@@ -13,13 +13,13 @@ HOW TO USE THIS TEMPLATE
    reference before you start.
 -->
 
-# [REQ-ID] — [Short Requirement Title]
+# [REQ-01] — [Filtrado de eventos]
 
 | | |
 |---|---|
 | **Status** | Draft / Validated / Open Question |
 | **Team / Author(s)** | |
-| **Date** | |
+| **Date** |8/10/2026|
 | **Linked User Story / AC** | |
 
 ---
@@ -39,7 +39,7 @@ HOW TO USE THIS TEMPLATE
 > El usuario necesita encontrar eventos que se ajusten a su presupuesto maximo, su rango de disponibilidad horaria y su ciudad.
 
 **Value / Rationale**
-> el usuario encontra eventos a los que tiene la posibilidad de asistir.
+> el usuario encuentra eventos a los que tiene la posibilidad de asistir.
 
 ---
 
@@ -127,11 +127,11 @@ entonces el sistema retorna únicamente los eventos con tarifa de acceso de $0 U
 | **Trigger** | El usuario ingresa sus filtros de búsqueda y ejecuta la consulta |
 |**Precondition** |El sistema se encuentra operativo y dispone de un catálogo de eventos registrados |
 
-**Main Flow**
-1.El usuario ingresa la ciudad objetivo, establece su presupuesto máximo disponible y define un rango de disponibilidad horaria (hora inicio y fin).
-2.El usuario solicita la ejecución del filtro.
-3.El sistema valida que los campos ingresados sean acordes con el formato esperado.
-4.El sistema consulta la base de datos con los filtros aplicados.
+**Main Flow**\
+1.El usuario ingresa la ciudad objetivo, establece su presupuesto máximo disponible y define un rango de disponibilidad horaria (hora inicio y fin).\
+2.El usuario solicita la ejecución del filtro.\
+3.El sistema valida que los campos ingresados sean acordes con el formato esperado.\
+4.El sistema consulta la base de datos con los filtros aplicados.\
 5.El sistema presenta al usuario la lista de eventos organizados que cumplen simultáneamente con los tres criterios.
 
 **Alternative Flow**
@@ -144,7 +144,6 @@ entonces el sistema retorna únicamente los eventos con tarifa de acceso de $0 U
 > El usuario obtiene una vista clara de las opciones de entretenimiento compatibles con sus restricciones o la retroalimentación correspondiente si no hay disponibilidad.
 
 **Flow Diagram**
-*(Replace the labels below with your own steps. Keep Main Flow, Alternative, and Exception visually distinct — delete whichever branch doesn't apply to your use case. This renders automatically on GitHub.)*
 
 ```mermaid
 flowchart TD
