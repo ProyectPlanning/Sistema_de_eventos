@@ -94,14 +94,12 @@ HOW TO USE THIS TEMPLATE
 ### 4.1 User Story
 
 > Como asistente a eventos,
-quiero filtrar las actividades disponibles según mi presupuesto máximo, mi disponibilidad horaria y mi ciudad,
-para poder encontrar rápidamente eventos reales a los que sí pueda asistir.
+quiero encontrar actividades que se ajusten a mi presupuesto máximo, mi disponibilidad horaria y mi ciudad,
+para obtener información sobre eventos a los que pueda asistir.
 
-*Check yourself: is the "I want" describing the need, or already prescribing a solution?*
 
 ### 4.2 Acceptance Criteria
 
-*(At least two scenarios: one normal path, one alternative or exception.)*
 
 **Scenario 1 — [short name]**
 Dado que el usuario se encuentra en la pantalla de búsqueda de actividades
