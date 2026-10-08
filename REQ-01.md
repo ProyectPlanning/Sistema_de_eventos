@@ -29,7 +29,7 @@ HOW TO USE THIS TEMPLATE
 **Requirement Statement**
 > El sistema debe permitir al usuario consultar y filtrar eventos ingresando su presupuesto máximo, su rango de disponibilidad horaria y su ciudad.
 
-**Type:** Functional / Non-functional
+**Type:** Functional
 *El requerimento es funcional*
 
 **Source / Evidence**
