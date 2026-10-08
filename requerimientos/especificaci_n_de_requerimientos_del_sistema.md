@@ -47,7 +47,7 @@ En este documento se detallan los requerimientos funcionales del sistema, organi
 ### 2. Gestión e Interacción con Eventos
 
 #### **REQ-01: Búsqueda y filtrado de eventos**
-* **Descripción:** El sistema debe permitir al usuario buscar y filtrar eventos aplicando criterios de presupuesto, rango horario y disponibilidad geográfica.
+* **Descripción:** El sistema debe permitir al usuario consultar y filtrar eventos por presupuesto, rango horario y ciudad.
 
 #### **REQ-02: Administración de eventos**
 * **Descripción:** El sistema debe permitir a los usuarios autorizados crear, modificar y eliminar eventos dentro de la plataforma.
@@ -56,7 +56,7 @@ En este documento se detallan los requerimientos funcionales del sistema, organi
 * **Descripción:** El sistema debe permitir al usuario fijar eventos de su interés y acceder a una sección dedicada para visualizar todos los eventos fijados.
 
 #### **REQ-07: Agendamiento de eventos**
-* **Descripción:** El sistema debe permitir al usuario agendar un evento en su calendario personal o en la agenda de la plataforma cuando aplique.
+* **Descripción:** El sistema debe permitir al usuario agendar un evento en su calendario personal o en la agenda de la plataforma cuando el evento sea agendable.
 
 #### **REQ-08: Confirmación de interés y asistencia**
 * **Descripción:** El sistema debe permitir al usuario marcar los eventos a los que tiene intención de asistir, así como visualizar la lista completa de eventos marcados.
@@ -69,20 +69,20 @@ En este documento se detallan los requerimientos funcionales del sistema, organi
 ### 3. Sistema de Recomendaciones y Notificaciones
 
 #### **REQ-03: Motor de recomendaciones personalizadas**
-* **Descripción:** El sistema debe recomendar automáticamente eventos al usuario basándose en sus preferencias e historial de interacción.
+* **Descripción:** El sistema debe recomendar automáticamente eventos al usuario basándose en sus preferencias.
 
 #### **REQ-04: Notificación de eventos recomendados**
-* **Descripción:** El sistema debe enviar alertas o notificaciones periódicas al usuario informándole sobre nuevos eventos recomendados para él.
+* **Descripción:** El sistema debe enviar notificaciones al usuario sobre la creación nuevos eventos recomendados para él.
 
 #### **REQ-10: Recomendación directa entre usuarios**
-* **Descripción:** El sistema debe permitir a un usuario compartir y recomendar eventos específicos directamente a otros usuarios o amigos dentro de la plataforma.
+* **Descripción:** El sistema debe permitir a un usuario compartir y recomendar eventos específicos directamente a otros usuarios.
 
 #### **REQ-12: Notificación por alteración de eventos marcados**
-* **Descripción:** El sistema debe notificar oportunamente a los usuarios si un evento que habían marcado para asistir sufre modificaciones en su información o es eliminado.
+* **Descripción:** El sistema debe notificar a los usuarios si un evento que habían marcado para asistir sufre modificaciones en su información o es eliminado.
 
 ---
 
 ### 4. Calificaciones y Valoraciones
 
 #### **REQ-05: Calificación de eventos y organizadores**
-* **Descripción:** El sistema debe permitir a los usuarios evaluar y calificar tanto la experiencia de un evento finalizado como al usuario/organizador que lo creó.
+* **Descripción:** El sistema debe permitir a los usuarios evaluar y calificar tanto la experiencia de un evento finalizado si el evento es calificable como al usuario/organizador que lo creó.
