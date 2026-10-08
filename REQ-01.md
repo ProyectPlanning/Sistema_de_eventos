@@ -39,7 +39,7 @@ HOW TO USE THIS TEMPLATE
 > El usuario necesita encontrar eventos que se ajusten a su presupuesto maximo, su rango de disponibilidad horaria y su ciudad.
 
 **Value / Rationale**
-> el usuario encontra eventos a los que tiene la posibilidad de asistir*
+> el usuario encontra eventos a los que tiene la posibilidad de asistir.
 
 ---
 
