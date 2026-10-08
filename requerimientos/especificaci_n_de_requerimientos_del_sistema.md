@@ -1,6 +1,6 @@
 # Especificación de Requerimientos Funcionales
 
-En este documento se detallan los requerimientos funcionales del sistema, organizados e identificados mediante un código único para su trazabilidad y gestión.
+En este documento se detallan los requerimientos funcionales del sistema.
 
 ---
 
