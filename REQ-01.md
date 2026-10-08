@@ -13,7 +13,7 @@ HOW TO USE THIS TEMPLATE
    reference before you start.
 -->
 
-# [REQ-01] — [Filtrado de eventos]
+# REQ-01 — Filtrado de eventos
 
 | | |
 |---|---|
@@ -54,8 +54,6 @@ HOW TO USE THIS TEMPLATE
 
 - Si existen **más de 10 eventos** que coinciden con la búsqueda del usuario, el sistema muestra **un máximo de 10 resultados inicialmente**. La opción de mostrar más resultados estará disponible únicamente si el usuario lo solicita.
 
-- El sistema permite realizar consultas utilizando **cualquier combinación de los tres filtros** disponibles, incluyendo la posibilidad de realizar una consulta **sin aplicar ningún filtro**.
-
 **Constraint(s)**
 > What limits how this requirement can be solved (regulation, existing technology, contract, interoperability, organizational policy)? A constraint reduces the available design space — it doesn't describe what must be satisfied, it describes what limits the solution.
 
@@ -89,7 +87,6 @@ HOW TO USE THIS TEMPLATE
 
 ## 4. Representations — Requirement ≠ Representation
 
-*(Class 9. Each representation reveals different information. Fill in all three below — for this capstone requirement, all three are required.)*
 
 ### 4.1 User Story
 
@@ -101,21 +98,26 @@ para obtener información sobre eventos a los que pueda asistir.
 ### 4.2 Acceptance Criteria
 
 
-**Scenario 1 — [short name]**
+**Scenario 1 — eventos filtrados**
 Dado que el usuario se encuentra en la pantalla de búsqueda de actividades
 cuando ingresa como presupuesto máximo "$50 USD", selecciona la ciudad "Bogotá" y define un rango de disponibilidad de "18:00 a 22:00"
 Entonces el sistema muestra la lista de eventos cuya ubicación sea Bogotá, su tarifa mínima sea menor o igual a $50 USD y su horario de inicio y fin esté totalmente contenido entre las 18:00 y las 22:00
 
-**Scenario 2 — [short name, alternative or exception]**
+**Scenario 2 — sin eventos compatibles**
 Dado que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10 USD" dentro del rango de "08:00 a 12:00"
 cuando el usuario ejecuta una búsqueda en Medellín con presupuesto máximo de "$10 USD" y rango de disponibilidad de "08:00 a 12:00"
 enotnces el sistema muestra un mensaje indicando que no se encontraron actividades con esos criterios y sugiere ampliar el rango horaria o ajustar el presupuesto
 
 
-**Scenario 3 — [short name, alternative or exception]**
+**Scenario 3 — eventos gratis**
 Dado que existen eventos públicos de entrada libre ($0 USD) en la ciudad seleccionada durante el rango de disponibilidad del usuario
 cuando el usuario realiza la búsqueda ingresando un presupuesto máximo de "$0 USD"
 entonces el sistema retorna únicamente los eventos con tarifa de acceso de $0 USD que coincidan con la ciudad y el rango de horario especificados
+
+**Scenario 4 — Búsqueda parcial y límite de resultados**
+Dado que existen 15 eventos registrados en la ciudad "Bogotá" sin restricción de horario
+cuando el usuario realiza una búsqueda seleccionando únicamente la ciudad "Bogotá" sin ingresar presupuesto ni rango horario
+entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opción de cargar los resultados restantes.
 
 ### 4.3 Use Case
 
