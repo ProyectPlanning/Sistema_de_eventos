@@ -45,13 +45,16 @@ HOW TO USE THIS TEMPLATE
 
 ## 2. Context — A Requirement Rarely Stands Alone
 
-*(Class 10. Fill honestly — "N/A — none identified" is a valid, expected answer for several of these.)*
 
 **Business Rule(s)**
-> Solo se muestran eventos que cuenten con al menos 1 cupo o entrada disponible para venta al momento de procesar la consulta (eventos agotados quedan excluidos de la lista general).
-> En eventos con múltiples tipos de entrada (ej. General $20, VIP $50), el evento califica como resultado válido si al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo del usuario.
-> si hay mas de 10 eventos que coinciden con la busqueda del usuario, el sistema muiestra maximo 10, con la opcion de mostrar mas solo si el usuario lo especifica.
-> El sistema deja consultar con cualquier combinacion de los tres filtros, incluyendo consultar sin ningun filtro.
+
+- Solo se muestran eventos que cuenten con al menos **1 cupo o entrada disponible para venta** al momento de procesar la consulta. Los eventos agotados quedan excluidos de la lista general.
+
+- En eventos con múltiples tipos de entrada (por ejemplo, **General $20** y **VIP $50**), el evento califica como resultado válido si **al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo** establecido por el usuario.
+
+- Si existen **más de 10 eventos** que coinciden con la búsqueda del usuario, el sistema muestra **un máximo de 10 resultados inicialmente**. La opción de mostrar más resultados estará disponible únicamente si el usuario lo solicita.
+
+- El sistema permite realizar consultas utilizando **cualquier combinación de los tres filtros** disponibles, incluyendo la posibilidad de realizar una consulta **sin aplicar ningún filtro**.
 
 **Constraint(s)**
 > What limits how this requirement can be solved (regulation, existing technology, contract, interoperability, organizational policy)? A constraint reduces the available design space — it doesn't describe what must be satisfied, it describes what limits the solution.
@@ -182,7 +185,6 @@ flowchart TD
 ---
 ## 5. Traceability & Impact
 
-*(Class 10. Conceptual, not a formal matrix.)*
 
 **Backward — why does this requirement exist?**
 > Evidence → Need → Requirement. Point to the specific evidence/need entries that justify this requirement (from your Discovery Sheet).
@@ -192,14 +194,14 @@ flowchart TD
 
 **Impact Analysis — if this requirement changes, what else might need to change?**
 - [ ] Business Rules
-- [ ] Constraints
-- [ ] Dependencies
-- [ ] Risks
-- [ ] Acceptance Criteria
-- [ ] Estimate
+- [x] Constraints
+- [x] Dependencies
+- [x] Risks
+- [x] Acceptance Criteria
+- [x] Estimate
 - [ ] Priority
-- [ ] Future Design
-- [ ] Future Tests
+- [x] Future Design
+- [x] Future Tests
 
 > Briefly note which of the above are actually likely to be affected, and why.
 
@@ -209,14 +211,13 @@ flowchart TD
 
 *(Class 9 + Class 10. Self-audit before you commit this file. Check honestly — a "no" here means the requirement isn't ready yet, not that you should force a checkmark.)*
 
-- [ ] **Valid?** Does it reflect a real, evidenced need — not an invented one?
-- [ ] **Clear / Unambiguous?** Is there only one reasonable interpretation?
-- [ ] **Atomic?** Is this one independently testable expectation, not several bundled together?
-- [ ] **Necessary?** Does removing it actually break something real?
-- [ ] **Feasible?** Can this realistically be built with what the team has?
-- [ ] **Verifiable?** Can you demonstrate, concretely, whether it's satisfied?
-- [ ] **Consistent?** Does it conflict with any other requirement in your set?
-- [ ] **Complete enough?** Are there important functions or constraints still missing?
-- [ ] **Traceable?** Can every part of this document be traced back to real evidence — not invented to fill a section?
-
-> If any box is unchecked, say what's missing and whether it becomes an Open Question or sends you back to Class 8 (re-elicit) or Class 9 (re-specify).
+- [x] **Valid?** Does it reflect a real, evidenced need — not an invented one?
+- [x] **Clear / Unambiguous?** Is there only one reasonable interpretation?
+- [x] **Atomic?** Is this one independently testable expectation, not several bundled together?
+- [x] **Necessary?** Does removing it actually break something real?
+- [x] **Feasible?** Can this realistically be built with what the team has?
+- [x] **Verifiable?** Can you demonstrate, concretely, whether it's satisfied?
+- [x] **Consistent?** Does it conflict with any other requirement in your set?
+- [x] **Complete enough?** Are there important functions or constraints still missing?
+- [x] **Traceable?** Can every part of this document be traced back to real evidence — not invented to fill a section?
+      
