@@ -147,10 +147,38 @@ entonces el sistema retorna únicamente los eventos con tarifa de acceso de $0 U
 
 ```mermaid
 flowchart TD
-    A[Inicio] --> B{¿Datos válidos?}
-    B -->|Sí| C[Consultar eventos]
-    B -->|No| D[Mostrar error]
+    A([Asistente a eventos inicia la consulta]) --> B["1. Usuario ingresa ciudad, presupuesto máximo y rango horario"]
+    B --> C["2. Usuario solicita ejecutar el filtro"]
+    C --> D["3. Sistema valida el formato de los campos"]
+    D --> E{"¿Datos válidos?"}
+
+    E -- "Sí" --> F["4. Sistema consulta la base de datos aplicando ciudad, presupuesto y horario"]
+    F --> G{"¿Servicio de eventos disponible?"}
+
+    G -- "Sí" --> H{"¿Existen eventos que cumplan los 3 criterios?"}
+    H -- "Sí" --> I["5. Sistema presenta la lista de eventos compatibles"]
+    I --> J(["Postcondition: usuario obtiene opciones compatibles con sus restricciones"])
+
+    H -- "No" --> K["ALTERNATIVE: Sistema informa que no existen eventos con los filtros exactos"]
+    K --> L["Sistema muestra recomendaciones para flexibilizar la búsqueda"]
+    L --> M(["Postcondition: usuario recibe retroalimentación y opciones para ajustar la búsqueda"])
+
+    G -- "No, error o timeout" --> N["EXCEPTION: Sistema informa la indisponibilidad temporal del servicio"]
+    N --> O["Sistema conserva los filtros ingresados e invita al usuario a reintentar"]
+    O --> P(["Postcondition: usuario puede reintentar la consulta con sus filtros"])
+
+    E -- "No" --> Q["Sistema informa que los datos ingresados no cumplen el formato esperado"]
+    Q --> R(["Postcondition: usuario debe corregir los datos ingresados"])
+
+    classDef mainflow fill:#1E2761,color:#ffffff,stroke:#1E2761;
+    classDef alt fill:#F2A541,color:#1E2761,stroke:#F2A541;
+    classDef exception fill:#B3261E,color:#ffffff,stroke:#B3261E;
+
+    class B,C,D,F,I mainflow;
+    class K,L,Q alt;
+    class N,O exception;
 ```
+
 ---
 ## 5. Traceability & Impact
 
