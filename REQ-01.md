@@ -17,7 +17,7 @@ HOW TO USE THIS TEMPLATE
 
 | | |
 |---|---|
-| **Estado** | validado |
+| **Estado** | abierto a preguntas|
 | **Equipo** | |
 | **Fecha** |8/10/2026|
 | **Historia de usuario relacionada** |REQ-01|
