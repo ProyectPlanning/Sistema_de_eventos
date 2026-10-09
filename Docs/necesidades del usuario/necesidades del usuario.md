@@ -1,4 +1,4 @@
-# Documento de Necesidades del Sistema (Needs)
+# Documento de Necesidades del usuario (Needs)
 
 En este documento se detallan las necesidades de los usuarios y del negocio identificadas durante la fase de descubrimiento. Cada necesidad describe el problema o meta que se busca resolver, sirviendo como fundamento para la definición de los requerimientos funcionales del sistema.
 
