@@ -1,16 +1,20 @@
-# Título (lee el source code del markdown para ver los comentarios)
+# PLANEA
 
 Autores:
- - @githubusername
+ - Cristian Andres Diaz Ortega - @crdiazo
+ - Juan Sebastian Rodriguez Carvajal - @juanRodriguez-repositorio
+ - Martin Lora Caro - @malorac
+ - Justin David Vargas Vasquez - @David123just
+ - Nicolas David Lovera Cabiativa - @NicoLovera18
 
 ## 1 TL;DR
 
-<!--
-párrafo corto que explica qué estas proponiendo
--->
+Muchas veces queremos salir de nuestras casas y no tenemos ningun plan y nos da un poco de pereza buscar en sitios eventos o cosas asi que se estan realizando en la ciudad, 
+proponemos una plataforma inteligente que permita descubrir actividades y convertirlas en planes personalizados segun presupuesto, tiempo, ubicacion, intereses y disponibilidad, 
+facilitando la reserva y compra mediante integraciones con provedores externos.
 
 ## 2 Motivación
-
+La motivación de escoger esta decisión es porque no nos pusimos de acuerdo y a veces la dictadura no es tan mala elección, por la nota y por aprender
 <!--
 ¿qué motiva esta decisión y por qué es importante?
 el propósito de esta sección es articular de una manera sencilla el valor de la decision que vamos a tomar
@@ -24,6 +28,8 @@ hacer una plataforma web que ayude a los usuarios a encontrar actividades variad
 Que métricas debemos vamos a instrumentar, o monitorear para observar las implicaciónes de esta decisiòn?
 Por ejemplo, cuando interactuamos con un sistema externo que tipo de latencia esperariamos o si agregamos una tabla nueva que tan rápido se llenaría?
 -->
+
+La cantidad de regaños a David es proporcional a la cantidad de errores cometidos, mantener al mínimo posible (si David colabora).
 
 ## 5 Riesgos e inconvenientes
 
