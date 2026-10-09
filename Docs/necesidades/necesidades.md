@@ -26,7 +26,7 @@ En este documento se detallan las necesidades de los usuarios y del negocio iden
 
 #### **[NEED-01] — Descubrimiento de eventos viables**
 * **Actor:** Asistente a eventos.
-* **Descripción:** El usuario necesita encontrar actividades acordes a su dinero disponible, tiempo libre y ubicación geográfica actual.
+* **Descripción:** El usuario necesita encontrar actividades acordes a su dinero disponible, tiempo libre y la ciudad donde se ubica.
 * **Justificación / Valor:** Evita la frustración de consultar opciones a las que no puede asistir por incompatibilidad de horario, costo elevado o distancia.
 * **Requerimientos asociados:** `REQ-01`.
 
