@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| **Estado** | abierto a preguntas|
+| **Estado** | validado |
 | **Equipo** | Cristian Andres Diaz Ortega - Juan Sebastian Rodriguez Carvajal - Martin Lora Caro - Justin David Vargas Vasquez -Nicolas David Lovera Cabiativa|
 | **Fecha** |9/10/2026|
 | **Historia de usuario relacionada** |US-01.1|
@@ -41,6 +41,7 @@
 
 > BR-02 En eventos con múltiples tipos de entrada (por ejemplo, **General $20.000** y **VIP $50.000**), el evento califica como resultado válido si **al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo** establecido por el usuario.
 
+> BR-03 El usuario puede ingresar cualquier combinación de filtros (incluso ninguno), la cual se realizará solo sobre los filtros ingresados. Sino se ingresa ningún filtro, se muestran eventos aleatorios.
 
 **Restricción(es)** 
 > La solución debe manejar con precaución la información de eventos públicos de terceros (existe la posibilidad de cambios dentro del evento que pueden modificar las características del mismo). Controlamos la visualización de eventos públicos de terceros, pero no tenemos control de todo el ciclo de vida del evento.
@@ -138,28 +139,28 @@ entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opci
 
 ```mermaid
 flowchart TD
-    A([Asistente a eventos inicia la consulta]) --> B["1. Usuario ingresa zona geográfica, presupuesto máximo y rango horario"]
-    B --> C["2. Usuario solicita ejecutar el filtro"]
-    C --> D["3. Sistema valida el formato de los campos"]
-    D --> E{"¿Datos válidos?"}
+    A([Asistente a eventos inicia la consulta]) --> B["1. Usuario ingresa opcionalmente zona geográfica, presupuesto máximo y rango horario"]
+    B --> C["2. Usuario solicita ejecutar la consulta"]
+    C --> D["3. Sistema valida el formato de los filtros ingresados"]
+    D --> E{"¿Los filtros ingresados tienen un formato válido?"}
 
-    E -- "Sí" --> F["4. Sistema consulta la base de datos y el API, aplicando los filtros de zona geográfica, presupuesto y horario"]
+    E -- "Sí" --> F["4. Sistema consulta la base de datos y el API aplicando únicamente los filtros proporcionados"]
     F --> G{"¿Servicio de eventos disponible?"}
 
-    G -- "Sí" --> H{"¿Existen eventos que cumplan los 3 criterios?"}
-    H -- "Sí" --> I["5. Sistema presenta la lista de eventos compatibles"]
-    I --> J(["Postcondition: usuario obtiene opciones compatibles con sus restricciones"])
+    G -- "Sí" --> H{"¿Existen eventos que coincidan con los filtros aplicados?"}
+    H -- "Sí" --> I["5. Sistema presenta la lista de eventos coincidentes"]
+    I --> J(["Postcondition: usuario obtiene eventos que cumplen los criterios seleccionados, si los ingresó"])
 
-    H -- "No" --> K["ALTERNATIVE: Sistema informa que no existen eventos con los filtros exactos"]
-    K --> L["Sistema muestra recomendaciones para flexibilizar la búsqueda"]
-    L --> M(["Postcondition: usuario recibe retroalimentación y opciones para ajustar la búsqueda"])
+    H -- "No" --> K["ALTERNATIVE: Sistema informa que no se encontraron eventos con los criterios aplicados"]
+    K --> L["Sistema ofrece opciones para modificar los filtros o ampliar la búsqueda"]
+    L --> M(["Postcondition: usuario recibe retroalimentación y puede ajustar su búsqueda"])
 
     G -- "No, error o timeout" --> N["EXCEPTION: Sistema informa la indisponibilidad temporal del servicio"]
     N --> O["Sistema conserva los filtros ingresados e invita al usuario a reintentar"]
-    O --> P(["Postcondition: usuario puede reintentar la consulta con sus filtros"])
+    O --> P(["Postcondition: usuario puede reintentar la consulta con los mismos filtros"])
 
-    E -- "No" --> Q["Sistema informa que los datos ingresados no cumplen el formato esperado"]
-    Q --> R(["Postcondition: usuario debe corregir los datos ingresados"])
+    E -- "No" --> Q["Sistema informa cuáles filtros presentan un formato inválido"]
+    Q --> R(["Postcondition: usuario puede corregir los filtros inválidos y reintentar"])
 
     classDef mainflow fill:#1E2761,color:#ffffff,stroke:#1E2761;
     classDef alt fill:#F2A541,color:#1E2761,stroke:#F2A541;
