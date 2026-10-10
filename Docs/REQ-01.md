@@ -41,6 +41,7 @@
 
 > BR-02 En eventos con múltiples tipos de entrada (por ejemplo, **General $20.000** y **VIP $50.000**), el evento califica como resultado válido si **al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo** establecido por el usuario.
 
+> BR-03 El usuario puede ingresar cualquier combinación de filtros (incluso ninguno), la cual se realizará solo sobre los filtros ingresados. Sino se ingresa ningún filtro, se muestran eventos aleatorios.
 
 **Restricción(es)** 
 > La solución debe manejar con precaución la información de eventos públicos de terceros (existe la posibilidad de cambios dentro del evento que pueden modificar las características del mismo). Controlamos la visualización de eventos públicos de terceros, pero no tenemos control de todo el ciclo de vida del evento.
