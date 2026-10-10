@@ -149,7 +149,7 @@ flowchart TD
 
     G -- "Sí" --> H{"¿Existen eventos que coincidan con los filtros aplicados?"}
     H -- "Sí" --> I["5. Sistema presenta la lista de eventos coincidentes"]
-    I --> J(["Postcondition: usuario obtiene eventos que cumplen los criterios seleccionados, si los ingresó"])
+    I --> J(["Postcondition: usuario obtiene eventos que cumplen los criterios seleccionados"])
 
     H -- "No" --> K["ALTERNATIVE: Sistema informa que no se encontraron eventos con los criterios aplicados"]
     K --> L["Sistema ofrece opciones para modificar los filtros o ampliar la búsqueda"]
