@@ -138,28 +138,28 @@ entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opci
 
 ```mermaid
 flowchart TD
-    A([Asistente a eventos inicia la consulta]) --> B["1. Usuario ingresa zona geográfica, presupuesto máximo y rango horario"]
-    B --> C["2. Usuario solicita ejecutar el filtro"]
-    C --> D["3. Sistema valida el formato de los campos"]
-    D --> E{"¿Datos válidos?"}
+    A([Asistente a eventos inicia la consulta]) --> B["1. Usuario ingresa opcionalmente zona geográfica, presupuesto máximo y rango horario"]
+    B --> C["2. Usuario solicita ejecutar la consulta"]
+    C --> D["3. Sistema valida el formato de los filtros ingresados"]
+    D --> E{"¿Los filtros ingresados tienen un formato válido?"}
 
-    E -- "Sí" --> F["4. Sistema consulta la base de datos y el API, aplicando los filtros de zona geográfica, presupuesto y horario"]
+    E -- "Sí" --> F["4. Sistema consulta la base de datos y el API aplicando únicamente los filtros proporcionados"]
     F --> G{"¿Servicio de eventos disponible?"}
 
-    G -- "Sí" --> H{"¿Existen eventos que cumplan los 3 criterios?"}
-    H -- "Sí" --> I["5. Sistema presenta la lista de eventos compatibles"]
-    I --> J(["Postcondition: usuario obtiene opciones compatibles con sus restricciones"])
+    G -- "Sí" --> H{"¿Existen eventos que coincidan con los filtros aplicados?"}
+    H -- "Sí" --> I["5. Sistema presenta la lista de eventos coincidentes"]
+    I --> J(["Postcondition: usuario obtiene eventos que cumplen los criterios seleccionados, si los ingresó"])
 
-    H -- "No" --> K["ALTERNATIVE: Sistema informa que no existen eventos con los filtros exactos"]
-    K --> L["Sistema muestra recomendaciones para flexibilizar la búsqueda"]
-    L --> M(["Postcondition: usuario recibe retroalimentación y opciones para ajustar la búsqueda"])
+    H -- "No" --> K["ALTERNATIVE: Sistema informa que no se encontraron eventos con los criterios aplicados"]
+    K --> L["Sistema ofrece opciones para modificar los filtros o ampliar la búsqueda"]
+    L --> M(["Postcondition: usuario recibe retroalimentación y puede ajustar su búsqueda"])
 
     G -- "No, error o timeout" --> N["EXCEPTION: Sistema informa la indisponibilidad temporal del servicio"]
     N --> O["Sistema conserva los filtros ingresados e invita al usuario a reintentar"]
-    O --> P(["Postcondition: usuario puede reintentar la consulta con sus filtros"])
+    O --> P(["Postcondition: usuario puede reintentar la consulta con los mismos filtros"])
 
-    E -- "No" --> Q["Sistema informa que los datos ingresados no cumplen el formato esperado"]
-    Q --> R(["Postcondition: usuario debe corregir los datos ingresados"])
+    E -- "No" --> Q["Sistema informa cuáles filtros presentan un formato inválido"]
+    Q --> R(["Postcondition: usuario puede corregir los filtros inválidos y reintentar"])
 
     classDef mainflow fill:#1E2761,color:#ffffff,stroke:#1E2761;
     classDef alt fill:#F2A541,color:#1E2761,stroke:#F2A541;
