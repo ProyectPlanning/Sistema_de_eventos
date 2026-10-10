@@ -16,13 +16,13 @@
 ## 1. General
 
 **Requerimiento**
-> El sistema debe permitir al usuario consultar y filtrar eventos ingresando su presupuesto máximo, su rango de disponibilidad horaria y su zona geográfica (Se aplica un doble filtro de lugar de búsqueda con tipo de zona: pais, ciudad, departamento/estado. Y posteriormente un buscador de ese tipo de zona).
+> El sistema debe permitir al usuario consultar y filtrar eventos ingresando su presupuesto máximo, su rango de disponibilidad horaria y su zona geográfica (país, departamento/estado y ciudad).
 
 **Tipo:** Funcional *(Sigue existiendo pasando por el filtro de la computadora perfecta: el usuario aun así necesita colocar los filtros para encontrar los eventos compatibles)* 
 
 
 **Fuente/Evidencia**
-> necesidades del usuario: NEED 01: "El usuario necesita encontrar actividades acordes a su dinero disponible, tiempo libre y la ciudad donde se ubica"
+> necesidades del usuario: NEED-01: "El usuario necesita encontrar actividades acordes a su dinero disponible, tiempo libre y la zona donde se ubica"
 
 **Necesidad**
 > Encontrar eventos acordes al usuario.
@@ -37,21 +37,21 @@
 
 **Reglas de negocio**
 
-> BR-01 Solo se muestran eventos que cuenten con al menos **1 cupo o entrada disponible para venta** al momento de procesar la consulta. Los eventos agotados quedan excluidos de la lista general.
+> BR-01 Para eventos con cupos máximos, solo se muestran los eventos que cuenten con al menos **1 cupo y/o entrada disponible** al momento de procesar la consulta. Los eventos agotados quedan excluidos de la lista general.
 
 > BR-02 En eventos con múltiples tipos de entrada (por ejemplo, **General $20.000** y **VIP $50.000**), el evento califica como resultado válido si **al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo** establecido por el usuario.
 
-> BR-03 El usuario puede ingresar cualquier combinación de filtros (incluso ninguno), la cual se realizará solo sobre los filtros ingresados. Sino se ingresa ningún filtro, se muestran eventos aleatorios.
+> BR-03 El usuario puede ingresar cualquier combinación de filtros (incluso ninguno); la consulta se realizará solo sobre los filtros ingresados. Sino se ingresa ningún filtro, se muestran eventos aleatorios.
 
 **Restricción(es)** 
-> La solución debe manejar con precaución la información de eventos públicos de terceros (existe la posibilidad de cambios dentro del evento que pueden modificar las características del mismo). Controlamos la visualización de eventos públicos de terceros, pero no tenemos control de todo el ciclo de vida del evento.
+> La solución debe manejar con precaución la información de eventos públicos de terceros (Apis externas), porque existe la posibilidad de cambios en el evento. Controlamos la visualización de eventos públicos de terceros, pero no tenemos control de todo el ciclo de vida del evento.
 
 **Supuesto(s)**
-> Existen eventos.
-> Los eventos hechos por los usuarios son verídicos y legales. 
+> Existen eventos en nuestra base de datos y Apis de terceros.
+> Los eventos  son verídicos y legales. 
 
 **Dependencias**
-> Información actualizada de los eventos procedente de la API del proveedor externo.
+> Apis externas (para los eventos que se consultan de una Api externa).
 
 **Riesgos**
 
@@ -105,9 +105,17 @@ cuando el usuario realiza la búsqueda ingresando un presupuesto máximo de "$0 
 entonces el sistema retorna únicamente los eventos con tarifa de acceso de $0 pesos que coincidan con la ciudad y el rango de horario especificados
 
 >**Escenario 4 — Búsqueda parcial y límite de resultados**
-Dado que existen 15 eventos registrados en la ciudad "Bogotá" sin restricción de horario
+Dado que existen 15 eventos registrados en la ciudad "Bogotá"
 cuando el usuario realiza una búsqueda seleccionando únicamente la ciudad "Bogotá" sin ingresar presupuesto ni rango horario
-entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opción de cargar los resultados restantes.
+entonces el sistema muestra los 15 eventos.
+
+
+>**Escenario 5 — Sin filtros**
+Dado que el usuario no ingresa ningún filtro
+cuando el usuario ejecuta la búsqueda
+entonces el sistema muestra eventos aleatorios.
+
+
 
 ### 4.3 Caso de uso
 
@@ -116,7 +124,7 @@ entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opci
 | **Nombre** |Consultar y Filtrar Eventos |
 | **Rol** |Asistente a eventos |
 | **Objetivo** |Encontrar eventos que coincidan con su presupuesto disponible, rango de horario y ubicación geográfica |
-| **Activador** | El usuario oprime el botón de búsqueda, ingresa sus filtros de búsqueda y ejecuta la consulta |
+| **Activador** |ingresar sus filtros de búsqueda y ejecutar la consulta |
 |**Condición previa** |El sistema se encuentra operativo y dispone de un catálogo de eventos registrados |
 
 **Flujo Principal**\
@@ -124,7 +132,7 @@ entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opci
 2.El usuario solicita la ejecución del filtro.\
 3.El sistema valida que los campos ingresados sean acordes con el formato esperado.\
 4.El sistema consulta la base de datos con los filtros aplicados.\
-5.El sistema presenta al usuario la lista de eventos organizados que cumplen simultáneamente con los tres criterios.
+5.El sistema presenta al usuario la lista de eventos que cumplen con los filtros.
 
 **Flujo Alternativo**
 > Sin coincidencias para los criterios ingresados → El sistema informa al usuario que no existen eventos disponibles con los filtros exactos seleccionados y muestra recomendaciones para flexibilizar la búsqueda (ampliar rango de horario o ajustar presupuesto).
@@ -133,7 +141,7 @@ entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opci
 > Fallo de disponibilidad en el servicio de eventos → El sistema detecta un error de conexión o tiempo de espera agotado en la base de datos; despliega un mensaje notificando la indisponibilidad temporal e invita a reintentar manteniendo los filtros ingresados en pantalla.
 
 **Condición posterior**
-> El usuario obtiene una vista clara de las opciones de entretenimiento compatibles con sus restricciones o la retroalimentación correspondiente si no hay disponibilidad.
+> El usuario obtiene una vista clara de las opciones de eventos compatibles con sus restricciones o la retroalimentación correspondiente si no hay disponibilidad.
 
 **Diagrama de flujo**
 
@@ -149,7 +157,7 @@ flowchart TD
 
     G -- "Sí" --> H{"¿Existen eventos que coincidan con los filtros aplicados?"}
     H -- "Sí" --> I["5. Sistema presenta la lista de eventos coincidentes"]
-    I --> J(["Postcondition: usuario obtiene eventos que cumplen los criterios seleccionados, si los ingresó"])
+    I --> J(["Postcondition: usuario obtiene eventos que cumplen los criterios seleccionados"])
 
     H -- "No" --> K["ALTERNATIVE: Sistema informa que no se encontraron eventos con los criterios aplicados"]
     K --> L["Sistema ofrece opciones para modificar los filtros o ampliar la búsqueda"]
@@ -192,20 +200,20 @@ flowchart TD
 - [x] Diseño futuro
 - [x] Futuras pruebas
 
-> Si cambia el proveedor de eventos (por ejemplo, si migramos a otro proveedor), las Restricciones, Dependencias, Riesgos, y el Diseño y las Pruebas futuras necesitarían revisión — la integración, los contratos de datos y los escenarios de fallo dependen directamente de ese proveedor. Las Reglas de Negocio (BR-01 y BR-02) y la Prioridad no se cambia: BR-01 y BR-02 son reglas de dominio sobre qué cuenta como evento válido (cupos disponibles y tarifa mínima frente al presupuesto), y la Prioridad depende de la necesidad del usuario (Need 01), no de los detalles técnicos de implementación. Por eso quedan sin marcar.
+> Si cambia un proveedor de eventos, las Restricciones, Dependencias, Riesgos, y el Diseño y las Pruebas futuras necesitarían revisión — la integración, los contratos de datos y los escenarios de fallo dependen directamente de ese proveedor. Las Reglas de Negocio y la Prioridad no se cambia: BR-01, BR-02 y BR-03 son reglas de dominio, y la Prioridad depende de la necesidad del usuario (Need-01), no de los detalles técnicos de implementación. Por eso quedan sin marcar.
 
 ---
 
 ## 6. Validación
 
-- [x] **Válido?** Si, traza directamente a Need 01 y a US-01.1, no fue inventado para llenar una sección.
+- [x] **Válido?** Si, sale directamente de Need-01 y US-01.
 - [x] **Claro?** Si, "consultar y filtrar eventos por presupuesto máximo, rango de disponibilidad horaria y zona geográfica" tiene una lectura razonable única para eventos.
 - [x] **Atómico?** Si, es una única expectativa verificable de forma independiente (filtrar y listar eventos), no varias capacidades distintas empaquetadas juntas.
-- [x] **Necesario?** Si, removerlo elimina la funcionalidad central de descubrimiento del MVP, la cual responde directamente al Need 01.
+- [x] **Necesario?** Si, removerlo elimina la funcionalidad central de descubrimiento del MVP, la cual responde directamente al Need-01.
 - [x] **Alcanzable?** Si, filtros por presupuesto y zona geográfica son consultas estándar; el filtro por horario es alcanzable aunque con mayor costo por eventos multi-día, zonas horarias y solapamientos parciales.
-- [x] **Verificable?** Si, AC-01.1 a AC-01.4 dan condiciones de paso/fallo observables y concretas.
+- [x] **Verificable?** Si, AC-01.1 a AC-01.5 dan condiciones de paso/fallo observables y concretas.
 - [x] **Consistente?** Si, no se identificó conflicto con otras reglas del mismo conjunto; BR-01 y BR-02 son coherentes con los criterios de aceptación.
-- [x] **Completo?** Si, Se define los filtros que va a usar y cómo se comporta esta parte del sistema
-- [x] **trazable?** Sí, cada sección anterior remite a evidencia real o a una suposición/pregunta abierta marcada explícitamente; nada se ha inventado para llenar un vacío.
+- [x] **Completo?** Si, Se define los filtros que se van a usar y cómo se comporta esta parte del sistema
+- [x] **trazable?** Sí, cada sección anterior remite a evidencia real.
       
       
