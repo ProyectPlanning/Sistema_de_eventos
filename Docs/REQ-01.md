@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| **Estado** | abierto a preguntas|
+| **Estado** | validado |
 | **Equipo** | Cristian Andres Diaz Ortega - Juan Sebastian Rodriguez Carvajal - Martin Lora Caro - Justin David Vargas Vasquez -Nicolas David Lovera Cabiativa|
 | **Fecha** |9/10/2026|
 | **Historia de usuario relacionada** |US-01.1|
