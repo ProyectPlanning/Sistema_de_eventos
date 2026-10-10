@@ -1,4 +1,4 @@
-# Documento de Necesidades del Sistema (Needs)
+# Documento de Necesidades del usuario (Needs)
 
 En este documento se detallan las necesidades de los usuarios y del negocio identificadas durante la fase de descubrimiento. Cada necesidad describe el problema o meta que se busca resolver, sirviendo como fundamento para la definición de los requerimientos funcionales del sistema.
 
@@ -26,7 +26,7 @@ En este documento se detallan las necesidades de los usuarios y del negocio iden
 
 #### **[NEED-01] — Descubrimiento de eventos viables**
 * **Actor:** Asistente a eventos.
-* **Descripción:** El usuario necesita encontrar actividades acordes a su dinero disponible, tiempo libre y ubicación geográfica actual.
+* **Descripción:** El usuario necesita encontrar actividades acordes a su dinero disponible, tiempo libre y la ciudad donde se ubica.
 * **Justificación / Valor:** Evita la frustración de consultar opciones a las que no puede asistir por incompatibilidad de horario, costo elevado o distancia.
 * **Requerimientos asociados:** `REQ-01`.
 

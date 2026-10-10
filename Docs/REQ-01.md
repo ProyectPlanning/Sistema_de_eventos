@@ -1,16 +1,5 @@
 <!--
-HOW TO USE THIS TEMPLATE
-------------------------
-1. Copy this file and rename it to the requirement's ID, e.g. REQ-01.md.
-2. Fill in every section. If a section genuinely does not apply to this
-   requirement (not every requirement has a Business Rule or a Constraint),
-   write "N/A — none identified" and say why in one line. Never invent
-   content to fill a blank cell — that breaks the rule we've followed since
-   Class 8: specification is not invention.
-3. If something is unknown rather than inapplicable, use the Open
-   Questions section instead of guessing.
-4. See REQ-07_Example.md (Food Delivery System) for a fully filled-in
-   reference before you start.
+
 -->
 
 # REQ-01 — Filtrado de eventos
@@ -18,24 +7,25 @@ HOW TO USE THIS TEMPLATE
 | | |
 |---|---|
 | **Estado** | abierto a preguntas|
-| **Equipo** | |
-| **Fecha** |8/10/2026|
-| **Historia de usuario relacionada** |REQ-01|
+| **Equipo** | Cristian Andres Diaz Ortega - Juan Sebastian Rodriguez Carvajal - Martin Lora Caro - Justin David Vargas Vasquez -Nicolas David Lovera Cabiativa|
+| **Fecha** |9/10/2026|
+| **Historia de usuario relacionada** |US-01.1|
 
 ---
 
 ## 1. General
 
 **Requerimiento**
-> El sistema debe permitir al usuario consultar y filtrar eventos ingresando su presupuesto máximo, su rango de disponibilidad horaria y su ciudad.
+> El sistema debe permitir al usuario consultar y filtrar eventos ingresando su presupuesto máximo, su rango de disponibilidad horaria y su zona geográfica (Se aplica un doble filtro de lugar de búsqueda con tipo de zona: pais, ciudad, departamento/estado. Y posteriormente un buscador de ese tipo de zona).
 
-**Tipo:** Funcional
+**Tipo:** Funcional *(Sigue existiendo pasando por el filtro de la computadora perfecta: el usuario aun así necesita colocar los filtros para encontrar los eventos compatibles)* 
+
 
 **Fuente/Evidencia**
-> discusión con el equipo.
+> necesidades del usuario: NEED 01: "El usuario necesita encontrar actividades acordes a su dinero disponible, tiempo libre y la ciudad donde se ubica"
 
 **Necesidad**
-> El usuario necesita encontrar eventos que se ajusten a su presupuesto máximo, su rango de disponibilidad horaria y su ciudad.
+> Encontrar eventos acordes al usuario.
 
 **Valor**
 > el usuario encuentra eventos a los que tiene la posibilidad de asistir.
@@ -47,27 +37,27 @@ HOW TO USE THIS TEMPLATE
 
 **Reglas de negocio**
 
-- Solo se muestran eventos que cuenten con al menos **1 cupo o entrada disponible para venta** al momento de procesar la consulta. Los eventos agotados quedan excluidos de la lista general.
+> BR-01 Solo se muestran eventos que cuenten con al menos **1 cupo o entrada disponible para venta** al momento de procesar la consulta. Los eventos agotados quedan excluidos de la lista general.
 
-- En eventos con múltiples tipos de entrada (por ejemplo, **General $20** y **VIP $50**), el evento califica como resultado válido si **al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo** establecido por el usuario.
+> BR-02 En eventos con múltiples tipos de entrada (por ejemplo, **General $20.000** y **VIP $50.000**), el evento califica como resultado válido si **al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo** establecido por el usuario.
 
-- Si existen **más de 10 eventos** que coinciden con la búsqueda del usuario, el sistema muestra **un máximo de 10 resultados inicialmente**. La opción de mostrar más resultados estará disponible únicamente si el usuario lo solicita.
 
-**Limites**
-> What limits how this requirement can be solved (regulation, existing technology, contract, interoperability, organizational policy)? A constraint reduces the available design space — it doesn't describe what must be satisfied, it describes what limits the solution.
+**Restricción(es)** 
+> La solución debe manejar con precaución la información de eventos públicos de terceros (existe la posibilidad de cambios dentro del evento que pueden modificar las características del mismo). Controlamos la visualización de eventos públicos de terceros, pero no tenemos control de todo el ciclo de vida del evento.
 
-**Suposiciones**
-> La infomracion de los eventos almacenados en la base de datos es verídica.
+**Supuesto(s)**
+> Existen eventos.
+> Los eventos hechos por los usuarios son verídicos y legales. 
 
 **Dependencias**
-> El requierimiento depende de la base de datos del sistema.
+> Información actualizada de los eventos procedente de la API del proveedor externo.
 
 **Riesgos**
 
 | Riesgo | Probabilidad | Impacto | Mitigación (opcional) |
 |---|---|---|---|
-| La base de datos no responde | alto | el usuario no puede encontrar eventos |N/A|
-| No hay eventos que cumplan con los filtros dados | mediano | El usuario no puede encotrar eventos |N/A|
+| La base de datos no responde | bajo | el usuario no puede encontrar eventos | Sistema informa la indisponibilidad temporal del servicio | 
+| No hay eventos que cumplan con los filtros dados | mediano | El usuario no puede encontrar eventos | Sistema informa que no existen eventos con los filtros exactos y muestra recomendaciones para flexibilizar la búsqueda |
 
 **Open Questions**
 > N/A
@@ -77,10 +67,10 @@ HOW TO USE THIS TEMPLATE
 ## 3.Prioridad y estimación
 
 **Prioridad asignada:**
-> Asignamos Must have debido a que tener la facilidad de encontrar eventos en un horario,presupuesto y ciudad compatibles es la funcionalidad fundamental del sistema para encopntrar actividades que el usuario pueda hacer. Aceptamos el costo de postergar filtros secundarios como categoría de evento, accesibilidad del recinto o vista en mapa interactivo para esta iteración. Consideramos la opción Should have y la rechazamos porque lanzar la búsqueda sin estos tres criterios básicos entregaría resultados irrelevantes, haciendo inviable la experiencia clave de descubrimiento de eventos en el MVP.
+> Asignamos Must have (Imprescindible) debido a que tener la facilidad de encontrar eventos en un horario,presupuesto y zona geográfica compatibles es la funcionalidad fundamental del sistema para encontrar actividades que el usuario pueda hacer. Aceptamos el costo de postergar filtros secundarios como categoría de evento, accesibilidad del recinto o vista en mapa interactivo para esta iteración. Consideramos la opción Should have y la rechazamos porque lanzar la búsqueda sin estos tres criterios básicos entregaría resultados irrelevantes, haciendo inviable la experiencia clave de descubrimiento de eventos en el MVP.
 
-**Estimación (confianza):** Medio
-> Entendemos bien la lógica de filtrado directo por presupuesto máximo y ciudad (son consultas estándar a nivel de base de datos). Lo que genera incertidumbre y reduce la confianza de High a Medium es el algoritmo de coincidencia para la disponibilidad horaria, especialmente al evaluar eventos que abarcan múltiples días, manejar diferencias de zonas horarias o procesar solapamientos parciales de tiempo sin degradar el rendimiento de la consulta.*
+**Estimación (confianza):** Media
+> Entendemos bien la lógica de filtrado directo por presupuesto máximo y zona geográfica (son consultas estándar a nivel de base de datos). Lo que genera incertidumbre y reduce la confianza de High a Medium, es el algoritmo de coincidencia para la disponibilidad horaria, especialmente al evaluar eventos que abarcan múltiples días, manejar diferencias de zonas horarias o procesar solapamientos parciales de tiempo sin degradar el rendimiento de la consulta.*
 
 ---
 
@@ -90,30 +80,30 @@ HOW TO USE THIS TEMPLATE
 ### 4.1 Historia de usuario
 
 > Como asistente a eventos,
-quiero encontrar actividades que se ajusten a mi presupuesto máximo, mi disponibilidad horaria y mi ciudad,
+quiero encontrar actividades que se ajusten a mi presupuesto máximo, mi disponibilidad horaria y zona geográfica,
 para obtener información sobre eventos a los que pueda asistir.
 
 
 ### 4.2 Criterios de aceptación
 
 
-**Escenario 1 — eventos filtrados**
+>**Escenario 1 — eventos filtrados**
 Dado que el usuario se encuentra en la pantalla de búsqueda de actividades
-cuando ingresa como presupuesto máximo "$50 USD", selecciona la ciudad "Bogotá" y define un rango de disponibilidad de "18:00 a 22:00"
-Entonces el sistema muestra la lista de eventos cuya ubicación sea Bogotá, su tarifa mínima sea menor o igual a $50 USD y su horario de inicio y fin esté totalmente contenido entre las 18:00 y las 22:00
+cuando ingresa como presupuesto máximo "$50.000 pesos", selecciona el país "Colombia" y define un rango de disponibilidad de "18:00 a 22:00"
+Entonces el sistema muestra la lista de eventos cuya ubicación sea Colombia, su tarifa mínima sea menor o igual a $50.000 pesos y su horario de inicio y fin esté totalmente contenido entre las 18:00 y las 22:00
 
-**Escenario 2 — sin eventos compatibles**
-Dado que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10 USD" dentro del rango de "08:00 a 12:00"
-cuando el usuario ejecuta una búsqueda en Medellín con presupuesto máximo de "$10 USD" y rango de disponibilidad de "08:00 a 12:00"
-enotnces el sistema muestra un mensaje indicando que no se encontraron actividades con esos criterios y sugiere ampliar el rango horaria o ajustar el presupuesto
+>**Escenario 2 — sin eventos compatibles**
+Dado que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10.000 pesos" dentro del rango de "08:00 a 12:00"
+cuando el usuario ejecuta una búsqueda en Medellín con presupuesto máximo de "$10.000 pesos" y rango de disponibilidad de "08:00 a 12:00"
+entonces el sistema muestra un mensaje indicando que no se encontraron actividades con esos criterios y sugiere ampliar el rango horaria o ajustar el presupuesto
 
 
-**Escenario 3 — eventos gratis**
-Dado que existen eventos públicos de entrada libre ($0 USD) en la ciudad seleccionada durante el rango de disponibilidad del usuario
-cuando el usuario realiza la búsqueda ingresando un presupuesto máximo de "$0 USD"
-entonces el sistema retorna únicamente los eventos con tarifa de acceso de $0 USD que coincidan con la ciudad y el rango de horario especificados
+>**Escenario 3 — eventos gratis**
+Dado que existen eventos públicos de entrada libre ($0 pesos) en la ciudad seleccionada durante el rango de disponibilidad del usuario
+cuando el usuario realiza la búsqueda ingresando un presupuesto máximo de "$0 pesos"
+entonces el sistema retorna únicamente los eventos con tarifa de acceso de $0 pesos que coincidan con la ciudad y el rango de horario especificados
 
-**Escenario 4 — Búsqueda parcial y límite de resultados**
+>**Escenario 4 — Búsqueda parcial y límite de resultados**
 Dado que existen 15 eventos registrados en la ciudad "Bogotá" sin restricción de horario
 cuando el usuario realiza una búsqueda seleccionando únicamente la ciudad "Bogotá" sin ingresar presupuesto ni rango horario
 entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opción de cargar los resultados restantes.
@@ -125,11 +115,11 @@ entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opci
 | **Nombre** |Consultar y Filtrar Eventos |
 | **Rol** |Asistente a eventos |
 | **Objetivo** |Encontrar eventos que coincidan con su presupuesto disponible, rango de horario y ubicación geográfica |
-| **Activador** | El usuario ingresa sus filtros de búsqueda y ejecuta la consulta |
+| **Activador** | El usuario oprime el botón de búsqueda, ingresa sus filtros de búsqueda y ejecuta la consulta |
 |**Condición previa** |El sistema se encuentra operativo y dispone de un catálogo de eventos registrados |
 
 **Flujo Principal**\
-1.El usuario ingresa la ciudad objetivo, establece su presupuesto máximo disponible y define un rango de disponibilidad horaria (hora inicio y fin).\
+1.El usuario ingresa la zona geográfica, establece su presupuesto máximo disponible y define un rango de disponibilidad horaria (hora inicio y fin).\
 2.El usuario solicita la ejecución del filtro.\
 3.El sistema valida que los campos ingresados sean acordes con el formato esperado.\
 4.El sistema consulta la base de datos con los filtros aplicados.\
@@ -148,12 +138,12 @@ entonces el sistema muestra los primeros 10 eventos ordenados y habilita la opci
 
 ```mermaid
 flowchart TD
-    A([Asistente a eventos inicia la consulta]) --> B["1. Usuario ingresa ciudad, presupuesto máximo y rango horario"]
+    A([Asistente a eventos inicia la consulta]) --> B["1. Usuario ingresa zona geográfica, presupuesto máximo y rango horario"]
     B --> C["2. Usuario solicita ejecutar el filtro"]
     C --> D["3. Sistema valida el formato de los campos"]
     D --> E{"¿Datos válidos?"}
 
-    E -- "Sí" --> F["4. Sistema consulta la base de datos aplicando ciudad, presupuesto y horario"]
+    E -- "Sí" --> F["4. Sistema consulta la base de datos y el API, aplicando los filtros de zona geográfica, presupuesto y horario"]
     F --> G{"¿Servicio de eventos disponible?"}
 
     G -- "Sí" --> H{"¿Existen eventos que cumplan los 3 criterios?"}
@@ -184,36 +174,37 @@ flowchart TD
 ## 5. Trazabilidad e impacto
 
 
-**Antecente**
-> Evidence → Need → Requirement. Point to the specific evidence/need entries that justify this requirement (from your Discovery Sheet).
+**Antecedente**
+> Necesidad Need 01 ("El usuario necesita encontrar eventos que se ajusten a su presupuesto máximo, su rango de disponibilidad horaria y su ciudad.") → REQ-01.
 
 **Efectos**
-> Requirement → future Design → Implementation → Tests. *(It's fine if Design hasn't happened yet — note what you expect this to touch once it does, and update this section once Class 11 work begins.)*
+> REQ-01 → Diseño futuro (un componente de búsqueda, más una capa de integración para el proveedor de eventos publicos) → Implementación → Pruebas (AC-01.1 y AC-01.2 como base de verificación). (El diseño aún no se ha realizado; esta sección se completará una vez que comience el trabajo de Clase 11).
 
 **Análisis de impacto**
-- [ ] Business Rules
-- [x] Constraints
-- [x] Dependencies
-- [x] Risks
-- [x] Acceptance Criteria
-- [x] Estimate
-- [ ] Priority
-- [x] Future Design
-- [x] Future Tests
+- [ ] Reglas de negocio 
+- [x] Restricción(es)
+- [x] Dependencias
+- [x] Riesgos
+- [x] Criterios de aceptación
+- [x] Estimación (confianza)
+- [ ] Prioridad 
+- [x] Diseño futuro
+- [x] Futuras pruebas
 
-> Briefly note which of the above are actually likely to be affected, and why.
+> Si cambia el proveedor de eventos (por ejemplo, si migramos a otro proveedor), las Restricciones, Dependencias, Riesgos, y el Diseño y las Pruebas futuras necesitarían revisión — la integración, los contratos de datos y los escenarios de fallo dependen directamente de ese proveedor. Las Reglas de Negocio (BR-01 y BR-02) y la Prioridad no se cambia: BR-01 y BR-02 son reglas de dominio sobre qué cuenta como evento válido (cupos disponibles y tarifa mínima frente al presupuesto), y la Prioridad depende de la necesidad del usuario (Need 01), no de los detalles técnicos de implementación. Por eso quedan sin marcar.
 
 ---
 
 ## 6. Validación
 
-- [x] **Válido?** Does it reflect a real, evidenced need — not an invented one?
-- [x] **Claro?** Is there only one reasonable interpretation?
-- [x] **Atómico?** Is this one independently testable expectation, not several bundled together?
-- [x] **Necesario?** Does removing it actually break something real?
-- [x] **Alcanzable?** Can this realistically be built with what the team has?
-- [x] **Verificable?** Can you demonstrate, concretely, whether it's satisfied?
-- [x] **Consistente?** Does it conflict with any other requirement in your set?
-- [x] **Completo?** Are there important functions or constraints still missing?
-- [x] **trazable?** Can every part of this document be traced back to real evidence — not invented to fill a section?
+- [x] **Válido?** Si, traza directamente a Need 01 y a US-01.1, no fue inventado para llenar una sección.
+- [x] **Claro?** Si, "consultar y filtrar eventos por presupuesto máximo, rango de disponibilidad horaria y zona geográfica" tiene una lectura razonable única para eventos.
+- [x] **Atómico?** Si, es una única expectativa verificable de forma independiente (filtrar y listar eventos), no varias capacidades distintas empaquetadas juntas.
+- [x] **Necesario?** Si, removerlo elimina la funcionalidad central de descubrimiento del MVP, la cual responde directamente al Need 01.
+- [x] **Alcanzable?** Si, filtros por presupuesto y zona geográfica son consultas estándar; el filtro por horario es alcanzable aunque con mayor costo por eventos multi-día, zonas horarias y solapamientos parciales.
+- [x] **Verificable?** Si, AC-01.1 a AC-01.4 dan condiciones de paso/fallo observables y concretas.
+- [x] **Consistente?** Si, no se identificó conflicto con otras reglas del mismo conjunto; BR-01 y BR-02 son coherentes con los criterios de aceptación.
+- [x] **Completo?** Si, Se define los filtros que va a usar y cómo se comporta esta parte del sistema
+- [x] **trazable?** Sí, cada sección anterior remite a evidencia real o a una suposición/pregunta abierta marcada explícitamente; nada se ha inventado para llenar un vacío.
+      
       
