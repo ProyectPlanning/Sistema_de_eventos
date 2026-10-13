@@ -47,7 +47,7 @@ En este documento se detallan los requerimientos funcionales del sistema.
 ### 2. Gestión e Interacción con Eventos
 
 #### **REQ-01: Búsqueda y filtrado de eventos**
-* **Descripción:** El sistema debe permitir al usuario consultar y filtrar eventos ingresando su presupuesto máximo, su rango de disponibilidad horaria y su ciudad.
+* **Descripción:** El sistema debe permitir al usuario consultar y filtrar eventos ingresando su presupuesto máximo, su rango de disponibilidad horaria y su zona geográfica (país, departamento/estado y ciudad).
   
 #### **REQ-02: Administración de eventos**
 * **Descripción:** El sistema debe permitir a los usuarios autorizados crear, modificar y eliminar eventos dentro de la plataforma.
