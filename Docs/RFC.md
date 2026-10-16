@@ -1,47 +1,35 @@
 # PLANEA
 
 Autores:
- - @crdiazo
- - @juanRodriguez-repositorio
- - @malorac
- - @NicoLovera18
- - @David123just
+ - Cristian Andres Diaz Ortega - @crdiazo
+ - Juan Sebastian Rodriguez Carvajal - @juanRodriguez-repositorio
+ - Martin Lora Caro - @malorac
+ - Justin David Vargas Vasquez - @David123just
+ - Nicolas David Lovera Cabiativa - @NicoLovera18
 
 ## 1 TL;DR
 
-<!--
-párrafo corto que explica qué estas proponiendo
--->
+Muchas veces queremos salir de nuestras casas y no tenemos ningun plan y nos da un poco de pereza buscar en sitios eventos o cosas asi que se estan realizando en la ciudad, 
+proponemos una plataforma inteligente que permita descubrir actividades y convertirlas en planes personalizados segun presupuesto, tiempo, ubicacion, intereses y disponibilidad, 
+facilitando la reserva y compra mediante integraciones con provedores externos.
 
 ## 2 Motivación
-
+La motivación de escoger esta decisión es porque no nos pusimos de acuerdo y a veces la dictadura no es tan mala elección, por la nota y por aprender
 <!--
 ¿qué motiva esta decisión y por qué es importante?
 el propósito de esta sección es articular de una manera sencilla el valor de la decision que vamos a tomar
 -->
 
 ## 3 Propuesta de implementación
-
-<!--
-Este es el núcleo de tu propuesta, y su proposito es ayudarte a pensar en la solución. Esto debe ser un wireframe, no un documento perfecto con todos los detalles.
-
-Escribir es pensar https://medium.learningbyshipping.com/writing-is-thinking-an-annotated-twitter-thread-2a75fe07fade
-
-  - usa diagramas para ilustrat tus ideas o flujos
-  - inluye ejemplos de código si estas proponiendo una interfaz o contrato de sistemsa nuevo
-  - agrega links con las especificaciones de proyectos
-
-El proposito de esta sección se resume en:
-"Esta es la dirección en la que nos voy a llevar, alguién ve huecos en mi propuesta o tiene comentarios sobre cómo mejorarla?
-
- -->
-
+hacer una plataforma web que ayude a los usuarios a encontrar actividades variadas que se ajusten a sus necesidades y posibilidades
 ## 4 Métricas
 
 <!--
 Que métricas debemos vamos a instrumentar, o monitorear para observar las implicaciónes de esta decisiòn?
 Por ejemplo, cuando interactuamos con un sistema externo que tipo de latencia esperariamos o si agregamos una tabla nueva que tan rápido se llenaría?
 -->
+
+La cantidad de regaños a David es proporcional a la cantidad de errores cometidos, mantener al mínimo posible (si David colabora).
 
 ## 5 Riesgos e inconvenientes
 
