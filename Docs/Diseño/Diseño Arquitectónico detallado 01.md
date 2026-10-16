@@ -233,6 +233,6 @@ flowchart LR
     end
 
     U -->|"Interactuar con la plataforma"| V
-    AC -.->|"Consultar o sincronizar calendarios, si aplica"| CAL
+    AC -->|"Consultar o sincronizar calendarios, si aplica"| CAL
 
 ```
