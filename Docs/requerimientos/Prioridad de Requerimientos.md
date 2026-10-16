@@ -1,6 +1,6 @@
 # Priorización de Requerimientos Funcionales (Metodología MoSCoW)
 
-Para la definición del alcance inicial hemos aplicado la metodología de priorización **MoSCoW**. Este análisis nos ha permitido identificar los requerimientos críticos para el Producto Mínimo Viable (MVP) y organizar el resto de las funcionalidades según su impacto y viabilidad.
+En este documento hemos aplicado la metodología de priorización **MoSCoW** a los requerimientos funcionales. Este análisis nos ha permitido identificar los requerimientos críticos para el Producto Mínimo Viable (MVP) y organizar el resto de las funcionalidades según su impacto y viabilidad.
 
 A continuación, se presenta la clasificación de los requerimientos:
 
