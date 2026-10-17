@@ -304,7 +304,7 @@ autenticarUsuario(credencialesDTO):
 | **Ocultamiento de información** | La información sobre como `IrepositorioDeEventos` y `IrepositorioDeUsuario` se implementan permanece oculta, el resto de componentes solo interactúan con `EventoDTO` y `UsuarioDTO`|
 
 **Hallazgo en el diseño original y que se cambió**  
-> Inicialmente, las responsabilidades de generación y validación de tokens estaban  dentro de `Usuario`. Se creó `IProveedorDeToken` y para manejar la validación de usuario.  
+> Inicialmente, las responsabilidades de generación y validación de tokens estaban  dentro de `Usuario`. Se creó `IProveedorDeToken` para manejar la validación de usuario.  
 
 ---
 
