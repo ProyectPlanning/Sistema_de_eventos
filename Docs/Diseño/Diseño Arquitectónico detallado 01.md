@@ -255,17 +255,17 @@ classDiagram
 | `GestorEventos` | Gestión de eventos | Solicita las operaciones de escritura (crear, modificar y eliminar) y el agendamiento de eventos| `Evento`, `IRepositorioDeEventos`, `IAgendador` |
 | `ConsultadorEventos` | Gestión de eventos | valida los filtros de la consulta y la solicita | `IRepositorioDeEventos`, `IProveedorEventosExternos` |
 | `Evento` | Gestión de eventos | Define los datos de un evento y las operaciones que se le realizan | `HorarioEvento` |
-| `HorarioEvento` | Gestión de eventos | Clase abstracta (Value Object) que define las funciones de ocurrencia (`ocurreEn`) y caducidad (`estaCaducado`) | Ningúno |
+| `HorarioEvento` | Gestión de eventos | Clase abstracta (Value Object) que define las funciones de ocurrencia (`ocurreEn`) y caducidad (`estaCaducado`) | Ninguno |
 | `HorarioRango` | Gestión de eventos | Implementa `HorarioEvento` con fecha y hora de inicio y fin delimitadas | `HorarioEvento` |
 | `HorarioRecurrente` | Gestión de eventos |Implementa `HorarioEvento` con horarios periódicos por días de la semana y franja horaria| `HorarioEvento` |
-| `IRepositorioDeEventos` | Gestíon de Persistencia de datos | Sirve de Puerto/Interfaz para operaciones CRUD en la base de datos local | Ningúno |
-| `IAgendador` | Agendación de citas | Sirve de Puerto/Interfaz para agendar eventos en el calendario personal del usuario | Ningúno |
-| `IProveedorEventosExternos` | Eventos externos | Sirve de Puerto/Interfaz para consumir eventos desde Apis de terceros | Ningúno|
+| `IRepositorioDeEventos` | Gestíon de Persistencia de datos | Sirve de Puerto/Interfaz para operaciones CRUD en la base de datos local | Ninguno |
+| `IAgendador` | Agendación de citas | Sirve de Puerto/Interfaz para agendar eventos en el calendario personal del usuario | Ninguno |
+| `IProveedorEventosExternos` | Eventos externos | Sirve de Puerto/Interfaz para consumir eventos desde Apis de terceros | Ninguno|
 | `ControladorDeUsuarios` | Gestíon de usuarios| Expone interfaz para las operaciones de registro y validación usuario | `GestorUsuarios` |
 | `GestorUsuarios` | Gestión de usuarios | Implementa la lógica para validar usuario y registrarlo | `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken` |
 | `Usuario` | Gestión de usuarios | Define los datos del usuario (`id`, `nombre`, `email`, `token`)| Ningúno |
-| `IRepositorioDeUsuario` | Gestíon de persistencia de datos| Puerto/Interfaz para consultar y persistir la información del usuario en la base de datos. | Ningúno |
-| `IProveedorDeToken` | Gestíon de usuarios | Puerto/Interfaz responsable de generar, verificar y extraer datos desde tokens. | Ningúno |
+| `IRepositorioDeUsuario` | Gestíon de persistencia de datos| Puerto/Interfaz para consultar y persistir la información del usuario en la base de datos. | Ninguno |
+| `IProveedorDeToken` | Gestíon de usuarios | Puerto/Interfaz responsable de generar, verificar y extraer datos desde tokens. | Ninguno |
 
 
 
