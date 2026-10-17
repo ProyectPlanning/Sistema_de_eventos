@@ -21,10 +21,10 @@
 
 | Requirement / Use Case ID | Why it shapes the structure | Quality attribute, constraint or business rule involved |
 |---|---|---|
-| REQ-01/filtrar eventos|Es la principal funcionalidad del sistema, por lo que se debe definir muy dentro del diseño|BR-01.BR-O2 y BR-O3|
-| REQ-02/gestionar eventos|Es la parte que alimenta el sistema de eventos, por lo que se debe definir muy bien  | N/A|
-| REQ-07/agendar eventos|Funcionalidad secundaria pero que interactua con un sistema externo, debe definirse muy bien |limitación:uso de sistema externo|
-| REQ-13/regsitrar usuarios|Se be especificar como se realizara el registro de usuarios |N/A|
+| REQ-01/Filtrar eventos|Es la principal funcionalidad del sistema, por lo que se debe definir muy dentro del diseño|BR-01.BR-O2 y BR-O3|
+| REQ-02/Gestionar eventos|Es la parte que alimenta el sistema de eventos, por lo que se debe definir muy bien  | N/A|
+| REQ-07/Agendar eventos|Funcionalidad secundaria pero que interactua con un sistema externo, debe definirse muy bien |limitación:uso de sistema externo|
+| REQ-13/Regitrar usuarios|Se be especificar como se realizara el registro de usuarios |N/A|
 
 ---
 
@@ -251,21 +251,21 @@ classDiagram
 
 | Class | Component it belongs to | Responsibility | Key collaborators |
 |---|---|---|---|
-| `ControladorDeEventos` | Gestión de eventos | Punto de entrada que expone las operaciones de eventos. | `GestorEventos`, `ConsultadorEventos` |
-| `GestorEventos` | Gestión de eventos | Operaciones de escritura (crear, modificar, eliminar) y coordinación de persistencia/agendas. | `Evento`, `IRepositorioDeEventos`, `IAgendador` |
-| `ConsultadorEventos` | Gestión de eventos | Consultas de lectura y búsqueda por disponibilidad combinando fuentes locales y externas. | `IRepositorioDeEventos`, `IProveedorEventosExternos` |
-| `Evento` | Gestión de eventos | Entidad raíz del dominio con lógica de estado y delegación de cálculo de fechas. | `HorarioEvento` |
-| `HorarioEvento` | Gestión de eventos | Clase abstracta (Value Object) que define el contrato de ocurrencia (`ocurreEn`) y caducidad (`estaCaducado`). | Ningúno |
-| `HorarioRango` | Gestión de eventos | Subclase para eventos con fecha y hora de inicio y fin delimitadas. | Ningúno |
-| `HorarioRecurrente` | Gestión de eventos | Subclase para eventos periódicos o continuos por días de la semana y franja horaria. | Ningúno |
-| `IRepositorioDeEventos` | Gestíon de Persistencia de datos | Puerto/Interfaz para operaciones CRUD en la base de datos local. | Ningúno |
-| `IAgendador` | Agendación de citas | Puerto/Interfaz para sincronización con calendarios externos. | Ningúno |
-| `IProveedorEventosExternos` | Eventos externos | Puerto/Interfaz para consumir eventos desde APIs de terceros. | Ningúno|
-| `ControladorDeUsuarios` | Gestíon de usuarios| Expone los endpoints HTTP para registro, inicio de sesión y validación de sesión. | `GestorUsuarios` |
-| `GestorUsuarios` | Gestión de usuarios | Servicio de aplicación que coordina los flujos de negocio (registro, autenticación y validación de token). | `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken` |
-| `Usuario` | Gestión de usuarios | Entidad de dominio con los datos principales del usuario (`id`, `nombre`, `email`, `token`). | Ninguno |
-| `IRepositorioDeUsuario` | Gestíon de persistencia de datos| Puerto/Interfaz para consultar y persistir la información del usuario en la base de datos. | Ninguno |
-| `IProveedorDeToken` | Gestíon de usuarios | Puerto/Interfaz responsable de generar, verificar y extraer datos desde tokens. | Ninguno |
+| `ControladorDeEventos` | Gestión de eventos | Expone las operaciones de eventos. | `GestorEventos`, `ConsultadorEventos` |
+| `GestorEventos` | Gestión de eventos | Solicita las operaciones de escritura (crear, modificar y eliminar) y el agendamiento de eventos| `Evento`, `IRepositorioDeEventos`, `IAgendador` |
+| `ConsultadorEventos` | Gestión de eventos | valida los filtros de la consulta y la solicita | `IRepositorioDeEventos`, `IProveedorEventosExternos` |
+| `Evento` | Gestión de eventos | Define los datos de un evento y las operaciones que se le realizan | `HorarioEvento` |
+| `HorarioEvento` | Gestión de eventos | Clase abstracta (Value Object) que define las funciones de ocurrencia (`ocurreEn`) y caducidad (`estaCaducado`) | Ningúno |
+| `HorarioRango` | Gestión de eventos | Implementa `HorarioEvento` con fecha y hora de inicio y fin delimitadas | `HorarioEvento` |
+| `HorarioRecurrente` | Gestión de eventos |Implementa `HorarioEvento` con horarios periódicos por días de la semana y franja horaria| `HorarioEvento` |
+| `IRepositorioDeEventos` | Gestíon de Persistencia de datos | Sirve de Puerto/Interfaz para operaciones CRUD en la base de datos local | Ningúno |
+| `IAgendador` | Agendación de citas | Sirve de Puerto/Interfaz para agendar eventos en el calendario personal del usuario | Ningúno |
+| `IProveedorEventosExternos` | Eventos externos | Sirve de Puerto/Interfaz para consumir eventos desde Apis de terceros | Ningúno|
+| `ControladorDeUsuarios` | Gestíon de usuarios| Expone interfaz para las operaciones de registro y validación usuario | `GestorUsuarios` |
+| `GestorUsuarios` | Gestión de usuarios | Implementa la lógica para validar usuario y registrarlo | `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken` |
+| `Usuario` | Gestión de usuarios | Define los datos del usuario (`id`, `nombre`, `email`, `token`)| Ningúno |
+| `IRepositorioDeUsuario` | Gestíon de persistencia de datos| Puerto/Interfaz para consultar y persistir la información del usuario en la base de datos. | Ningúno |
+| `IProveedorDeToken` | Gestíon de usuarios | Puerto/Interfaz responsable de generar, verificar y extraer datos desde tokens. | Ningúno |
 
 
 
@@ -342,10 +342,10 @@ At least one of the two decisions above must also be recorded as an ADR (use `Pl
 
 | Requirement ID | Use Case | Component(s) | Class(es) |
 |---|---|---|---|
-|REQ-01 | | | |
-|REQ-02 | | | |
-|REQ-07 | | | |
-|REQ-13 | | | |
+|REQ-01 |Filtrar eventos|`Vistas`,`API gateway`,`gestión de eventos`, `gestión de persistencia de datos`, `Integración de eventos externos`|`ControladorEventos`,`IProveedorEventosExternos`,`IRepositorioDeEventos`,`ConsultadorEventos`,`HorarioEvento`,`HorarioRango`,`HorarioRecurrente`|
+|REQ-02 |Gestionar eventos|`Vistas`,`API gateway`,`gestión de eventos`, `gestión de persistencia de datos` |`ControladorEventos`,`GestorEventos`,`IRepositorioDeEventos`|
+|REQ-07 |Agendar eventos|`Vistas`,`API gateway`,`Agendamiento de eventos`, `gestión de persistencia de datos` |`ControladorEventos`,`IAgendador`,`IRepositorioDeEventos`|
+|REQ-13 |Regitrar usuarios|`Vistas`,`API gateway`,`gestión de usuarios`, `gestión de persistencia de datos` |`ControladorEventos`,`ControladorDeUsuarios`,`gestorUsuarios`,`Usuario`,`IProveedorDeToken`,`IRepositorioDeUsuario` |
 
 ---
 
