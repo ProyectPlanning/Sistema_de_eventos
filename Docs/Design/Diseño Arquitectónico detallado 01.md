@@ -14,353 +14,440 @@
 
 ## 1. System Overview & Design Drivers
 
-**System purpose** (2–3 sentences, in terms of the need it satisfies)
-> El propósito de sistema es satisfacer la necesidad del usuario de encontrar eventos/actividades que se ajusten a sus condiciones.
+**Propósito del sistema**
+> Proveer una plataforma accesible que permita a los asistentes descubrir y filtrar eventos viables según su presupuesto, disponibilidad de tiempo y ubicación geográfica, facilitando a los organizadores la gestión y publicación confiable de sus actividades en un entorno seguro y centralizado.
 
-| Requirement / Use Case ID | Why it shapes the structure | Quality attribute, constraint or business rule involved |
+**Requerimientos que moldean la estructura (Alcance Primera Etapa: REQ-01, REQ-02, REQ-13)**
+
+| Requerimiento / ID Caso de Uso | Por qué moldea la estructura | Atributo de calidad, restricción o regla de negocio involucrada |
 |---|---|---|
-| REQ-01/Filtrar eventos| Principal funcionalidad del sistema,  se debe definir los responsables de validar filtros y realizar las consultas|BR-01,BR-O2 y BR-O3|
-| REQ-02/Gestionar eventos| Crear, eliminar y actualizar eventos requiere de la definición sobre como y quiénes acceden a los datos locales | ninguno|
-| REQ-07/Agendar eventos|Funcionalidad secundaria pero que interactúa con un sistema externo, debe definirse esa interacción |limitación: uso de sistema externo|
-| REQ-13/Registrar usuarios|Se debe especificar como se valida la sesión del usuario |ninguno|
+| **REQ-01 / Consultar y Filtrar Eventos** | Requiere evaluar criterios multidimensionales (presupuesto, horario y zona), consultando tanto registros locales como APIs externas de eventos. Demanda aislar las llamadas externas detrás de adaptadores con estrategia de caché y fallback para que la lentitud o cuotas de terceros no degraden la experiencia. | **Restricción:** Integrar APIs externas bajo límites de cuota (60 req/min por IP en `api-colombia.com`). **Calidad:** Disponibilidad de la experiencia de consulta, tolerancia a fallos y bajo tiempo de respuesta. **Reglas:** BR-01 (al menos 1 cupo disponible), BR-02 (tarifa mínima y presupuesto) y BR-03 (filtros combinables). |
+| **REQ-02 / Administrar Eventos** | Las operaciones de creación, edición y cancelación de eventos alteran el estado del catálogo y requieren validación de coherencia en fechas, aforos y precios, además de control transaccional en el almacenamiento. | **Calidad:** Consistencia e integridad de datos. **Regla de dominio:** Un evento debe poseer al menos una tarifa y un horario válido antes de ser publicado en el catálogo. |
+| **REQ-13 / Registro y Creación de Cuenta** | La identificación de usuarios exige separar las responsabilidades de gestión de credenciales, hashing seguro y emisión de tokens de la lógica de eventos, controlando el acceso a operaciones administrativas y disparando notificaciones de confirmación vía correo. | **Restricción:** Políticas de seguridad y unicidad de cuenta. **Calidad:** Confidencialidad, desacoplamiento de la identidad y trazabilidad de sesión. |
 
 ---
 
 ## 2. Architectural Design
 
+*(Vista externa: delimitación de fronteras, componentes de alto nivel, responsabilidades e interacciones según `Arquitectura_de_Software_en_Capas_3.drawio` y ADR-0005).*
 
-### 2.1 System Context & Boundary
+### 2.1 Frontera del Sistema y Contexto (System Context & Boundary)
 
-| Outside the system | Type (actor / external system / hardware) | How the system interacts with it |
+| Elemento fuera del sistema | Tipo | Cómo interactúa el sistema con él |
 |---|---|---|
-|Asistente/gestor de eventos (usuario principal)|Actor|El usuario gestiona y consulta eventos mediante el sistema|
-|Google calendar API|sistema externo|El sistema solicita agendar un evento al calendario personal del usuario|
-|Apis para eventos externos|sistema externo|El sistema consulta eventos externos|
+| **Usuario (Asistente / Gestor)** | Actor humano | Interactúa con la Aplicación Web para autenticarse, consultar y filtrar eventos compatibles, o crear y modificar eventos si posee permisos de organizador. |
+| **API de Eventos y Datos Territoriales** | Sistemas externos | 1. `https://api-colombia.com/`: Datos de atracciones turísticas que Colombia tiene para ofrecer, desde museos hasta parques naturales., operada bajo límite de 60 req/min y recomienda caché local.<br/>2. `https://www.datos.gov.co/.../xm7a-7paj/about_data`: Catálogo oficial de eventos abiertos nacionales e internacionales de CTI. |
+| **API de Google Maps** | Sistema externo | El sistema interactúa con ella para geocodificación y normalización de direcciones. |
+| **API de Gmail** | Sistema externo | Servicio de correo externo utilizado por el sistema para confirmación de registro (`REQ-13`) y alertas de cuenta. |
 
-### 2.2 Components, Responsibilities & Capabilities
+---
+
+### 2.2 Componentes, Responsabilidades y Capacidades
+
+El sistema está estructurado como un **Monolito Modular de 3 Capas** (Presentación, Lógica de Negocio y Datos), delimitado en estricta correspondencia con "Arquitectura_de_Software_en_Capas_3.drawio" :
 
 ```mermaid
 flowchart LR
-    U([Usuario])
-    EXT["Apis de eventos externos"]
-    CAL["Google Calendar API"]
+    User([Usuario / Asistente / Gestor])
+    API_COL[("API Colombia\n(api-colombia.com)\n60 req/min")]
+    API_GOV[("API Datos Abiertos\n(datos.gov.co)\nEventos CTI")]
+    MAPS_EXT[("API de Google Maps\n(Mapas y Geocodificación)")]
+    GMAIL_EXT[("API de Gmail\n(Correos Transaccionales)")]
 
-    subgraph SYS["Filtrado de eventos"]
-        V["Vistas"]
-        API["API Gateway"]
-        GU["Gestión de usuarios"]
-        GE["Gestión de eventos"]
-        IE["Integración de eventos externos"]
-        AC["Agendamiento de eventos"]
-        PD["Gestión de persistencia de datos"]
-        DB[("Base de datos")]
+    subgraph SYS["Sistema (Monolito Modular de 3 Capas)"]
+        subgraph FRONT["Capa de Presentación (Front-End)"]
+            WEB["Aplicación Web\n(Vistas / UI)"]
+        end
 
-        V -->|"Acceder a las operaciones del sistema"| API
-        API -->|"registrar y validar usuarios"| GU
-        API -->|"Manipular y consultar eventos"| GE
-        API -->|"agendar eventos"| AC
+        subgraph BACK["Capa de Lógica de Negocio (Back-End)"]
+            GW["API Gateway\n(Control de Acceso y Enrutamiento)"]
+            GE["Gestión de Eventos\n(Dominio y Filtrado)"]
+            IE["Integración de Eventos Externos\n(Adaptadores API Colombia y DatosGov)"]
+            GU["Módulo de Usuarios y Perfiles\n(Identidad y Sesión)"]
+            NOTIF["Módulo de Notificaciones\n(Confirmación de Registro en Etapa 1)"]
+            PERS["Capa de Persistencia\n(Repositorios / DAO)"]
+        end
 
-        GE -->|"traer y formatear los eventos externos"| IE
-        
+        subgraph DATA["Capa de Datos"]
+            DB[("Base de Datos\n(Relacional Embebida / Local)")]
+        end
 
-        GU -->|"guardar y consultar datos de los usuarios en la base de datos"| PD
-        GE -->|"guardar y consultar datos de los eventos en la base de datos"| PD
-        AC -->|"guardar y consultar si un evento está agendado"| PD
+        WEB -->|"solicitar operaciones HTTP"| GW
+        GW -->|"enrutar autenticación y registro"| GU
+        GW -->|"enrutar consultas y gestión de eventos"| GE
 
-        PD -->|"leer y escribir datos"| DB
+        GE -->|"recuperar eventos externos y zonas"| IE
+        IE -->|"consultar municipios (con caché)"| API_COL
+        IE -->|"consultar catálogo público"| API_GOV
+
+        GE -->|"persistir y consultar eventos"| PERS
+        GU -->|"persistir y consultar usuarios"| PERS
+        GU -.->|"solicitar envío de bienvenida"| NOTIF
+        NOTIF -->|"enviar correo de confirmación"| GMAIL_EXT
+
+        PERS -->|"leer y escribir registros"| DB
     end
 
-    U -->|"interactuar con la plataforma"| V
-    AC -->|"guardar evento en el calendario personal del usuario"| CAL
-    IE -->|"consultar los eventos externos"| EXT
+    User -->|"interactuar mediante navegador"| WEB
+    GE -.->|"geocodificar ubicación"| MAPS_EXT
 
+    classDef external fill:#2D3748,color:#ffffff,stroke:#4A5568;
+    classDef frontend fill:#1E2761,color:#ffffff,stroke:#1E2761;
+    classDef backend fill:#2A4365,color:#ffffff,stroke:#2B6CB0;
+    classDef database fill:#1A365D,color:#ffffff,stroke:#2C5282;
+
+    class API_COL,API_GOV,MAPS_EXT,GMAIL_EXT external;
+    class WEB frontend;
+    class GW,GE,IE,GU,NOTIF,PERS backend;
+    class DB database;
 ```
 
-| Component | Main responsibility | Requirements / use cases supported | Provided capabilities | Required capabilities | Main dependencies |
-|---|---|---|---|---|---|
-|Vistas | Presenta la plataforma y recibe las acciones del usuario|`REQ-01`,`REQ-02`,`REQ-07`,`REQ-13`|Interactuar con la plataforma| Acceder a las operaciones del sistema | API Gateway|
-|API Gateway | Recibe las solicitudes del usuario y las direcciona al módulo correspondiente| `REQ-01`,`REQ-02`,`REQ-07`,`REQ-13` |Acceder a las operaciones del sistema | Publicar/consultar eventos, registrar, validar usuarios y agendar eventos | Gestión de eventos, Gestión de usuarios, Agendamiento de eventos|
-|Gestión de eventos | Define y Aplica los mecanismos para la publicación, modificación, eliminación, actualización, consulta y filtrado de eventos| `REQ-01`,`REQ-02`|Manipular y consultar eventos | Guardar y consultar eventos en la base de datos| Gestión de persistencia de datos|
-|Gestión de usuarios | Registra y valida a los usuarios|`REQ-13`|registrar y validar usuarios | Guardar y consultar datos de los usuarios en la base de datos |Gestión de persistencia de datos|
-|Integración de eventos externos| solicita los datos de los eventos externos a las Apis proveedoras y formatea los datos obtenidos a la estructura de datos interna del sistema |`REQ-01` |traer y formatear eventos externos| consultar los eventos externos |Apis de eventos externos |
-|Agendamiento de eventos|Agenda eventos al calendario personal del usuario mediante la API de google calendar|`REQ-07`|agendar eventos | guardar evento en el calendario personal del usuario |Google Calendar API|
-|Gestión de persistencia de datos | Proporcionar acceso a los datos almacenados|`REQ-01`,`REQ-02`,`REQ-07`,`REQ-13`|Consultar, guardar y actualizar los datos de los eventos y usuarios en la base de datos | Leer y escribir en la base de datos | Base de datos |
+#### Tabla de Responsabilidades de Componentes
 
+| Componente | Capa Arquitectónica | Responsabilidad Principal | Requerimientos Soportados | Capacidades Provistas | Capacidades Requeridas | Dependencias Principales |
+|---|---|---|---|---|---|---|
+| **Aplicación Web** | Front-End | Renderizar vistas interactivas, capturar formularios de filtrado, creación de eventos y registro, y presentar resultados. | `REQ-01`, `REQ-02`, `REQ-13` | Interacción de usuario, captura de filtros y visualización de catálogo. | Enviar solicitudes HTTP/REST hacia el API Gateway. | API Gateway |
+| **API Gateway** | Back-End | Punto único de entrada al Back-End: autentica peticiones, valida tokens de sesión y enruta las solicitudes al módulo de negocio correspondiente. | `REQ-01`, `REQ-02`, `REQ-13` | Enrutamiento de solicitudes, validación de sesión y autorización por rol. | Ejecutar casos de uso en módulos de negocio. | Gestión de Eventos, Módulo de Usuarios y Perfiles |
+| **Gestión de Eventos** | Back-End | Contiene la lógica de dominio de eventos: validación de reglas BR-01, BR-02 y BR-03, cálculo de solapamiento horario y orquestación de operaciones CRUD. | `REQ-01`, `REQ-02` | `consultarEventos(filtro)`, `crearEvento(datos)`, `modificarEvento(id, datos)`, `eliminarEvento(id)`. | Consultar eventos locales y obtener eventos de terceros formateados. | Integración de Eventos Externos, Capa de Persistencia |
+| **Integración de Eventos Externos** | Back-End | Adaptadores que aíslan la comunicación con las APIs externas (`api-colombia.com` y `datos.gov.co`), gestionando la caché local para respetar el límite de 60 req/min y aplicando fallback ante timeouts. | `REQ-01` | `obtenerEventosExternos(filtro)`, `obtenerDepartamentosYCiudades()` | Consumir APIs REST externas bajo cuotas y timeouts estrictos. | API Colombia, Datos Abiertos Gov.co |
+| **Módulo de Usuarios y Perfiles** | Back-End | Gestionar el registro de usuarios, validación de credenciales, hashing seguro de contraseñas y emisión de tokens de autenticación. | `REQ-13` | `registrarUsuario(datos)`, `autenticarUsuario(credenciales)`, `validarSesion(token)`. | Guardar credenciales y solicitar confirmación por email. | Capa de Persistencia, Módulo de Notificaciones |
+| **Módulo de Notificaciones** | Back-End | Gestionar el despacho de mensajes y correos transaccionales a usuarios. En la Primera Etapa atiende la confirmación de registro (`REQ-13`) vía Gmail; en fases posteriores atenderá avisos de eventos modificados (`REQ-12`). | `REQ-13` | `despacharCorreoConfirmacion(usuario)` | Consumir API de Gmail externa. | API de Gmail (Terceros) |
+| **Capa de Persistencia** | Back-End | Implementar repositorios y DAOs para abstraer las sentencias SQL y desacoplar a las entidades de negocio de los detalles del motor de base de datos. | `REQ-01`, `REQ-02`, `REQ-13` | `guardarEvento()`, `buscarEventos()`, `guardarUsuario()`, `buscarUsuarioPorEmail()`. | Conectividad y ejecución relacional. | Base de Datos |
+| **Base de Datos** | Datos | Almacenar físicamente de manera consistente los registros de eventos, horarios, usuarios y perfiles. | `REQ-01`, `REQ-02`, `REQ-13` | Almacenamiento ACID persistente. | Ninguna | Ninguna |
 
 ---
 
 ## 3. Detailed Design
 
-*(Inward-facing: how is each selected component designed internally?)*
+*(Vista interna: cómo están diseñados por dentro los componentes seleccionados de la Primera Etapa).*
 
-### 3.1 Components selected (at least two)
+### 3.1 Componentes Seleccionados
 
-| Component | Why it was selected |
+| Componente | Justificación de Selección (Riesgo, Complejidad, Centralidad en Drivers) |
 |---|---|
-| Gestión de eventos | Componente principal del sistema, el que despliega la mayor cantidad de funcionalidades |
-| Gestión de usuarios | Necesario para permitirle al usuario crear una cuenta y persistir su información|
+| **Gestión de Eventos** | Núcleo transaccional del sistema. Implementa `REQ-01` (evaluación polimórfica de horarios, filtrado multidimensional, integración de `api-colombia.com` y `datos.gov.co`) y `REQ-02` (invariantes de dominio para administración de eventos). |
+| **Módulo de Usuarios y Perfiles** | Centralidad en el driver de seguridad e identidad (`REQ-13`). Garantiza el registro atómico, unicidad de cuenta, generación de tokens seguros y despacho de confirmación de registro a través del Módulo de Notificaciones. |
 
-### 3.2 Class Diagram(s)
+---
+
+### 3.2 Diagramas de Clases (Class Diagrams)
+
+para mejor lectura se dividio en dos diagramas estructurales enfocados en cada controlador y módulo principal:
+
+#### 3.2.1 Diagrama de Clases — Componente Gestión de Eventos (`ControladorDeEventos`)
 
 ```mermaid
 classDiagram
-       %% --- Capa de Entrada ---
-    class ControladorDeUsuarios {
-        +registrar(req: RegistroRequest) UsuarioDTO
-        +autenticar(req: LoginRequest) UsuarioDTO
-        +validarSesion(token: String) UsuarioDTO
-    }
-
-    %% --- Capa de Aplicación ---
-    class GestorUsuarios {
-        +registrarUsuario(datos: UsuarioDTO) UsuarioDTO
-        +autenticarUsuario(credenciales: CredencialesDTO) UsuarioDTO
-        +validarSesion(token: String) UsuarioDTO
-    }
-
-    %% --- Capa de Dominio ---
-    class Usuario {
-        -id: Integer
-        -nombre: String
-        -email: String
-        -token: String
-    }
-
-    %% --- Interfaces / Puertos de Infraestructura ---
-    class IRepositorioDeUsuario {
-        <<interface>>
-        +guardar(usuario: UsuarioDTO) Boolean
-        +encontrarPorNombre(nombre: string) UsuarioDTO
-    }
-
-
-    class IProveedorDeToken {
-        <<interface>>
-        +generarToken(usuario: UsuarioDTO) String
-        +validarToken(token: String) Boolean
-        +obtenerUsuario(token: String) UsuarioDTO
-    }
-
-    %% --- Relaciones ---
-    ControladorDeUsuarios --> GestorUsuarios
-
-    GestorUsuarios --> Usuario
-    GestorUsuarios --> IRepositorioDeUsuario
-    GestorUsuarios --> IProveedorDeToken
-    %% --- Capa de Entrada ---
+    %% Capa de Entrada
     class ControladorDeEventos {
-        +crear(req: CrearEventoRequest) Boolean
-        +modificar(id: String, req: ModificarEventoRequest) Boolean
-        +eliminar(id: String) Boolean
-        +consultar(req: ConsultaRequest) List~EventoDTO~
+        +consultar(req: ConsultaFiltrosDTO) ResumenEventosDTO
+        +crear(req: CrearEventoDTO) EventoDTO
+        +modificar(id: Integer, req: ModificarEventoDTO) EventoDTO
+        +eliminar(id: Integer) Boolean
     }
 
-    %% --- Capa de Aplicación ---
-    class GestorEventos {
-        +crearEvento(datos: EventoDTO) Boolean
-        +modificarEvento(id: Integer, datos: EventoDTO) Boolean
-        +eliminarEvento(id: Integer) Boolean
-    }
-
+    %% Capa de Aplicación
     class ConsultadorEventos {
-        +consultarEventos(filtro: FiltroDTO) List~EventoDTO~
+        -repositorio: IRepositorioDeEventos
+        -proveedorExterno: IProveedorEventosExternos
+        -proveedorGeografico: IProveedorGeografico
+        +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~
+        -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
     }
 
-    %% --- Capa de Dominio ---
+    class GestorEventos {
+        -repositorio: IRepositorioDeEventos
+        +crearEvento(datos: CrearEventoDTO, idOrganizador: Integer) EventoDTO
+        +modificarEvento(id: Integer, datos: ModificarEventoDTO, idOrganizador: Integer) EventoDTO
+        +eliminarEvento(id: Integer, idOrganizador: Integer) Boolean
+    }
+
+    %% Capa de Dominio
     class Evento {
         -id: Integer
-        -idCreador:Integer
+        -idOrganizador: Integer
         -titulo: String
         -descripcion: String
         -horario: HorarioEvento
-        -capacidad: Integer
-        -lugar: String
-        +actualizarInformacion(titulo, descripcion, horario, capacidad,lugar) Boolean
-        +eliminar() Boolean
-        +ocurreEn(fechaHora: DateTime) Boolean
-        +estaCaducado(fechaReferencia: DateTime) Boolean
+        -tarifaMinima: Float
+        -tarifaMaxima: Float
+        -cuposDisponibles: Integer
+        -ubicacionCiudad: String
+        -direccion: String
+        -estado: EstadoEvento
+        +esCompatibleConFiltro(presupuestoMax: Float, ciudad: String, rango: HorarioRango) Boolean
+        +tieneCupoDisponible() Boolean
+        +actualizar(titulo: String, desc: String, horario: HorarioEvento, precio: Float, cupos: Integer)
+        +cancelar()
     }
 
     class HorarioEvento {
         <<abstract>>
         +esValido() Boolean*
-        +ocurreEn(fechaHora: DateTime) Boolean*
-        +estaCaducado(fechaReferencia: DateTime) Boolean*
+        +coincideConRango(inicio: DateTime, fin: DateTime) Boolean*
+        +estaVigente(fechaReferencia: DateTime) Boolean*
     }
 
     class HorarioRango {
         -fechaInicio: DateTime
         -fechaFin: DateTime
         +esValido() Boolean
-        +ocurreEn(fechaHora: DateTime) Boolean
-        +estaCaducado(fechaReferencia: DateTime) Boolean
+        +coincideConRango(inicio: DateTime, fin: DateTime) Boolean
+        +estaVigente(fechaReferencia: DateTime) Boolean
     }
 
     class HorarioRecurrente {
         -diasSemana: List~DiaSemana~
         -horaInicio: Time
         -horaFin: Time
-        -tieneFechaLimite: Boolean
         -fechaLimite: DateTime
         +esValido() Boolean
-        +ocurreEn(fechaHora: DateTime) Boolean
-        +estaCaducado(fechaReferencia: DateTime) Boolean
+        +coincideConRango(inicio: DateTime, fin: DateTime) Boolean
+        +estaVigente(fechaReferencia: DateTime) Boolean
     }
 
-    %% --- Puertos / Interfaces de Infraestructura ---
+    %% Puertos / Interfaces de Persistencia e Integración
     class IRepositorioDeEventos {
         <<interface>>
-        +guardar(evento: EventoDTO) boolean
-        +eliminarPorId(id: EventoId) boolean
-        +buscar(filtro: FiltroDTO) List~EventoDTO~
-    }
-
-    class IAgendador {
-        <<interface>>
-        +agendar(evento: EventoDTO) Boolean
+        +guardar(evento: Evento) Evento
+        +obtenerPorId(id: Integer) Evento
+        +buscarPorCriterios(ciudad: String, presupuestoMax: Float) List~Evento~
+        +eliminar(id: Integer) Boolean
     }
 
     class IProveedorEventosExternos {
         <<interface>>
-        +consultarEventosExternos(filtro: FiltroDTO) List~EventoDTO~
+        +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
     }
 
-    %% --- Relaciones ---
-    ControladorDeEventos --> GestorEventos
-    ControladorDeEventos --> ConsultadorEventos
+    class AdaptadorEventosDatosGov {
+        -urlDatosGov: String
+        -timeoutMs: Integer
+        +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
+        -mapearJsonSODA(json: String) Evento
+    }
 
-    GestorEventos --> Evento
-    GestorEventos --> IRepositorioDeEventos
-    GestorEventos --> IAgendador
+    class IProveedorGeografico {
+        <<interface>>
+        +obtenerMunicipiosPorDepartamento(depto: String) List~String~
+    }
 
-    ConsultadorEventos --> IRepositorioDeEventos
-    ConsultadorEventos --> IProveedorEventosExternos
+    class AdaptadorApiColombia {
+        -cacheLocal: Map~String, List~String~~
+        -urlBase: String
+        +obtenerMunicipiosPorDepartamento(depto: String) List~String~
+        -cargarYCachearDatos()
+    }
 
-    Evento "1" *-- "1" HorarioEvento : programa con
-
-    HorarioRango --|> HorarioEvento
-    HorarioRecurrente --|> HorarioEvento
-
-
- 
-```
-
-### 3.3 Class Responsibilities
-
-| Class | Component it belongs to | Responsibility | Key collaborators |
-|---|---|---|---|
-| `ControladorDeEventos` | Gestión de eventos | Expone las operaciones de eventos. | `GestorEventos`, `ConsultadorEventos` |
-| `GestorEventos` | Gestión de eventos | Solicita las operaciones de escritura (crear, modificar y eliminar) y el agendamiento de eventos| `Evento`, `IRepositorioDeEventos`, `IAgendador` |
-| `ConsultadorEventos` | Gestión de eventos | valida los filtros de la consulta y la solicita | `IRepositorioDeEventos`, `IProveedorEventosExternos` |
-| `Evento` | Gestión de eventos | Define los datos de un evento y las operaciones que se le realizan | `HorarioEvento` |
-| `HorarioEvento` | Gestión de eventos | Clase abstracta (Value Object) que define las funciones de ocurrencia (`ocurreEn`) y caducidad (`estaCaducado`) | Ninguno |
-| `HorarioRango` | Gestión de eventos | Implementa `HorarioEvento` con fecha y hora de inicio y fin delimitadas | `HorarioEvento` |
-| `HorarioRecurrente` | Gestión de eventos |Implementa `HorarioEvento` con horarios periódicos por días de la semana y franja horaria| `HorarioEvento` |
-| `IRepositorioDeEventos` | Gestíon de Persistencia de datos | Sirve de Puerto/Interfaz para operaciones CRUD en la base de datos local | Ninguno |
-| `IAgendador` | Agendación de citas | Sirve de Puerto/Interfaz para agendar eventos en el calendario personal del usuario | Ninguno |
-| `IProveedorEventosExternos` | Eventos externos | Sirve de Puerto/Interfaz para consumir eventos desde Apis de terceros | Ninguno|
-| `ControladorDeUsuarios` | Gestíon de usuarios| Expone interfaz para las operaciones de registro y validación usuario | `GestorUsuarios` |
-| `GestorUsuarios` | Gestión de usuarios | Implementa la lógica para validar usuario y registrarlo | `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken` |
-| `Usuario` | Gestión de usuarios | Define los datos del usuario (`id`, `nombre`, `email`, `token`)| Ningúno |
-| `IRepositorioDeUsuario` | Gestíon de persistencia de datos| Puerto/Interfaz para consultar y persistir la información del usuario en la base de datos. | Ninguno |
-| `IProveedorDeToken` | Gestíon de usuarios | Puerto/Interfaz responsable de generar, verificar y extraer datos desde tokens. | Ninguno |
-
-
-
-### 3.4 Behavior of one key operation
-
-
-
-```
-autenticarUsuario(credencialesDTO):
-    usuarioDTO = IRepositorioDeUsuario.encontrarPorNombre(credencialesDTO.nombre)
-    IF usuarioDTO IS NULL THEN
-        THROW ErrorAutenticacion("Usuario no encontrado")
-    END IF
-
-    IF usuarioDTO.contraseña != credencialesDTO.contraseña THEN
-        THROW ErrorAutenticacion("contraseña incorrecta")
-    END IF
-
-    tokenJWT = IProveedorDeToken.generarToken(usuarioDTO)
-
-    IF tokenJWT IS NULL  THEN
-        THROW ErrorSeguridad("No se pudo emitir el token de sesión")
-    END IF
-
-    usuarioDTO.token = tokenJWT
-    RETURN usuarioDTO
-
+    %% Relaciones de Gestión de Eventos
+    ControladorDeEventos --> ConsultadorEventos : delega consulta (REQ-01)
+    ControladorDeEventos --> GestorEventos : delega administración (REQ-02)
+    ConsultadorEventos --> IRepositorioDeEventos : consulta locales
+    ConsultadorEventos --> IProveedorEventosExternos : consulta externos
+    ConsultadorEventos --> IProveedorGeografico : normaliza zonas
+    IProveedorEventosExternos <|.. AdaptadorEventosDatosGov : implementa
+    IProveedorGeografico <|.. AdaptadorApiColombia : implementa
+    GestorEventos --> Evento : manipula
+    GestorEventos --> IRepositorioDeEventos : persiste
+    Evento "1" *-- "1" HorarioEvento : delega reglas temporales
+    HorarioEvento <|-- HorarioRango : especializa
+    HorarioEvento <|-- HorarioRecurrente : especializa
 ```
 
 ---
 
-## 4. Design Quality — Cohesion, Coupling, Information Hiding
+#### 3.2.2 Diagrama de Clases — Componente Módulo de Usuarios y Perfiles (`ControladorDeUsuarios`)
 
-| Pregunta | Tu respuesta, con evidencia de tu diseño |
+```mermaid
+classDiagram
+    %% Capa de Entrada
+    class ControladorDeUsuarios {
+        +registrar(req: RegistroRequestDTO) RespuestaAuthDTO
+        +autenticar(req: LoginRequestDTO) RespuestaAuthDTO
+    }
+
+    %% Capa de Aplicación
+    class GestorUsuarios {
+        -repositorioUsuario: IRepositorioDeUsuario
+        -proveedorToken: IProveedorDeToken
+        -servicioNotificaciones: IServicioNotificaciones
+        +registrarNuevoUsuario(datos: RegistroRequestDTO) RespuestaAuthDTO
+        +autenticarUsuario(datos: LoginRequestDTO) RespuestaAuthDTO
+        +validarTokenAcceso(token: String) UsuarioDTO
+    }
+
+    %% Capa de Dominio
+    class Usuario {
+        -id: Integer
+        -nombreCompleto: String
+        -email: String
+        -passwordHash: String
+        -rol: RolUsuario
+        -activo: Boolean
+        +verificarPassword(passwordPlano: String) Boolean
+        +esOrganizador() Boolean
+    }
+
+    %% Puertos e Interfaces
+    class IRepositorioDeUsuario {
+        <<interface>>
+        +guardar(usuario: Usuario) Usuario
+        +buscarPorEmail(email: String) Usuario
+        +buscarPorId(id: Integer) Usuario
+    }
+
+    class IProveedorDeToken {
+        <<interface>>
+        +generarToken(usuario: Usuario) String
+        +validarToken(token: String) Boolean
+        +obtenerIdUsuario(token: String) Integer
+    }
+
+    class IServicioNotificaciones {
+        <<interface>>
+        +enviarConfirmacionRegistro(emailDestino: String, nombre: String) Boolean
+    }
+
+    %% Módulo de Notificaciones e Integración Externa
+    class ServicioNotificaciones {
+        -adaptadorGmail: AdaptadorGmail
+        +enviarConfirmacionRegistro(emailDestino: String, nombre: String) Boolean
+    }
+
+    class AdaptadorGmail {
+        -credencialesApi: String
+        +despacharEmail(destino: String, asunto: String, cuerpoHtml: String) Boolean
+    }
+
+    %% Relaciones de Usuarios y Notificaciones
+    ControladorDeUsuarios --> GestorUsuarios : delega registro y login (REQ-13)
+    GestorUsuarios --> Usuario : gestiona ciclo de vida
+    GestorUsuarios --> IRepositorioDeUsuario : persiste datos
+    GestorUsuarios --> IProveedorDeToken : emite token JWT
+    GestorUsuarios --> IServicioNotificaciones : solicita email de confirmación
+    IServicioNotificaciones <|.. ServicioNotificaciones : implementa
+    ServicioNotificaciones --> AdaptadorGmail : envía vía Gmail API
+```
+
+
+---
+
+### 3.3 Tabla de Responsabilidades de Clases
+
+| Clase | Componente al que pertenece | Responsabilidad | Colaboradores clave |
+|---|---|---|---|
+| `ControladorDeEventos` | Gestión de Eventos | Expone endpoints HTTP de la capa de entrada para consultar y administrar eventos; valida esquemas de entrada. | `ConsultadorEventos`, `GestorEventos` |
+| `ConsultadorEventos` | Gestión de Eventos | Coordina la consulta a la persistencia local y a los adaptadores externos (`datos.gov.co` y `api-colombia.com`), unifica resultados y aplica filtros de dominio (BR-01, BR-02, BR-03). | `IRepositorioDeEventos`, `IProveedorEventosExternos`, `IProveedorGeografico` |
+| `GestorEventos` | Gestión de Eventos | Aplica reglas de creación, actualización y eliminación de eventos locales, validando permisos del organizador. | `Evento`, `IRepositorioDeEventos` |
+| `Evento` | Gestión de Eventos | Entidad de dominio raíz que encapsula el estado, tarifas, aforo y validaciones de vigencia y precio de un evento. | `HorarioEvento` |
+| `HorarioEvento` | Gestión de Eventos | Clase abstracta (Value Object) que define el contrato de validación y solapamiento temporal. | Ninguno |
+| `HorarioRango` | Gestión de Eventos | Especialización de horario para eventos continuos delimitados por fecha/hora de inicio y fin. | `HorarioEvento` |
+| `HorarioRecurrente` | Gestión de Eventos | Especialización de horario para eventos periódicos por días de la semana y franja horaria. | `HorarioEvento` |
+| `IRepositorioDeEventos` | Capa de Persistencia | Interfaz de abstracción DAO para operaciones de persistencia y búsqueda relacional de eventos. | `Evento` |
+| `IProveedorEventosExternos` | Integración de Eventos Externos | Interfaz que define el contrato para recuperar eventos de fuentes remotas. | `ResultadoEventosExternosDTO` |
+| `AdaptadorEventosDatosGov` | Integración de Eventos Externos | Implementa el consumo HTTP de `datos.gov.co`, gestionando timeouts (2 s) y mapeando JSON SODA a entidades de dominio. | (API de Datos Abiertos Gov.co) |
+| `IProveedorGeografico` | Integración de Eventos Externos | Interfaz que define la consulta de departamentos y municipios normalizados de Colombia. | `AdaptadorApiColombia` |
+| `AdaptadorApiColombia` | Integración de Eventos Externos | Consume `https://api-colombia.com/` aplicando **estrategia de caché local en memoria** para respetar el límite de 60 req/min por IP. | (API Colombia) |
+| `ControladorDeUsuarios` | Módulo de Usuarios y Perfiles | Expone endpoints HTTP para registro y autenticación de usuarios. | `GestorUsuarios` |
+| `GestorUsuarios` | Módulo de Usuarios y Perfiles | Aplica lógica de negocio de registro: verificación de email único, hashing de contraseña, expedición de tokens y solicitud de email de bienvenida. | `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken`, `IServicioNotificaciones` |
+| `Usuario` | Módulo de Usuarios y Perfiles | Entidad de dominio que representa al usuario, su perfil, rol (Asistente/Organizador) y validación de hash de contraseña. | Ninguno |
+| `IRepositorioDeUsuario` | Capa de Persistencia | Interfaz de abstracción para persistir y buscar entidades de usuario por email o ID. | `Usuario` |
+| `IProveedorDeToken` | Módulo de Usuarios y Perfiles | Interfaz para generación y verificación de tokens seguros de sesión (JWT). | `Usuario` |
+| `IServicioNotificaciones` | Módulo de Notificaciones | Puerto/Interfaz de aplicación que desacopla el envío de notificaciones y confirmaciones. | `GestorUsuarios` |
+| `ServicioNotificaciones` | Módulo de Notificaciones | Implementación del servicio de notificaciones que coordina el despacho de correos transaccionales. | `AdaptadorGmail` |
+| `AdaptadorGmail` | Módulo de Notificaciones | Adaptador de infraestructura que consume la API de Gmail para enviar correos electrónicos formateados. | (API de Gmail externa) |
+
+---
+
+### 3.4 Comportamiento de una Operación Clave
+
+Operación seleccionada: `consultarEventos(filtro)` de la clase `ConsultadorEventos` (Implementa el flujo principal, alternativo y contingencia de `REQ-01`):
+
+```text
+consultarEventos(filtro):
+    validarCoherenciaFiltro(filtro) // Lanza ErrorValidacion si precios son negativos o fechas incoherentes
+    eventosLocales = repositorio.buscarPorCriterios(filtro.ciudad, filtro.presupuestoMaximo)
+    
+    TRY:
+        respuestaExterna = proveedorExterno.obtenerEventosExternos(filtro) // timeout max 2000 ms a datos.gov.co
+        eventosExternos = respuestaExterna.eventosValidados
+    EXCEPTION (TimeoutError, NetworkError):
+        registrarAdvertencia("API externa inaccesible; continuando con catálogo local")
+        eventosExternos = LISTA_VACIA
+    
+    eventosConsolidados = unificar(eventosLocales, eventosExternos)
+    
+    listaFinal = []
+    FOR evento IN eventosConsolidados:
+        IF evento.tieneCupoDisponible() Y evento.tarifaMinima <= filtro.presupuestoMaximo:
+            IF filtro.rangoHorario ES NULO O evento.horario.coincideConRango(filtro.rangoHorario):
+                listaFinal.agregar(mapearADTO(evento))
+                
+    RETURN listaFinal // Retorna lista vacía si no hay coincidencias (Flujo Alternativo)
+```
+
+---
+
+## 4. Design Quality — Cohesión, Acoplamiento y Ocultamiento de Información
+
+| Criterio | Análisis con Evidencia del Diseño |
 |---|---|
-| **Cohesión**| Cada clase tiene un enfoque único y estrictamente definido. `ControladorDeEventos` solo define las firmas de las operaciones de eventos; `GestorEventos` se encarga de la implementacíon de la creación,eliminacion y actualización de eventos; `ConsultadorEventos` implementa la consulta y filtrado de eventos y `IRepositorioDeEventos` maneja las consultas que se necesitan a nivel de base de datos |
-| **Acoplamiento**| La lógica de aplicación de alto nivel (`GestorUsuarios`) depende de interfaces abstractas (`IRepositorioDeUsuario`, `IProveedorDeToken`) en lugar de implementaciones concretas de base de datos o de técnicas de encriptación. Cambiar por ejemplo, el motor de base de datos, no requiere cambios en la lógica central de negocio |
-| **Ocultamiento de información** | La información sobre como `IrepositorioDeEventos` y `IrepositorioDeUsuario` se implementan permanece oculta, el resto de componentes solo interactúan con `EventoDTO` y `UsuarioDTO`|
-
-**Hallazgo en el diseño original y que se cambió**  
-> Inicialmente, las responsabilidades de generación y validación de tokens estaban  dentro de `Usuario`. Se creó `IProveedorDeToken` para manejar la validación de usuario.  
+| **Cohesión** | Alta cohesión por separación de responsabilidades: `ConsultadorEventos` se encarga exclusivamente de resolver búsquedas y aplicar reglas de consulta (BR-01/02/03); `GestorEventos` concentra el ciclo de vida administrativo; `HorarioEvento` y sus subclases encapsulan la lógica temporal; y `GestorUsuarios` se dedica exclusivamente a la identidad. Ninguna clase mezcla presentación, persistencia o consumo HTTP. |
+| **Acoplamiento** | Bajo acoplamiento mediante interfaces: los servicios de aplicación (`ConsultadorEventos`, `GestorUsuarios`) dependen de abstracciones (`IRepositorioDeEventos`, `IProveedorEventosExternos`, `IProveedorGeografico`, `IServicioNotificaciones`). Los cambios en proveedores externos (`datos.gov.co`, `api-colombia.com`, `Gmail`) quedan encapsulados en sus respectivos adaptadores sin propagarse al dominio. |
+| **Ocultamiento de información** | Los detalles mecánicos de conexión a la base de datos, consultas SQL, formatos JSON propietarios de las APIs externas y algoritmos de hashing o firmado de tokens JWT permanecen encapsulados como privados detrás de las interfaces. Los componentes externos solo interactúan mediante DTOs tipados. |
 
 ---
 
 ## 5. Design Decisions & Decision Record
 
-### Decision A — Architectural
+### Decisión A — Arquitectónica (Architectural)
 
 | | |
 |---|---|
-| **Context**  |El sistema requiere desacoplar la lógica de negocio de eventos y usuarios respecto a los detalles mecánicos del almacenamiento, evitando dependencias directas con motores SQL/NoSQL o librerías ORM específicas en las capas de dominio y aplicación.|
-| **Decision** |La comunicación con la base de datos se establecera exclusivamente atravez del módulo de gestión de persistencia de datos |
-| **Rationale** |Aislar las consultas y operaciones transaccionales en un módulo especializado impide que sentencias SQL, contaminen la lógica de Gestión de eventos y Gestión de usuarios. Esto facilita las pruebas unitarias sin depender de una base de datos real y permite migrar o actualizar el motor de base de datos sin alterar la lógica de negocio del backend|
-| **Trade-off accepted** |Se introduce una capa de abstracción adicional|
+| **Contexto** | El sistema debe consultar eventos de proveedores externos (`datos.gov.co`, `api-colombia.com`) y almacenar eventos locales en base de datos sin acoplar la lógica de filtrado (`REQ-01`) a formatos cambiantes ni arriesgar la disponibilidad global ante caídas de red o límites de cuota (60 req/min). |
+| **Decisión** | Adoptar una Arquitectura en Capas estricta (Monolito Modular) con el patrón Adapter (`AdaptadorEventosDatosGov`, `AdaptadorApiColombia`) con caché local en memoria y una Capa de Persistencia desacoplada (`IRepositorioDeEventos`), donde todo servicio externo interactúa mediante contratos estables con fallback ante indisponibilidad. |
+| **Justificación** | Aislar las llamadas externas permite que fallas en APIs de terceros no interrumpan la consulta de eventos locales. Asimismo, la caché en `AdaptadorApiColombia` previene sobrepasar el límite de 60 req/min por IP. |
+| **Costo aceptado / Trade-off** | Introduce capas adicionales de indirección (DTOs, interfaces y adaptadores), requiriendo mayor número de clases y ligero incremento en latencia por mapeo de datos. |
 
-### Decision B — Detailed design
+### Decisión B — Diseño Detallado (Detailed Design)
 
 | | |
 |---|---|
-| **Context** |Los eventos del sistema tienen comportamientos temporales diferentes (rangos de fechas continuos o recurrencias periódicas con o sin fecha límite), y el sistema requiere consultar en los dos casos si los eventos ocurren en una fecha específica, o si los eventos ya finalizaron|
-| **Decision** |Encapsular las reglas de tiempo mediante polimorfismo, utilizando una abstracción `HorarioEvento` de la que heredan `HorarioRango` y `HorarioRecurrente`|
-| **Rationale** |Desplaza la lógica de cálculo de fechas hacia objetos de valor específicos. Esto previene la acumulación de bloques condicionales dentro de la entidad `HorarioEvento`|
-| **Trade-off accepted** |Aumenta el número de clases en la capa de dominio y requiere configurar adecuadamente la persistencia de datos para almacenar correctamente las distintas variantes de horarios|
+| **Contexto** | Los eventos del catálogo presentan dos modalidades temporales dispares: eventos de fecha única/rango continuo y eventos recurrentes por días de la semana con fecha de expiración (`REQ-01` y `REQ-02`). |
+| **Decisión** | Encapsular las reglas de tiempo mediante polimorfismo, utilizando una abstracción `HorarioEvento` (Value Object) de la que heredan `HorarioRango` y `HorarioRecurrente`. |
+| **Justificación** | Desplaza la lógica de cálculo de fechas hacia objetos de valor específicos. Esto previene la acumulación de bloques condicionales anidados dentro de la entidad `Evento` y permite realizar pruebas unitarias aisladas y deterministas. |
+| **Costo aceptado / Trade-off** | Aumenta el número de clases en la capa de dominio y requiere configurar adecuadamente la persistencia de datos para almacenar correctamente las distintas variantes de horarios (mediante discriminador o JSONB). |
 
-### ADR
-
-At least one of the two decisions above must also be recorded as an ADR (use `Plantilla_ADR_Nygard`) in `docs/decisions/`.
-
-**ADR file:** `docs/decisions/ADR-XXX-title.md` — records Decision [A / B].
+### Registros de Decisión Arquitectónica (ADRs Vinculados)
+* **Decisión A (Arquitectura en Capas y APIs):** Documentada formalmente en ADR-0004_APIS.md y ADR-0005_Arquitectura.md
+* **Decisión B (Polimorfismo en Horarios):** Documentada formalmente en ADR-0006_Polimorfismo_Horarios_Eventos.md(Falta crearla, mañana lo hago).
 
 ---
 
-## 6. Traceability
+## 6. Traceability (Trazabilidad de la Primera Etapa)
 
-| Requirement ID | Use Case | Component(s) | Class(es) |
+| ID Requerimiento | Caso de Uso | Componente(s) Arquitectónico(s) | Clase(s) del Diseño Detallado |
 |---|---|---|---|
-|REQ-01 |Filtrar eventos|`Vistas`,`API gateway`,`gestión de eventos`, `gestión de persistencia de datos`, `Integración de eventos externos`|`ControladorEventos`,`IProveedorEventosExternos`,`IRepositorioDeEventos`,`ConsultadorEventos`,`HorarioEvento`,`HorarioRango`,`HorarioRecurrente`|
-|REQ-02 |Gestionar eventos|`Vistas`,`API gateway`,`gestión de eventos`, `gestión de persistencia de datos` |`ControladorEventos`,`GestorEventos`,`IRepositorioDeEventos`|
-|REQ-07 |Agendar eventos|`Vistas`,`API gateway`,`Agendamiento de eventos`, `gestión de persistencia de datos` |`ControladorEventos`,`IAgendador`,`IRepositorioDeEventos`|
-|REQ-13 |Registrar usuarios|`Vistas`,`API gateway`,`gestión de usuarios`, `gestión de persistencia de datos` |`ControladorEventos`,`ControladorDeUsuarios`,`gestorUsuarios`,`Usuario`,`IProveedorDeToken`,`IRepositorioDeUsuario` |
+| **REQ-01** | Consultar y Filtrar Eventos | Aplicación Web, API Gateway, Gestión de Eventos, Integración de Eventos Externos, Capa de Persistencia | `ControladorDeEventos`, `ConsultadorEventos`, `Evento`, `HorarioEvento`, `HorarioRango`, `HorarioRecurrente`, `IProveedorEventosExternos`, `AdaptadorEventosDatosGov`, `IProveedorGeografico`, `AdaptadorApiColombia`, `IRepositorioDeEventos` |
+| **REQ-02** | Administrar Eventos | Aplicación Web, API Gateway, Gestión de Eventos, Capa de Persistencia | `ControladorDeEventos`, `GestorEventos`, `Evento`, `HorarioEvento`, `HorarioRango`, `HorarioRecurrente`, `IRepositorioDeEventos` |
+| **REQ-13** | Registrar Usuario / Autenticar | Aplicación Web, API Gateway, Módulo de Usuarios y Perfiles, Módulo de Notificaciones, Capa de Persistencia | `ControladorDeUsuarios`, `GestorUsuarios`, `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken`, `IServicioNotificaciones`, `ServicioNotificaciones`, `AdaptadorGmail` |
 
 ---
 
-## 7. Optional — AI-Assisted Design Reflection
+## 7. Reflexión sobre Diseño Asistido por IA (AI-Assisted Design Reflection)
 
-> N/A
-
+ >El uso de la IA como corrector permitió al equipo mejorar la calidad del entregable al detectar problemas que podían pasar desapercibidos en una revisión interna, así como reforzar la aplicación de buenas prácticas y lineamientos de clase. Sin embargo, se deja constancia de que esta herramienta se utilizó de manera ética y transparente, como un apoyo al proceso de diseño, y que la responsabilidad sobre el contenido final recae completamente en los integrantes del equipo, quienes comprenden y respaldan cada uno de los elementos presentados.
 ---
 
-## 8. Consistency Checklist
+## 8. Consistency Checklist (Lista de Verificación de Consistencia)
 
-- [x] Every component in the diagram appears in the responsibilities table, and the other way around.
-- [x] Every class belongs to an identifiable component.
-- [x] Components are named by responsibility, not technology.
-- [x] Nothing inside the system boundary is something you do not control.
-- [x] Provided and required capabilities match across components (what one requires, another provides).
-- [x] Both decisions name a real cost or limitation, and at least one has an ADR.
-- [x] The traceability table has no empty rows and no orphan components or classes.
-- [x] Diagrams render correctly on GitHub (or the exported images are embedded).
-
+- [x] Cada componente del diagrama aparece en la tabla de responsabilidades y viceversa.
+- [x] Cada clase pertenece a un componente plenamente identificable.
+- [x] Los componentes están nombrados por responsabilidad ("Gestión de Eventos", "Capa de Persistencia"), no por tecnología.
+- [x] Nada dentro de la frontera del sistema es algo que el equipo no controle directamente.
+- [x] Las capacidades requeridas y provistas coinciden entre componentes adyacentes.
+- [x] Ambas decisiones de diseño explicitan costos y trade-offs reales, y están formalmente vinculadas con sus respectivos ADRs (`ADR-0004`, `ADR-0005` y `ADR-0006`).
+- [x] El diagrama de clases está fragmentado en dos secciones Mermaid independientes (`ControladorDeEventos` y `ControladorDeUsuarios`) para mayor legibilidad y modularidad.
+- [x] La integración del Módulo de Notificaciones está documentada y justificada arquitectónicamente.
+- [x] La tabla de trazabilidad cubre exhaustivamente los requerimientos de la Primera Etapa (REQ-01, REQ-02, REQ-13) sin filas vacías ni clases huérfanas.
+- [x] Los diagramas de Mermaid se renderizan correctamente con sintaxis válida para GitHub.
