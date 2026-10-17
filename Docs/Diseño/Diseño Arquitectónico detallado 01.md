@@ -17,8 +17,6 @@
 **System purpose** (2–3 sentences, in terms of the need it satisfies)
 > El propósito de sistema es satisfacer la necesidad del usuario de encontrar eventos/actividades que se ajusten a sus condiciones.
 
-**Requirements that shape the structure** *(the ones that most influence the design, not all of them)*
-
 | Requirement / Use Case ID | Why it shapes the structure | Quality attribute, constraint or business rule involved |
 |---|---|---|
 | REQ-01/Filtrar eventos| Principal funcionalidad del sistema,  se debe definir los responsables de validar filtros y realizar las consultas|BR-01.BR-O2 y BR-O3|
