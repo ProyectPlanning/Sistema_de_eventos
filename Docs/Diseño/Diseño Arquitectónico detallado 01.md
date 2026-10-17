@@ -1,30 +1,30 @@
 
 
-# [Project Name] — Architectural & Detailed Design v1.0
+# Filtrado de eventos — Diseño Arquitectónico detallado v1.0
 
 | | |
 |---|---|
-| **Team** | |
-| **Members** | |
-| **Status** | Draft / Ready for review |
-| **Date** | |
-| **Inputs** | `docs/requirements/`, Architectural Hypothesis v0.1 (Class 11), Detailed Design v0.1 (Class 12) |
+| **Team** |Power Rangers|
+| **Members** |Cristian Andres Diaz Ortega - Juan Sebastian Rodriguez Carvajal - Martin Lora Caro - Justin David Vargas Vasquez -Nicolas David Lovera Cabiativa |
+| **Status** | Listo para revisar |
+| **Date** | 17/10/2026 |
+| **Inputs** | `docs/requerimientos/` |
 
 ---
 
 ## 1. System Overview & Design Drivers
 
 **System purpose** (2–3 sentences, in terms of the need it satisfies)
-> El proposito de sistema es satisfacer la necesidad del usuario de encontrar eventos/actividades que se ajusten a sus condiciones.
+> El propósito de sistema es satisfacer la necesidad del usuario de encontrar eventos/actividades que se ajusten a sus condiciones.
 
 **Requirements that shape the structure** *(the ones that most influence the design, not all of them)*
 
 | Requirement / Use Case ID | Why it shapes the structure | Quality attribute, constraint or business rule involved |
 |---|---|---|
-| REQ-01/Filtrar eventos|Es la principal funcionalidad del sistema, por lo que se debe definir muy dentro del diseño|BR-01.BR-O2 y BR-O3|
-| REQ-02/Gestionar eventos|Es la parte que alimenta el sistema de eventos, por lo que se debe definir muy bien  | N/A|
-| REQ-07/Agendar eventos|Funcionalidad secundaria pero que interactua con un sistema externo, debe definirse muy bien |limitación:uso de sistema externo|
-| REQ-13/Regitrar usuarios|Se be especificar como se realizara el registro de usuarios |N/A|
+| REQ-01/Filtrar eventos| Principal funcionalidad del sistema,  se debe definir los responsables de validar filtros y realizar las consultas|BR-01.BR-O2 y BR-O3|
+| REQ-02/Gestionar eventos| Crear, eliminar y actualizar eventos requiere de la definición sobre como y quiénes acceden a los datos locales | ninguno|
+| REQ-07/Agendar eventos|Funcionalidad secundaria pero que interactúa con un sistema externo, debe definirse esa interacción |limitación: uso de sistema externo|
+| REQ-13/Registrar usuarios|Se debe especificar como se valida la sesión del usuario |ninguno|
 
 ---
 
@@ -80,13 +80,13 @@ flowchart LR
 
 | Component | Main responsibility | Requirements / use cases supported | Provided capabilities | Required capabilities | Main dependencies |
 |---|---|---|---|---|---|
-|Vistas | Presenta la plataforma y recibe las acciones del usuario| |Interactuar con la plataforma| Acceder a las operaciones del sistema | API Gateway|
-|API Gateway | Recibe las solicitudes del usuario y las direcciona al módulo correspondiente| |Acceder a las operaciones del sistema | Publicar/consultar eventos, registrar/validar usuarios y agendar eventos | Gestión de eventos, Gestión de usuarios, Agendamiento de eventos|
-|Gestión de eventos | Define y Aplica los mecanismos para la publicación, consulta y filtrado de eventos| |Publicar/consultar eventos | Guardar y consultar eventos| Gestión de persistencia de datos|
-|Gestión de usuarios | Registra y valida a los usuarios| |registrar/validar usuarios | Guardar y consultar datos de los usuarios |Gestión de persistencia de datos|
-|Integración de eventos externos| solicita los datos de los eventos externos a las Apis proveedoras y formatea los datos obtenidos a la estructura de datos interna del sistema | |traer y formatear eventos externos| consultar los eventos externos |Apis de eventos externos |
-|Agendamiento de eventos|Agenda eventos al calendario personal del usuario mediante la API de google calendar| |agendar eventos | guardar evento en el calendario personal del usuario |Google Calendar API|
-|Gestión de persistencia de datos|Proporcionar acceso a los datos almacenados| |Consultar, guardar y actualizar los datos de los eventos y usuarios | Leer y escribir en la base de datos | Base de datos |
+|Vistas | Presenta la plataforma y recibe las acciones del usuario|`REQ-01`,`REQ-02`,`REQ-07`,`REQ-13`|Interactuar con la plataforma| Acceder a las operaciones del sistema | API Gateway|
+|API Gateway | Recibe las solicitudes del usuario y las direcciona al módulo correspondiente| `REQ-01`,`REQ-02`,`REQ-07`,`REQ-13` |Acceder a las operaciones del sistema | Publicar/consultar eventos, registrar/validar usuarios y agendar eventos | Gestión de eventos, Gestión de usuarios, Agendamiento de eventos|
+|Gestión de eventos | Define y Aplica los mecanismos para la publicación, consulta y filtrado de eventos| `REQ-01`,`REQ-02`|Publicar/consultar eventos | Guardar y consultar eventos| Gestión de persistencia de datos|
+|Gestión de usuarios | Registra y valida a los usuarios|`REQ-13`|registrar/validar usuarios | Guardar y consultar datos de los usuarios |Gestión de persistencia de datos|
+|Integración de eventos externos| solicita los datos de los eventos externos a las Apis proveedoras y formatea los datos obtenidos a la estructura de datos interna del sistema |`REQ-01` |traer y formatear eventos externos| consultar los eventos externos |Apis de eventos externos |
+|Agendamiento de eventos|Agenda eventos al calendario personal del usuario mediante la API de google calendar|`REQ-07`|agendar eventos | guardar evento en el calendario personal del usuario |Google Calendar API|
+|Gestión de persistencia de datos|Proporcionar acceso a los datos almacenados|`REQ-01`,`REQ-02`,`REQ-07`,`REQ-13`|Consultar, guardar y actualizar los datos de los eventos y usuarios | Leer y escribir en la base de datos | Base de datos |
 
 
 ---
@@ -301,9 +301,9 @@ autenticarUsuario(credencialesDTO):
 
 | Pregunta | Tu respuesta, con evidencia de tu diseño |
 |---|---|
-| **Cohesión:**| Cada clase tiene un enfoque único y estrictamente definido. `ControladorDeEventos` solo define las firmas de las operaciones de eventos; `GestorEventos` se encarga de la implementacíon de la creación,eliminacion y actualización de eventos; `ConsultadorEventos` implementa la consulta y filtrado de eventos y `IRepositorioDeEventos` maneja las consultas que se necesitan a nivel de base de datos |
-| **Acoplamiento:**| La lógica de aplicación de alto nivel (`GestorUsuarios`) depende de interfaces abstractas (`IRepositorioDeUsuario`, `IProveedorDeToken`) en lugar de implementaciones concretas de base de datos o de técnicas de encriptación. Cambiar por ejemplo, el motor de base de datos, no requiere cambios en la lógica central de negocio |
-| **Ocultamiento de información:** | La información sobre como `IrepositorioDeEventos` y `IrepositorioDeUsuario` se implementan permanece oculta, el resto de componentes solo interactúan con `EventoDTO` y `UsuarioDTO`|
+| **Cohesión**| Cada clase tiene un enfoque único y estrictamente definido. `ControladorDeEventos` solo define las firmas de las operaciones de eventos; `GestorEventos` se encarga de la implementacíon de la creación,eliminacion y actualización de eventos; `ConsultadorEventos` implementa la consulta y filtrado de eventos y `IRepositorioDeEventos` maneja las consultas que se necesitan a nivel de base de datos |
+| **Acoplamiento**| La lógica de aplicación de alto nivel (`GestorUsuarios`) depende de interfaces abstractas (`IRepositorioDeUsuario`, `IProveedorDeToken`) en lugar de implementaciones concretas de base de datos o de técnicas de encriptación. Cambiar por ejemplo, el motor de base de datos, no requiere cambios en la lógica central de negocio |
+| **Ocultamiento de información** | La información sobre como `IrepositorioDeEventos` y `IrepositorioDeUsuario` se implementan permanece oculta, el resto de componentes solo interactúan con `EventoDTO` y `UsuarioDTO`|
 
 **Hallazgo en el diseño original y que se cambió**  
 > Inicialmente, las responsabilidades de generación y validación de tokens estaban  dentro de `Usuario`. Se creó `IProveedorDeToken` y para manejar la validación de usuario.  
@@ -345,7 +345,7 @@ At least one of the two decisions above must also be recorded as an ADR (use `Pl
 |REQ-01 |Filtrar eventos|`Vistas`,`API gateway`,`gestión de eventos`, `gestión de persistencia de datos`, `Integración de eventos externos`|`ControladorEventos`,`IProveedorEventosExternos`,`IRepositorioDeEventos`,`ConsultadorEventos`,`HorarioEvento`,`HorarioRango`,`HorarioRecurrente`|
 |REQ-02 |Gestionar eventos|`Vistas`,`API gateway`,`gestión de eventos`, `gestión de persistencia de datos` |`ControladorEventos`,`GestorEventos`,`IRepositorioDeEventos`|
 |REQ-07 |Agendar eventos|`Vistas`,`API gateway`,`Agendamiento de eventos`, `gestión de persistencia de datos` |`ControladorEventos`,`IAgendador`,`IRepositorioDeEventos`|
-|REQ-13 |Regitrar usuarios|`Vistas`,`API gateway`,`gestión de usuarios`, `gestión de persistencia de datos` |`ControladorEventos`,`ControladorDeUsuarios`,`gestorUsuarios`,`Usuario`,`IProveedorDeToken`,`IRepositorioDeUsuario` |
+|REQ-13 |Registrar usuarios|`Vistas`,`API gateway`,`gestión de usuarios`, `gestión de persistencia de datos` |`ControladorEventos`,`ControladorDeUsuarios`,`gestorUsuarios`,`Usuario`,`IProveedorDeToken`,`IRepositorioDeUsuario` |
 
 ---
 
