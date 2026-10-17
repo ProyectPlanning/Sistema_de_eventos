@@ -19,7 +19,7 @@
 
 | Requirement / Use Case ID | Why it shapes the structure | Quality attribute, constraint or business rule involved |
 |---|---|---|
-| REQ-01/Filtrar eventos| Principal funcionalidad del sistema,  se debe definir los responsables de validar filtros y realizar las consultas|BR-01.BR-O2 y BR-O3|
+| REQ-01/Filtrar eventos| Principal funcionalidad del sistema,  se debe definir los responsables de validar filtros y realizar las consultas|BR-01,BR-O2 y BR-O3|
 | REQ-02/Gestionar eventos| Crear, eliminar y actualizar eventos requiere de la definición sobre como y quiénes acceden a los datos locales | ninguno|
 | REQ-07/Agendar eventos|Funcionalidad secundaria pero que interactúa con un sistema externo, debe definirse esa interacción |limitación: uso de sistema externo|
 | REQ-13/Registrar usuarios|Se debe especificar como se valida la sesión del usuario |ninguno|
