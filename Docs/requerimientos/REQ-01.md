@@ -20,174 +20,191 @@
 
 **Tipo:** Funcional *(Sigue existiendo pasando por el filtro de la computadora perfecta: el usuario aun así necesita colocar los filtros para encontrar los eventos compatibles)* 
 
-
-**Fuente/Evidencia**
-> necesidades del usuario: NEED-01: "El usuario necesita encontrar actividades acordes a su dinero disponible, tiempo libre y la zona donde se ubica"
+**Fuente / Evidencia**
+> Documento de Necesidades del Usuario, `NEED-01` — Descubrimiento de eventos viables: *"El usuario necesita encontrar actividades acordes a su dinero disponible, tiempo libre y la ciudad/zona donde se ubica para evitar la frustración de consultar opciones a las que no puede asistir"*.
 
 **Necesidad**
-> Encontrar eventos acordes al usuario.
+> Encontrar actividades y eventos compatibles con las restricciones personales de presupuesto, tiempo y ubicación geográfica del usuario. *(Formulada como meta del usuario, no como solución tecnológica).*
 
-**Valor**
-> el usuario encuentra eventos a los que tiene la posibilidad de asistir.
+**Valor / Justificación**
+> Reduce la incertidumbre y el costo de búsqueda manual del usuario al descartar automáticamente ofertas incompatibles, permitiéndole descubrir opciones viables y alcanzables en su entorno.
 
 ---
 
-## 2. Contexto
-
+## 2. Contexto — Un requerimiento rara vez existe aislado
 
 **Reglas de negocio**
+> **BR-01 — Cupos disponibles mínimos:** Para eventos con aforo o boletería limitada, solo se mostrarán eventos que cuenten con al menos un (1) cupo o entrada disponible al momento de procesar la consulta. Los eventos agotados quedan excluidos del listado general.
 
-> BR-01 Para eventos con cupos máximos, solo se muestran los eventos que cuenten con al menos **1 cupo y/o entrada disponible** al momento de procesar la consulta. Los eventos agotados quedan excluidos de la lista general.
+> **BR-02 — Calificación tarifaria por presupuesto:** En eventos con múltiples tipos o localidades de entrada (ej. General $20.000 y VIP $50.000), el evento califica como resultado válido si al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo indicado por el usuario.
+ 
+> **BR-03 — Combinación flexible de filtros:** El usuario puede ingresar cualquier combinación de los tres criterios de búsqueda (presupuesto, horario, zona) o no ingresar ninguno. La consulta filtrará únicamente por los parámetros efectivamente provistos; si no se provee ningún filtro, el sistema presentará eventos sugeridos de forma aleatoria/general.
 
-> BR-02 En eventos con múltiples tipos de entrada (por ejemplo, **General $20.000** y **VIP $50.000**), el evento califica como resultado válido si **al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo** establecido por el usuario.
+**Restricción(es)**
+> 1. El sistema debe integrarse con proveedores de eventos externos mediante APIs REST de terceros, operando dentro de los límites de cuota (rate limits) y términos de servicio de dichos proveedores, sin asumir control sobre el ciclo de vida de los eventos remotos.  
 
-> BR-03 El usuario puede ingresar cualquier combinación de filtros (incluso ninguno); la consulta se realizará solo sobre los filtros ingresados. Sino se ingresa ningún filtro, se muestran eventos aleatorios.
-
-**Restricción(es)** 
-> La solución debe manejar con precaución la información de eventos públicos de terceros (Apis externas), porque existe la posibilidad de cambios en el evento. Controlamos la visualización de eventos públicos de terceros, pero no tenemos control de todo el ciclo de vida del evento.
+> 2. Conforme a las directrices de la asignatura, el sistema central opera bajo un modelo de monolito modular con almacenamiento relacional embebido/local, requiriendo que la lógica de filtrado de eventos locales se ejecute en el mismo proceso de aplicación.
 
 **Supuesto(s)**
-> Existen eventos en nuestra base de datos y Apis de terceros.
-> Los eventos  son verídicos y legales. 
+> *(Condiciones externas asumidas como verdaderas que NO dependen del control del equipo de desarrollo, diferenciadas de acciones internas o requisitos funcionales):*
 
-**Dependencias**
-> Apis externas (para los eventos que se consultan de una Api externa).
+> 1. **Disponibilidad de catálogo en fuentes externas:** Se asume que las plataformas y APIs externas de eventos disponen de un volumen activo y continuo de eventos públicos vigentes en las regiones geográficas cubiertas por el sistema. 
 
-**Riesgos**
+> 2. **Veracidad y legitimidad de los datos publicados:** Se asume que la información provista por los organizadores y fuentes externas (precios, horarios, ubicaciones y vigencia) es fidedigna, legal y no engañosa al momento de su captura.  
 
-| Riesgo | Probabilidad | Impacto | Mitigación (opcional) |
+> 3. **Estabilidad razonable en las interfaces de terceros:** Se asume que los servicios externos mantienen contratos de API estables con tiempos de respuesta compatibles con la interacción web (latencia inferior a 2-3 segundos en condiciones normales).
+
+**Dependencia(s)**
+> 1. Disponibilidad y conectividad de red con las APIs de proveedores externos de eventos.  
+
+> 2. Disponibilidad de la Capa de Persistencia y Base de Datos local para la consulta y recuperación de los eventos administrados internamente en la plataforma.
+
+**Riesgo(s)**
+
+| Riesgo | Probabilidad | Impacto | Mitigación |
 |---|---|---|---|
-| La base de datos no responde | bajo | el usuario no puede encontrar eventos | Sistema informa la indisponibilidad temporal del servicio | 
-| No hay eventos que cumplan con los filtros dados | mediano | El usuario no puede encontrar eventos | Sistema informa que no existen eventos con los filtros exactos y muestra recomendaciones para flexibilizar la búsqueda |
+| **Publicación o ingesta de eventos falsos o fraudulentos** *(Caso corregido y enfatizado por el docente)*: Fuentes externas no verificadas u organizadores maliciosos listan eventos inexistentes, engañosos, cancelados o con fines de estafa (e.g. cobro de entradas falsas o suplantación de recintos). | Media | Alto (Pérdida severa de confianza del usuario, daño reputacional de la plataforma y posibles contingencias legales o de seguridad para los asistentes). | Señalizar visualmente eventos provenientes de fuentes de terceros como *"Información agregada externa — No verificada por la plataforma"*; habilitar mecanismo comunitario de reporte (*"Reportar evento sospechoso"*); limitar ingesta a APIs con reputación validada y suministrar enlaces directos a boleterías oficiales. |
+| **Indisponibilidad, alta latencia o rate limiting de la API externa de eventos**: Caída del proveedor externo, tiempos de respuesta mayores a 3 segundos o agotamiento de cuotas de consumo por alta demanda. | Media | Alto (Degradación del catálogo en tiempo real; el usuario no puede acceder a eventos provistos por terceros). | Implementar patrón Adapter con Circuit Breaker y fallback: si la API externa no responde en un umbral estricto (2 segundos), la consulta responde inmediatamente con eventos locales y notifica al usuario que los eventos externos están temporalmente inaccesibles. |
+| **Desfase o desactualización en horarios, precios y cupos de eventos**: Un evento agota entradas o altera su tarifa/horario en la plataforma de origen sin reflejarlo a tiempo en la API de consulta. | Media-Alta | Medio (Frustración del usuario al encontrar discrepancias entre los resultados filtrados y las condiciones reales del evento). | Desplegar sello temporal de *"Última sincronización"* en la ficha del evento y enlace directo al sitio oficial del evento para confirmación final. |
+| **Modificaciones imprevistas en los esquemas de datos del proveedor**: Cambios intempestivos en el formato JSON, tipos de datos o campos de la API externa que rompen la deserialización. | Media-Baja | Medio-Alto (Falla en el parseo y filtrado de eventos externos, causando omisión de resultados válidos). | Aislamiento estricto de la integración en un módulo adaptador desacoplado; validación de esquema en la ingesta descartando de forma segura registros mal formados sin afectar el resto de la consulta. |
 
-**Open Questions**
-> N/A
+**Preguntas abiertas (Open Questions)**
+> 1. ¿Cómo debe tratar el algoritmo de solapamiento horario a los eventos de tipo "vida nocturna" que inician un día y finalizan en la madrugada del día siguiente, si el usuario define un rango horario nocturno (ej. 20:00 a 02:00)? *(Pendiente de validación en diseño detallado de la regla de horario).*  
+> 2. ¿Cuál será la política de reintentos o refresco de caché local cuando una API externa responda con error 429 (Too Many Requests)?
 
 ---
 
-## 3.Prioridad y estimación
+## 3. Prioridad y Estimación
 
-**Prioridad asignada:**
-> Asignamos Must have (Imprescindible) debido a que tener la facilidad de encontrar eventos en un horario,presupuesto y zona geográfica compatibles es la funcionalidad fundamental del sistema para encontrar actividades que el usuario pueda hacer. Aceptamos el costo de postergar filtros secundarios como categoría de evento, accesibilidad del recinto o vista en mapa interactivo para esta iteración. Consideramos la opción Should have y la rechazamos porque lanzar la búsqueda sin estos tres criterios básicos entregaría resultados irrelevantes, haciendo inviable la experiencia clave de descubrimiento de eventos en el MVP.
+**Modelo de priorización utilizado:** MoSCoW  
+*(Elegido de acuerdo con la comparación de la Clase 10 para delimitar el núcleo esencial del MVP con recursos limitados).*
+
+**Prioridad asignada:** **Must Have (Imprescindible)**
+> **Justificación de la decisión:**  
+> Porque la consulta y filtrado de eventos por presupuesto, horario y ubicación geográfica constituye la propuesta de valor nuclear del sistema (descubrimiento viable según Need-01 y US-01.1/2/3). Sin esta funcionalidad, la plataforma pierde su razón de ser y no resuelve el problema identificado. Aceptamos el costo de postergar funcionalidades deseables o secundarias (como filtros avanzados por categoría, fijado de eventos, calificaciones o vistas en mapa interactivo) para fases posteriores. Consideramos la clasificación *Should have* y la rechazamos porque entregar el primer incremento sin esta capacidad básica haría inviable e incompleta la experiencia de usuario.
 
 **Estimación (confianza):** Media
-> Entendemos bien la lógica de filtrado directo por presupuesto máximo y zona geográfica (son consultas estándar a nivel de base de datos). Lo que genera incertidumbre y reduce la confianza de High a Medium, es el algoritmo de coincidencia para la disponibilidad horaria, especialmente al evaluar eventos que abarcan múltiples días, manejar diferencias de zonas horarias o procesar solapamientos parciales de tiempo sin degradar el rendimiento de la consulta.*
+> **Justificación de la confianza:**  
+> La lógica de consulta y filtrado por presupuesto y zona geográfica es directa y bien comprendida (consultas relacionales indexadas estándar). La incertidumbre que reduce la confianza a *Media* radica en la lógica de evaluación temporal de disponibilidad horaria (manejo de rangos, recurrencias periódicas y eventos multijornada) y en la variabilidad en los tiempos de respuesta de la API externa de eventos bajo condiciones de tráfico real.
 
 ---
 
-## 4. Representaciones
+## 4. Representaciones — El Requerimiento ≠ La Representación
 
+*(Directrices de Clase 9: cada representación aporta una perspectiva complementaria; las tres son obligatorias).*
 
-### 4.1 Historia de usuario
+### 4.1 Historia de Usuario
 
-> Como asistente a eventos,
-quiero encontrar actividades que se ajusten a mi presupuesto máximo, mi disponibilidad horaria y zona geográfica,
-para obtener información sobre eventos a los que pueda asistir.
+> Como **asistente a eventos**,  
+> quiero **filtrar eventos ingresando mi presupuesto máximo, rango de horario disponible y zona geográfica**,  
+> para **encontrar actividades viables a las que realmente pueda y tenga la posibilidad de asistir**.
 
+*Verificación de necesidad vs. solución:* El enunciado expresa la capacidad y el valor buscado por el rol de usuario, sin imponer tecnologías ni soluciones de interfaz prematuras.
 
-### 4.2 Criterios de aceptación
+### 4.2 Criterios de Aceptación
 
+**Escenario 1 — Filtros combinados con coincidencias (Camino normal)**
+> **Dado** que el usuario se encuentra en la pantalla de búsqueda de actividades y existen eventos registrados en "Colombia", departamento "Bogotá D.C.", ciudad "Bogotá",  
+> **cuando** ingresa como presupuesto máximo "$50.000 COP", selecciona la ciudad "Bogotá" y define un rango horario de "18:00 a 22:00",  
+> **entonces** el sistema retorna y despliega la lista de eventos cuya ubicación coincida con "Bogotá", cuya tarifa mínima vigente sea menor o igual a $50.000 COP (conforme a BR-02), cuyo horario esté comprendido en el rango indicado y que tengan al menos 1 cupo disponible (conforme a BR-01).
 
->**Escenario 1 — eventos filtrados**
-Dado que el usuario se encuentra en la pantalla de búsqueda de actividades
-cuando ingresa como presupuesto máximo "$50.000 pesos", selecciona el país "Colombia" y define un rango de disponibilidad de "18:00 a 22:00"
-Entonces el sistema muestra la lista de eventos cuya ubicación sea Colombia, su tarifa mínima sea menor o igual a $50.000 pesos y su horario de inicio y fin esté totalmente contenido entre las 18:00 y las 22:00
+**Escenario 2 — Búsqueda sin coincidencias compatibles (Camino alternativo)**
+> **Dado** que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10.000 COP" en el rango de "08:00 a 12:00",  
+> **cuando** el usuario ejecuta la consulta con dichos filtros,  
+> **entonces** el sistema informa claramente que no se encontraron eventos que satisfagan todos los criterios simultáneamente, y sugiere ampliar el rango horario o ajustar el presupuesto.
 
->**Escenario 2 — sin eventos compatibles**
-Dado que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10.000 pesos" dentro del rango de "08:00 a 12:00"
-cuando el usuario ejecuta una búsqueda en Medellín con presupuesto máximo de "$10.000 pesos" y rango de disponibilidad de "08:00 a 12:00"
-entonces el sistema muestra un mensaje indicando que no se encontraron actividades con esos criterios y sugiere ampliar el rango horaria o ajustar el presupuesto
+**Escenario 3 — Búsqueda de eventos de acceso libre / gratuitos**
+> **Dado** que existen eventos públicos de entrada libre ($0 COP) en la ciudad seleccionada dentro del rango horario del usuario,  
+> **cuando** el usuario ejecuta la búsqueda ingresando un presupuesto máximo de "$0 COP",  
+> **entonces** el sistema presenta exclusivamente los eventos gratuitos ($0 COP) que coincidan con la ubicación y el horario definidos.
 
+**Escenario 4 — Búsqueda con filtros parciales**
+> **Dado** que existen 15 eventos registrados para la ciudad de "Cali",  
+> **cuando** el usuario selecciona únicamente la ciudad "Cali" dejando vacíos los campos de presupuesto y rango de horario,  
+> **entonces** el sistema aplica la regla BR-03 y retorna los 15 eventos correspondientes a dicha ciudad ordenados cronológicamente.
 
->**Escenario 3 — eventos gratis**
-Dado que existen eventos públicos de entrada libre ($0 pesos) en la ciudad seleccionada durante el rango de disponibilidad del usuario
-cuando el usuario realiza la búsqueda ingresando un presupuesto máximo de "$0 pesos"
-entonces el sistema retorna únicamente los eventos con tarifa de acceso de $0 pesos que coincidan con la ciudad y el rango de horario especificados
+**Escenario 5 — Búsqueda sin filtros (Consulta abierta)**
+> **Dado** que el catálogo contiene eventos activos y el usuario no especifica ningún criterio de filtrado,  
+> **cuando** el usuario solicita ver actividades disponibles,  
+> **entonces** el sistema aplica BR-03 y presenta un listado general de eventos sugeridos y vigentes.
 
->**Escenario 4 — Búsqueda parcial y límite de resultados**
-Dado que existen 15 eventos registrados en la ciudad "Bogotá"
-cuando el usuario realiza una búsqueda seleccionando únicamente la ciudad "Bogotá" sin ingresar presupuesto ni rango horario
-entonces el sistema muestra los 15 eventos.
+---
 
+### 4.3 Caso de Uso
 
->**Escenario 5 — Sin filtros**
-Dado que el usuario no ingresa ningún filtro
-cuando el usuario ejecuta la búsqueda
-entonces el sistema muestra eventos aleatorios.
-
-
-
-### 4.3 Caso de uso
-
-| Campo | |
+| Campo | Descripción |
 |---|---|
-| **Nombre** |Consultar y Filtrar Eventos |
-| **Rol** |Asistente a eventos |
-| **Objetivo** |Encontrar eventos que coincidan con su presupuesto disponible, rango de horario y ubicación geográfica |
-| **Activador** |ingresar sus filtros de búsqueda y ejecutar la consulta |
-|**Condición previa** |El sistema se encuentra operativo y dispone de un catálogo de eventos registrados |
+| **Nombre del Caso de Uso** | Consultar y Filtrar Eventos |
+| **Actor** | Asistente a eventos (Usuario registrado o invitado) |
+| **Meta** | Obtener un listado de eventos vigentes que se ajusten a su presupuesto, disponibilidad de tiempo y ubicación |
+| **Disparador (Trigger)** | El usuario ingresa criterios de búsqueda y solicita la ejecución de la consulta |
+| **Precondición** | El sistema se encuentra operativo y el servicio de eventos dispone de registros locales o remotos |
 
-**Flujo Principal**\
-1.El usuario ingresa la zona geográfica, establece su presupuesto máximo disponible y define un rango de disponibilidad horaria (hora inicio y fin).\
-2.El usuario solicita la ejecución del filtro.\
-3.El sistema valida que los campos ingresados sean acordes con el formato esperado.\
-4.El sistema consulta la base de datos con los filtros aplicados.\
-5.El sistema presenta al usuario la lista de eventos que cumplen con los filtros.
+**Flujo Principal**
+1. El usuario accede a la sección de búsqueda e ingresa opcionalmente: zona geográfica, presupuesto máximo disponible y rango de horario (hora inicio y fin).
+2. El usuario envía la solicitud de búsqueda.
+3. El sistema valida el formato de los criterios ingresados (números positivos en presupuesto, fechas/horas coherentes).
+4. El sistema consulta los eventos en la base de datos local y solicita la sincronización/consulta a la API de eventos externa a través del componente de integración.
+5. El sistema consolida los resultados, aplica las reglas de negocio (BR-01 de cupos disponibles y BR-02 de tarifas menores o iguales al presupuesto) y excluye eventos vencidos.
+6. El sistema presenta al usuario la lista ordenada de eventos compatibles con sus restricciones.
 
 **Flujo Alternativo**
-> Sin coincidencias para los criterios ingresados → El sistema informa al usuario que no existen eventos disponibles con los filtros exactos seleccionados y muestra recomendaciones para flexibilizar la búsqueda (ampliar rango de horario o ajustar presupuesto).
+> **Sin eventos coincidentes (Paso 5):** Si ningún evento satisface la combinación exacta de filtros, el sistema notifica que no existen coincidencias, mantiene los filtros en pantalla y sugiere relajar el rango horario o incrementar el presupuesto (Escenario 2).
 
-**Excepción**
-> Fallo de disponibilidad en el servicio de eventos → El sistema detecta un error de conexión o tiempo de espera agotado en la base de datos; despliega un mensaje notificando la indisponibilidad temporal e invita a reintentar manteniendo los filtros ingresados en pantalla.
+**Excepciones**
+> **Excepción A — Criterios de entrada malformados (Paso 3):** Si el usuario introduce valores no válidos (e.g. presupuesto negativo o rango horario con hora fin anterior a la hora inicio), el sistema detiene la consulta, señala visualmente el campo erróneo y solicita la corrección manteniendo los demás datos.  
+> **Excepción B — Falla o timeout de la API externa de eventos (Paso 4):** Si el servicio de eventos externos no responde dentro de 2 segundos o retorna error HTTP, el sistema activa el fallback de contingencia: ejecuta la consulta únicamente sobre los registros de la base de datos local y despliega un aviso informativo indicando que los eventos externos no pudieron cargarse momentáneamente.
 
-**Condición posterior**
-> El usuario obtiene una vista clara de las opciones de eventos compatibles con sus restricciones o la retroalimentación correspondiente si no hay disponibilidad.
+**Postcondición**
+> El usuario visualiza la oferta de actividades viables para su perfil de búsqueda o recibe retroalimentación clara para ajustar sus criterios, sin bloqueos del sistema.
 
-**Diagrama de flujo**
+**Diagrama de Flujo del Caso de Uso**
 
 ```mermaid
 flowchart TD
-    A([Asistente a eventos inicia la consulta]) --> B["1. Usuario ingresa opcionalmente zona geográfica, presupuesto máximo y rango horario"]
-    B --> C["2. Usuario solicita ejecutar la consulta"]
-    C --> D["3. Sistema valida el formato de los filtros ingresados"]
-    D --> E{"¿Los filtros ingresados tienen un formato válido?"}
+    A([Asistente solicita búsqueda de eventos]) --> B["1. Usuario ingresa filtros: zona, presupuesto, rango horario"]
+    B --> C["2. Usuario ejecuta la consulta"]
+    C --> D["3. Sistema valida formato y coherencia de filtros"]
+    D --> E{"¿Filtros válidos?"}
 
-    E -- "Sí" --> F["4. Sistema consulta la base de datos y el API aplicando únicamente los filtros proporcionados"]
-    F --> G{"¿Servicio de eventos disponible?"}
+    E -- "No" --> F["EXCEPCIÓN A: Mostrar error de validación en pantalla"]
+    F --> B
 
-    G -- "Sí" --> H{"¿Existen eventos que coincidan con los filtros aplicados?"}
-    H -- "Sí" --> I["5. Sistema presenta la lista de eventos coincidentes"]
-    I --> J(["Postcondition: usuario obtiene eventos que cumplen los criterios seleccionados"])
+    E -- "Sí" --> G["4. Sistema consulta Base de Datos local y API de eventos externa"]
+    G --> H{"¿API externa disponible en tiempo límite?"}
 
-    H -- "No" --> K["ALTERNATIVE: Sistema informa que no se encontraron eventos con los criterios aplicados"]
-    K --> L["Sistema ofrece opciones para modificar los filtros o ampliar la búsqueda"]
-    L --> M(["Postcondition: usuario recibe retroalimentación y puede ajustar su búsqueda"])
+    H -- "No (timeout o error)" --> I["EXCEPCIÓN B: Registrar fallo y activar fallback con datos locales"]
+    I --> J["5. Filtrar eventos por BR-01 y BR-02"]
+    
+    H -- "Sí" --> J
 
-    G -- "No, error o timeout" --> N["EXCEPTION: Sistema informa la indisponibilidad temporal del servicio"]
-    N --> O["Sistema conserva los filtros ingresados e invita al usuario a reintentar"]
-    O --> P(["Postcondition: usuario puede reintentar la consulta con los mismos filtros"])
+    J --> K{"¿Se encontraron eventos coincidentes?"}
+    K -- "Sí" --> L["6. Presentar lista de eventos compatibles"]
+    L --> M([Postcondición: Usuario visualiza eventos viables])
 
-    E -- "No" --> Q["Sistema informa cuáles filtros presentan un formato inválido"]
-    Q --> R(["Postcondition: usuario puede corregir los filtros inválidos y reintentar"])
+    K -- "No" --> N["FLUJO ALTERNATIVO: Informar ausencia de coincidencias y sugerir ajustes"]
+    N --> O([Postcondición: Usuario orientado para flexibilizar búsqueda])
 
     classDef mainflow fill:#1E2761,color:#ffffff,stroke:#1E2761;
     classDef alt fill:#F2A541,color:#1E2761,stroke:#F2A541;
     classDef exception fill:#B3261E,color:#ffffff,stroke:#B3261E;
 
-    class B,C,D,F,I mainflow;
-    class K,L,Q alt;
-    class N,O exception;
+    class B,C,D,G,J,L mainflow;
+    class N alt;
+    class F,I exception;
 ```
 
 ---
-## 5. Trazabilidad e impacto
 
+## 5. Trazabilidad e Impacto
 
-**Antecedente**
-> Necesidad Need 01 ("El usuario necesita encontrar eventos que se ajusten a su presupuesto máximo, su rango de disponibilidad horaria y su ciudad.") → REQ-01.
+*(Directrices de Clase 10: Trazabilidad conceptual bidireccional y análisis de impacto).*
 
-**Efectos**
-> REQ-01 → Diseño futuro (un componente de búsqueda, más una capa de integración para el proveedor de eventos publicos) → Implementación → Pruebas (AC-01.1 y AC-01.2 como base de verificación). (El diseño aún no se ha realizado; esta sección se completará una vez que comience el trabajo de Clase 11).
+**Antecedente (Backward) — ¿Por qué existe este requerimiento?**
+> Evidencia en fase de descubrimiento (`NEED-01`) → Necesidad: *"Descubrimiento de eventos viables"* → Historias de Usuario (`US-01.1`, `US-01.2`, `US-01.3`) → **REQ-01**.
+
+**Efecto (Forward) — ¿Qué elementos del sistema impacta?**
+> **REQ-01** → **Diseño Arquitectónico:** Define componentes `Aplicación Web` (vistas de búsqueda), `API Gateway` (enrutamiento de consulta), `Gestión de Eventos` (`ConsultadorEventos`), `Integración de Eventos Externos` (`IProveedorEventosExternos`), y `Capa de Persistencia` (`IRepositorioDeEventos`) → **Implementación:** Módulos de filtrado y adapters → **Pruebas:** Casos de prueba automatizados basados en criterios `AC-01.1` a `AC-01.5`.
 
 **Análisis de impacto**
 - [ ] Reglas de negocio 
