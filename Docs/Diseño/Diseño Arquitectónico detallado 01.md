@@ -56,15 +56,15 @@ flowchart LR
         DB[("Base de datos")]
 
         V -->|"Acceder a las operaciones del sistema"| API
-        API -->|"registrar/validar usuarios"| GU
-        API -->|"Publicar/consultar eventos"| GE
+        API -->|"registrar y validar usuarios"| GU
+        API -->|"Manipular y consultar eventos"| GE
         API -->|"agendar eventos"| AC
 
         GE -->|"traer y formatear los eventos externos"| IE
         
 
-        GU -->|"guardar y consultar datos de los usuarios"| PD
-        GE -->|"guardar y consultar datos de los eventos"| PD
+        GU -->|"guardar y consultar datos de los usuarios en la base de datos"| PD
+        GE -->|"guardar y consultar datos de los eventos en la base de datos"| PD
         AC -->|"guardar y consultar si un evento está agendado"| PD
 
         PD -->|"leer y escribir datos"| DB
@@ -79,12 +79,12 @@ flowchart LR
 | Component | Main responsibility | Requirements / use cases supported | Provided capabilities | Required capabilities | Main dependencies |
 |---|---|---|---|---|---|
 |Vistas | Presenta la plataforma y recibe las acciones del usuario|`REQ-01`,`REQ-02`,`REQ-07`,`REQ-13`|Interactuar con la plataforma| Acceder a las operaciones del sistema | API Gateway|
-|API Gateway | Recibe las solicitudes del usuario y las direcciona al módulo correspondiente| `REQ-01`,`REQ-02`,`REQ-07`,`REQ-13` |Acceder a las operaciones del sistema | Publicar/consultar eventos, registrar/validar usuarios y agendar eventos | Gestión de eventos, Gestión de usuarios, Agendamiento de eventos|
-|Gestión de eventos | Define y Aplica los mecanismos para la publicación, consulta y filtrado de eventos| `REQ-01`,`REQ-02`|Publicar/consultar eventos | Guardar y consultar eventos| Gestión de persistencia de datos|
-|Gestión de usuarios | Registra y valida a los usuarios|`REQ-13`|registrar/validar usuarios | Guardar y consultar datos de los usuarios |Gestión de persistencia de datos|
+|API Gateway | Recibe las solicitudes del usuario y las direcciona al módulo correspondiente| `REQ-01`,`REQ-02`,`REQ-07`,`REQ-13` |Acceder a las operaciones del sistema | Publicar/consultar eventos, registrar, validar usuarios y agendar eventos | Gestión de eventos, Gestión de usuarios, Agendamiento de eventos|
+|Gestión de eventos | Define y Aplica los mecanismos para la publicación, modificación, eliminación, actualización, consulta y filtrado de eventos| `REQ-01`,`REQ-02`|Manipular y consultar eventos | Guardar y consultar eventos en la base de datos| Gestión de persistencia de datos|
+|Gestión de usuarios | Registra y valida a los usuarios|`REQ-13`|registrar y validar usuarios | Guardar y consultar datos de los usuarios en la base de datos |Gestión de persistencia de datos|
 |Integración de eventos externos| solicita los datos de los eventos externos a las Apis proveedoras y formatea los datos obtenidos a la estructura de datos interna del sistema |`REQ-01` |traer y formatear eventos externos| consultar los eventos externos |Apis de eventos externos |
 |Agendamiento de eventos|Agenda eventos al calendario personal del usuario mediante la API de google calendar|`REQ-07`|agendar eventos | guardar evento en el calendario personal del usuario |Google Calendar API|
-|Gestión de persistencia de datos|Proporcionar acceso a los datos almacenados|`REQ-01`,`REQ-02`,`REQ-07`,`REQ-13`|Consultar, guardar y actualizar los datos de los eventos y usuarios | Leer y escribir en la base de datos | Base de datos |
+|Gestión de persistencia de datos | Proporcionar acceso a los datos almacenados|`REQ-01`,`REQ-02`,`REQ-07`,`REQ-13`|Consultar, guardar y actualizar los datos de los eventos y usuarios en la base de datos | Leer y escribir en la base de datos | Base de datos |
 
 
 ---
