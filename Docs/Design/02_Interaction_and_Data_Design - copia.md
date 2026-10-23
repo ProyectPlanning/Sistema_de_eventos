@@ -11,7 +11,6 @@
 > **Convenciones de este documento.** Para separar lo aprobado de lo propuesto se usan cuatro etiquetas:
 > **[APROBADO]** requisito o regla ya validada en `Docs/` · **[DECISIÓN PROPUESTA]** decisión de diseño de este entregable, sujeta a revisión · **[SUPUESTO]** condición que se asume para poder diseñar y que debe confirmarse · **[PREGUNTA ABIERTA]** asunto no resuelto, registrado en la Sección 5 con su identificador `OQ-xx`.
 >
-> Este documento es una **propuesta de diseño**. Nada de lo descrito ha sido implementado ni probado.
 
 ---
 
