@@ -222,8 +222,8 @@ classDiagram
         -urlDatosGov: String
         -urlApiColombia: String
         +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
-        +mapearApiColombia(json: String) EventoDTO
-        +mapearDatosGov(json: String) EventoDTO
+        -mapearApiColombia(json: String) EventoDTO
+        -mapearDatosGov(json: String) EventoDTO
     }
 
     %% Relaciones de Gestión de Eventos
