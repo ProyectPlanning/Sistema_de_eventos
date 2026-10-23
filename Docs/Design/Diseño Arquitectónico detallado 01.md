@@ -210,6 +210,7 @@ classDiagram
         <<interface>>
         +guardar(evento: Evento) Evento
         +obtenerPorId(id: Integer) Evento
+        +obtenerTarifaMinimaDeEvento(id: Integer) Tarifa
         +actualizar(evento: EventoDTO) Boolean
         +buscarPorCriterios(ciudad: String, presupuestoMax: Float) List~Evento~
         +eliminar(id: Integer) Boolean
