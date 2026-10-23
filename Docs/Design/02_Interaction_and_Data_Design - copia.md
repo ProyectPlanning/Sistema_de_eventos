@@ -51,12 +51,12 @@ sequenceDiagram
         GW-->>WEB: rechazo con campo erróneo
         WEB-->>U: resaltar campo y conservar los demás datos
     else filtros válidos
-        CO->>REP: buscarPorCriterios(CriteriosBusqueda con campos opcionales)
+        CO->>REP: buscarPorCriterios(Ciudad, PresupuestoMax)
         REP-->>CO: lista de Evento locales candidatos
         CO->>EXT: obtenerEventosExternos(filtro)
 
         par Consulta a API datos.gov.co (Eventos CTI)
-            EXT->>GOV: consultar catálogo SODA con timeout de 2 s
+            EXT->>GOV: consultar catálogo con timeout de 2 s
             alt respuesta exitosa a tiempo
                 GOV-->>EXT: registros JSON CTI
                 EXT->>EXT: mapearDatosGov(json)
@@ -80,9 +80,9 @@ sequenceDiagram
         end
 
         CO->>CO: unificar y aplicarReglasNegocio (BR-01, BR-02, BR-03, vigencia)
-        CO-->>CE: ResumenEventosDTO(eventos, externosDisponibles)
-        CE-->>GW: ResumenEventosDTO
-        GW-->>WEB: ResumenEventosDTO
+        CO-->>CE: EventosDTO(eventos, externosDisponibles)
+        CE-->>GW: EventosDTO
+        GW-->>WEB: EventosDTO
         alt existen coincidencias
             WEB-->>U: lista de eventos compatibles (aviso si externosDisponibles = false)
         else Flujo alternativo - lista vacía
