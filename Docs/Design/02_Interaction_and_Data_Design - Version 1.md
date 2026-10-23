@@ -8,10 +8,6 @@
 | **Date** | 23/10/2026 |
 | **Inputs** | `Docs/Design/Diseño Arquitectónico detallado 01 (1).md` (Entregable 1 actualizado), Casos de uso y reglas en `Docs/Requirements/` y `Docs/Business Rules/`, Criterios de aceptación, Historias de usuario, ADR-0003 a ADR-0005, Interaction & Contracts Design v0.1 (Clase 13) |
 
-> **Convenciones de este documento.** Para separar lo aprobado de lo propuesto se usan cuatro etiquetas:
-> **[APROBADO]** requisito o regla ya validada en `Docs/` · **[DECISIÓN PROPUESTA]** decisión de diseño de este entregable, sujeta a revisión · **[SUPUESTO]** condición que se asume para poder diseñar y que debe confirmarse · **[PREGUNTA ABIERTA]** asunto no resuelto, registrado en la Sección 5 con su identificador `OQ-xx`.
->
-
 ---
 
 ## 1. Behavior — Selected Use Cases (Comportamiento — Casos de uso seleccionados)
@@ -24,8 +20,6 @@ Se seleccionan dos casos de uso de la Primera Etapa con interacción significati
 | 1.2 | Administrar Eventos — Crear Evento | `REQ-02` / `US-02.1` | Única operación de la Etapa 1 que **modifica** el catálogo; obliga a hacer concreta la autorización (identidad y rol) y la persistencia transaccional del evento con sus tarifas y horario. |
 
 ### 1.1 Consultar y Filtrar Eventos — from requirement REQ-01
-
-**[APROBADO]** Fuente: caso de uso de `REQ-01.md` §4.3 (flujo principal pasos 1–6, flujo alternativo, Excepción A, Excepción B), reglas BR-01, BR-02, BR-03, ADR-0004 (timeout de 2 s y fallback en tiempo real) y `Diseño Arquitectónico detallado 01 (1).md` (adaptador unificado `AdaptadorDeEventosExternos` para consulta de eventos en `datos.gov.co` y `api-colombia.com`, sin normalización geográfica ni caché local).
 
 ```mermaid
 sequenceDiagram
@@ -91,15 +85,6 @@ sequenceDiagram
     end
 ```
 
-**Notas de diseño del diagrama**
-
-- **[SUPUESTO]** `REQ-01` admite como actor a un usuario registrado **o invitado**; por eso el API Gateway enruta la consulta sin exigir token. Si la consulta requiriera sesión, se añadiría el mismo bloque de validación del diagrama 1.2.
-- **[DECISIÓN APROBADA]** Conforme al `Diseño Arquitectónico detallado 01 (1).md`, el componente `AdaptadorDeEventosExternos` unifica la consulta de eventos externos hacia **ambas APIs**: `datos.gov.co` (eventos CTI) y `api-colombia.com` (museos, parques y atracciones culturales tratadas como eventos). **Ambas APIs son fuentes de catálogo de eventos**.
-- **[DECISIÓN APROBADA] Sin almacenamiento en caché local:** Las consultas a los proveedores remotos se realizan en tiempo real directo. No se mantiene ningún mecanismo de caché local en memoria ni en disco, asegurando la frescura instantánea de los datos y reduciendo la complejidad del módulo de integración.
-- **[DECISIÓN PROPUESTA]** El *timeout* (2 s) y el *fallback* ante errores o demoras de los proveedores externos los absorbe internamente `AdaptadorDeEventosExternos`, no `ConsultadorEventos`. El adaptador retorna `ResultadoEventosExternosDTO` con los eventos obtenidos y la bandera `disponibles`. Esto preserva el ocultamiento de información (la capa de aplicación no manipula errores HTTP) y provee a la UI la bandera necesaria para desplegar el aviso informativo de la Excepción B.
-- **[DECISIÓN PROPUESTA]** La decisión de mostrar "sin coincidencias" la toma la Aplicación Web a partir de una lista vacía: para el back-end, una consulta sin resultados es un **éxito**, no una falla.
-- BR-01 y BR-02 se aplican en `aplicarReglasNegocio` sobre **todos** los eventos (locales y externos mapeados a dominio). BR-03 se aplica en dos puntos: `buscarPorCriterios` solo filtra por los criterios provistos y `aplicarReglasNegocio` omite los criterios ausentes.
-
 | Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1 actualizado) |
 |---|---|---|---|
 | Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `U->>WEB`, `WEB->>GW`, `GW->>CE` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req: ConsultaFiltrosDTO)` |
@@ -163,12 +148,6 @@ sequenceDiagram
     end
 ```
 
-**Notas de diseño del diagrama**
-
-- **[APROBADO]** El API Gateway "valida tokens de sesión y autorización por rol" (Entregable 1, tabla de componentes). Para validar el token usa la capacidad `validarSesion(token)` del Módulo de Usuarios, implementada en `GestorUsuarios.validarTokenAcceso(token)`.
-- **[DECISIÓN PROPUESTA]** El `idOrganizador` **siempre** proviene del token validado y nunca del cuerpo de la petición. Así se evita que un usuario cree o modifique eventos a nombre de otro. En el Entregable 1, `ControladorDeEventos.crear(req)` no recibe ese parámetro; el ajuste se registra en la Sección 4.
-- **[DECISIÓN PROPUESTA]** La validación de coherencia vive en la entidad `Evento` y en `HorarioEvento.esValido()`, no en el controlador. Así la misma regla protege también a `modificarEvento`.
-- **[SUPUESTO]** Una falla de persistencia (base de datos no disponible) no está especificada en `REQ-02`. Se trata en el contrato como falla genérica sin cambios de estado y no se dibuja para no inventar comportamiento de interfaz (ver `OQ-09`).
 
 | Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1) |
 |---|---|---|---|
@@ -263,16 +242,6 @@ erDiagram
 | `EVENTO` | Evento local publicado por un organizador; el sistema es su dueño autoritativo. | `id_evento` | `id_organizador` obligatorio (FK a `USUARIO` con rol ORGANIZADOR, validado en lógica); `titulo` y `ciudad` obligatorios; `capacidad_maxima` nula o `> 0`; `cupos_disponibles` nulo o `0 ≤ cupos ≤ capacidad_maxima`, y ambos nulos o ambos no nulos; `estado ∈ {PUBLICADO, CANCELADO}`. |
 | `TARIFA` | Tipo de entrada o localidad con su precio en COP. | `id_tarifa` | `id_evento` obligatorio; `precio_cop ≥ 0` (0 = entrada libre, AC.1.3); `nombre` único dentro del mismo evento; cada evento tiene **al menos una** tarifa (regla aplicada en lógica, ver 2.4). |
 | `HORARIO_EVENTO` | Programación temporal del evento: rango continuo o recurrencia semanal. | `id_horario` | `id_evento` obligatorio y único (1:1); `tipo ∈ {RANGO, RECURRENTE}`; si `RANGO`: `fecha_inicio` y `fecha_fin` obligatorias con `fecha_fin > fecha_inicio`; si `RECURRENTE`: `dias_semana`, `hora_inicio`, `hora_fin`, `fecha_limite` obligatorios. |
-
-**Decisiones del modelo**
-
-| Decisión | Alternativas consideradas | Por qué se elige / trade-off aceptado |
-|---|---|---|
-| **[DECISIÓN PROPUESTA] D-DAT-1 — Entidad `TARIFA` separada** en lugar de las columnas `tarifaMinima` / `tarifaMaxima` del Entregable 1. | (a) Mantener solo `tarifaMinima` y `tarifaMaxima` en `Evento`. (b) Guardar las tarifas en un campo JSONB. | BR-02 equivale a "la menor tarifa **vigente** ≤ presupuesto", así que (a) basta para filtrar, pero pierde las tarifas intermedias, la vigencia por tarifa y los "productos ofrecidos" de `US-02.1`. (b) impide restricciones de integridad (`precio ≥ 0`). Se acepta un *join* adicional en la consulta; `tarifaMinimaVigente()` pasa a ser un valor **derivado**, no almacenado, para evitar inconsistencias. |
-| **[DECISIÓN PROPUESTA] D-DAT-2 — Horario en una sola tabla con discriminador `tipo`.** | (a) Una tabla por subclase (`HORARIO_RANGO`, `HORARIO_RECURRENTE`). (b) JSONB (mencionado en ADR-0003 y en la Decisión B del Entregable 1). | Refleja el polimorfismo `HorarioEvento` con una sola relación 1:1 y permite `CHECK` por tipo. (a) añade *joins* y complejidad de mapeo sin beneficio para dos variantes. (b) no permite validar coherencia en la base de datos. Se aceptan columnas nulas según el tipo. Debe documentarse en el ADR-0006 pendiente. |
-| **[DECISIÓN APROBADA] D-DAT-3 — Ubicación como atributos de texto en `Evento` sin normalización externa.** | Crear tablas maestras `DEPARTAMENTO` / `CIUDAD` o validar contra APIs externas geográficas. | Ambas APIs externas (`datos.gov.co` y `api-colombia.com`) son fuentes de catálogo de eventos; no se requiere normalización geográfica externa. Mantener los atributos directamente en `Evento` evita acoplamiento innecesario y reduce la latencia en las consultas. |
-| **[DECISIÓN PROPUESTA] D-DAT-4 — Aforo opcional** (`capacidad_maxima` y `cupos_disponibles` nulos = sin aforo limitado). | Usar un valor centinela (ej. `-1` o un número muy grande). | BR-01 aplica solo "para eventos con aforo o boletería limitada"; el valor nulo expresa esa condición sin números mágicos. Quién decrementa `cupos_disponibles` en la Etapa 1 queda abierto (`OQ-05`). |
-| **[DECISIÓN PROPUESTA] D-DAT-5 — Cancelación lógica** (`estado = CANCELADO`) en vez de borrado físico. | Borrado físico (`DELETE`). | `US-02.3` habla de "cancelarlo formalmente" y el Entregable 1 ya define `Evento.cancelar()`; conservar el registro habilita `REQ-12` en fases posteriores. Se acepta que las consultas filtren siempre por estado. **Requiere confirmación** (`OQ-04`). |
 
 ### 2.3 Data Ownership (Propiedad de los datos)
 
@@ -403,39 +372,3 @@ erDiagram
 - [ ] Diagrams render correctly on GitHub (or the exported images are embedded). — *Sintaxis revisada manualmente; falta confirmar el render al subir el archivo a GitHub.*
 
 ---
-
-## Decisiones de diseño que requieren revisión
-
-| Decisión | ¿Por qué este enfoque? | Alternativas | Trade-off aceptado | Respaldo | ¿Qué nos haría reconsiderarla? |
-|---|---|---|---|---|---|
-| Fallback y unificación en `AdaptadorDeEventosExternos` sin caché local | Consume ambas APIs (`datos.gov.co` y `api-colombia.com`) como catálogo de eventos en tiempo real, ocultando detalles HTTP y fallas externas al dominio sin la complejidad de estados en memoria o invalidaciones de caché. | Implementar caché en memoria; consultar por separado en adaptadores independientes. | El adaptador concentra la orquestación externa y cada consulta remota se ejecuta en vivo. | Decisión de diseño, Entregable 1 actualizado | Si el tráfico real satura recurrentemente la cuota de 60 req/min de `api-colombia.com`. |
-| Ausencia de normalización geográfica externa | Ambas APIs proveen eventos/atracciones; no se requiere consultar APIs geográficas para normalizar nombres. | Mantener `IProveedorGeografico` con consultas de municipios. | Búsqueda por texto directo en atributos de ubicación. | Instrucción de diseño, Entregable 1 actualizado | Si se introduce autocompletado estricto de municipios desde una fuente oficial. |
-| Entidad `TARIFA` (D-DAT-1) | BR-02 y `US-02.1` trabajan con múltiples tarifas vigentes. | Columnas min/max; JSONB. | Un *join* más por consulta. | BR-02, `US-02.1` | Si el negocio confirma que solo importa el precio mínimo y no se muestran tarifas. |
-| Horario con discriminador (D-DAT-2) | Una relación 1:1 con validación por tipo en la base de datos. | Tabla por subclase; JSONB. | Columnas nulas según el tipo. | Decisión B del Entregable 1 | Aparición de más variantes de horario (ej. múltiples sesiones). |
-| No persistir eventos externos | El dueño es el proveedor; evita datos desactualizados. | Ingesta periódica en una tabla local. | Cada consulta depende de la latencia externa (acotada a 2 s). | Restricción 1 y riesgos de `REQ-01` | Latencias recurrentes cercanas a 2 s o requisito de búsqueda sin conexión. |
-| `idOrganizador` desde el token | Impide suplantar organizadores. | Recibirlo en el cuerpo y validarlo. | Firmas de controlador ligadas al contexto de seguridad. | `REQ-02` ("usuarios autorizados"), API Gateway | Ninguna razón de negocio previsible. |
-| Cancelación lógica (D-DAT-5) | Coincide con `US-02.3` y `Evento.cancelar()`. | Borrado físico. | Todas las consultas filtran por estado. | `US-02.3`, Entregable 1 | Políticas de retención o privacidad que exijan borrar datos. |
-
-## Preguntas abiertas que requieren aporte de stakeholders o del docente
-
-- `OQ-01` semántica del filtro horario y eventos que cruzan la medianoche.
-- `OQ-04` eliminación física vs. cancelación lógica.
-- `OQ-05` responsable de mantener `cupos_disponibles` en la Etapa 1.
-- `OQ-08` motor de base de datos definitivo.
-- `OQ-10` necesidad de revocación de tokens.
-- `OQ-11` orden y límite del listado sin filtros.
-
-## Autoevaluación de ingeniería (escenarios V1–V8)
-
-| Escenario | ¿Demostrable con el diseño propuesto? | Evidencia / brecha |
-|---|---|---|
-| V1 — Filtros combinados | **Sí** | Diagrama 1.1 (rama principal), postcondiciones 1–4 y ejemplo V1. |
-| V2 — BR-02 con múltiples tarifas | **Sí, solo con D-DAT-1** | Con las columnas `tarifaMinima` / `tarifaMaxima` actuales no hay noción de vigencia por tarifa: brecha del Entregable 1 (cambio 2). |
-| V3 — BR-01 | **Sí** | `tieneCupoDisponible()` y `CHECK` de cupos. Brecha: quién mantiene los cupos (`OQ-05`). |
-| V4 — Excepción B | **Sí** | Rama `alt Excepción B`, postcondición 5 y `externosDisponibles`. Requiere el cambio 3 en el pseudocódigo. |
-| V5 — Excepción A | **Sí** | `validarCoherenciaFiltro` antes de cualquier consulta. |
-| V6 — Sin coincidencias | **Sí** | Lista vacía como éxito y mensaje en la UI. |
-| V7 — Sin filtros (BR-03) | **Parcial** | Con la firma actual de `buscarPorCriterios` **no** es posible (cambio 1). Además, el orden (aleatorio o cronológico) no está definido (`OQ-11`). |
-| V8 — Usuario no organizador intenta crear evento | **Sí** | Diagrama 1.2, rama `rol distinto de ORGANIZADOR`: no se invoca `GestorEventos` y el catálogo no cambia. Brecha: el caso de uso formal de `REQ-02` no existe (`OQ-06`). |
-
-> **Conclusión:** las garantías de `REQ-01` y `REQ-02` se sostienen en las tres vistas de este documento **siempre que** se apliquen los cambios 1–4 al Entregable 1. Las brechas restantes son decisiones de negocio pendientes (`OQ-01`, `OQ-05`, `OQ-11`), no defectos del diseño. Nada de esto ha sido implementado ni probado.
