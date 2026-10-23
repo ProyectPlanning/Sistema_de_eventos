@@ -172,7 +172,7 @@ classDiagram
         -ubicacionCiudad: String
         -direccion: String
         -estado: EstadoEvento
-        +Evento(crearEventoDTO: CrearEventoDTO)
+        +Evento(evento: CrearEventoDTO)
         +tieneCupoDisponible() Boolean
         +actualizar(titulo: String, desc: String, horario: HorarioEvento, precio: Float, cupos: Integer)
         +cancelar()
@@ -199,7 +199,7 @@ classDiagram
         -horaInicio: Time
         -horaFin: Time
         -fechaLimite: DateTime
-        +HorarioRango(horario: HorarioDTO)
+        +HorarioRecurrente(horario: HorarioDTO)
         -esValido() Boolean
         +coincideConRango(inicio: DateTime, fin: DateTime) Boolean
         +estaVigente(fechaReferencia: DateTime) Boolean
