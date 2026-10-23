@@ -167,13 +167,12 @@ classDiagram
         -titulo: String
         -descripcion: String
         -horario: HorarioEvento
-        -tarifaMinima: Float
-        -tarifaMaxima: Float
+        -tarifas: List~Tarifa~
         -cuposDisponibles: Integer
         -ubicacionCiudad: String
         -direccion: String
         -estado: EstadoEvento
-        +esCompatibleConFiltro(presupuestoMax: Float, ciudad: String, rango: HorarioRango) Boolean
+        +Evento(crearEventoDTO: CrearEventoDTO)
         +tieneCupoDisponible() Boolean
         +actualizar(titulo: String, desc: String, horario: HorarioEvento, precio: Float, cupos: Integer)
         +cancelar()
@@ -209,6 +208,7 @@ classDiagram
         <<interface>>
         +guardar(evento: Evento) Evento
         +obtenerPorId(id: Integer) Evento
+        +actualizar(evento: EventoDTO) Boolean
         +buscarPorCriterios(ciudad: String, presupuestoMax: Float) List~Evento~
         +eliminar(id: Integer) Boolean
     }
