@@ -365,7 +365,7 @@ erDiagram
 | ID | Pregunta | Consecuencia si no se resuelve | Decisión necesaria / responsable |
 |---|---|---|---|
 | `OQ-01` | ¿El filtro horario usa **contención total** (AC.1.1) o **solapamiento parcial**? ¿Cómo se tratan los eventos que cruzan la medianoche (ej. 21:00–03:00)? | `coincideConRango` y el `CHECK hora_fin > hora_inicio` pueden excluir eventos nocturnos válidos o incluir eventos no compatibles. | Equipo con el docente; reflejar en AC.1.1 y en `HorarioRango`. |
-| `OQ-02` | ¿El rango horario incluye fecha (`US-01.2` habla de "días y horarios") o solo horas (AC.1.1)? Si solo trae horas, ¿qué fecha se asume? | El contrato podría no reflejar lo que captura la UI. | Equipo (UX y requerimientos). |
+| `OQ-02` | **[CERRADA / RESUELTA]** ¿El rango horario incluye fecha (`US-01.2` habla de "días y horarios") o solo horas (AC.1.1)? Si solo trae horas, ¿qué fecha se asume? | El contrato podría no reflejar lo que captura la UI. | Equipo (UX y requerimientos). |
 | `OQ-03` | ¿Los eventos externos se persisten localmente o solo se consultan en tiempo real? | Persistirlos cambia la Sección 2.1, añade una entidad y un proceso de sincronización y crea riesgo de datos desactualizados. | Equipo; hoy: no persistir (decisión propuesta). |
 | `OQ-04` | ¿"Eliminar evento" (`US-02.3`) es borrado físico o cancelación lógica? | Afecta el modelo (`estado`), las consultas y la futura `REQ-12`. | Stakeholders / docente; hoy: cancelación lógica (D-DAT-5). |
 | `OQ-05` | En la Etapa 1, sin reservas ni marcado de asistencia, ¿quién actualiza `cupos_disponibles`? ¿Solo el organizador vía `REQ-02`? | BR-01 dependería de datos que nadie mantiene. | Stakeholders. |
