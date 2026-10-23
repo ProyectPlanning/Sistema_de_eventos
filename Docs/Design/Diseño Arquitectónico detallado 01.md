@@ -325,7 +325,7 @@ classDiagram
 | Clase | Componente al que pertenece | Responsabilidad | Colaboradores clave |
 |---|---|---|---|
 | `ControladorDeEventos` | Gestión de Eventos | Expone endpoints HTTP de la capa de entrada para consultar y administrar eventos; valida esquemas de entrada. | `ConsultadorEventos`, `GestorEventos` |
-| `ConsultadorEventos` | Gestión de Eventos | Coordina la consulta a la persistencia local y a los adaptadores externos (`datos.gov.co` y `api-colombia.com`), unifica resultados y aplica filtros de dominio (BR-01, BR-02, BR-03). | `IRepositorioDeEventos`, `IProveedorEventosExternos`, `IProveedorGeografico` |
+| `ConsultadorEventos` | Gestión de Eventos | Coordina la consulta a la persistencia local y al adaptador externo unificado, unifica resultados y aplica filtros de dominio (BR-01, BR-02, BR-03). | `IRepositorioDeEventos`, `IProveedorEventosExternos` |
 | `GestorEventos` | Gestión de Eventos | Aplica reglas de creación, actualización y eliminación de eventos locales, validando permisos del organizador. | `Evento`, `IRepositorioDeEventos` |
 | `Evento` | Gestión de Eventos | Entidad de dominio raíz que encapsula el estado, tarifas, aforo y validaciones de vigencia y precio de un evento. | `HorarioEvento` |
 | `HorarioEvento` | Gestión de Eventos | Clase abstracta (Value Object) que define el contrato de validación y solapamiento temporal. | Ninguno |
@@ -333,9 +333,7 @@ classDiagram
 | `HorarioRecurrente` | Gestión de Eventos | Especialización de horario para eventos periódicos por días de la semana y franja horaria. | `HorarioEvento` |
 | `IRepositorioDeEventos` | Capa de Persistencia | Interfaz de abstracción DAO para operaciones de persistencia y búsqueda relacional de eventos. | `Evento` |
 | `IProveedorEventosExternos` | Integración de Eventos Externos | Interfaz que define el contrato para recuperar eventos de fuentes remotas. | `ResultadoEventosExternosDTO` |
-| `AdaptadorEventosDatosGov` | Integración de Eventos Externos | Implementa el consumo HTTP de `datos.gov.co`, gestionando timeouts (2 s) y mapeando JSON SODA a entidades de dominio. | (API de Datos Abiertos Gov.co) |
-| `IProveedorGeografico` | Integración de Eventos Externos | Interfaz que define la consulta de departamentos y municipios normalizados de Colombia. | `AdaptadorApiColombia` |
-| `AdaptadorApiColombia` | Integración de Eventos Externos | Consume `https://api-colombia.com/` aplicando **estrategia de caché local en memoria** para respetar el límite de 60 req/min por IP. | (API Colombia) |
+| `AdaptadorDeEventosExternos` | Integración de Eventos Externos | Implementa el consumo HTTP unificado de `datos.gov.co` y `api-colombia.com`, gestionando mapeos a entidades de dominio, timeouts y aplicando la estrategia de caché local. | (API de Datos Abiertos Gov.co, API Colombia) |
 | `ControladorDeUsuarios` | Módulo de Usuarios y Perfiles | Expone endpoints HTTP para registro y autenticación de usuarios. | `GestorUsuarios` |
 | `GestorUsuarios` | Módulo de Usuarios y Perfiles | Aplica lógica de negocio de registro: verificación de email único, hashing de contraseña, expedición de tokens y solicitud de email de bienvenida. | `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken`, `IServicioNotificaciones` |
 | `Usuario` | Módulo de Usuarios y Perfiles | Entidad de dominio que representa al usuario, su perfil, rol (Asistente/Organizador) y validación de hash de contraseña. | Ninguno |
