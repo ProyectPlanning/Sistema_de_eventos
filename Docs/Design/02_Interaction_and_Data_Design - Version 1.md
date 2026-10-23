@@ -126,7 +126,7 @@ sequenceDiagram
             GW-->>WEB: rechazo por falta de autorización
             WEB-->>O: informar que no tiene permisos de organizador
         else rol ORGANIZADOR
-            GW->>CE: crear(CrearEventoDTO, idOrganizador tomado del token)
+            GW->>CE: crear(evento)
             CE->>GE: crearEvento(datos, idOrganizador)
             GE->>EV: construir Evento con horario, tarifas y capacidad
             EV->>EV: validar horario (esValido), al menos una tarifa, valores no negativos
@@ -174,8 +174,8 @@ sequenceDiagram
 | **Evento local** (título, descripción, ubicación, capacidad, cupos, estado, organizador) | Consultar (`REQ-01`), Crear/Modificar/Eliminar (`REQ-02`) | **Sí** | El sistema es el dueño autoritativo de los eventos creados por organizadores. |
 | **Tarifas del evento** (nombre, precio, vigencia) | Consultar (`REQ-01`, BR-02), Crear (`REQ-02`) | **Sí** | BR-02 trabaja sobre *múltiples* tarifas vigentes; `US-02.1` exige registrar los "productos ofrecidos". |
 | **Horario del evento** (rango continuo o recurrente) | Consultar (`REQ-01`, filtro horario), Crear (`REQ-02`) | **Sí** | Es parte del estado del evento; el Entregable 1 lo modela como `HorarioRango` / `HorarioRecurrente`. |
-| **Eventos externos** (`datos.gov.co` y `api-colombia.com`) | Consultar (`REQ-01`) | **No** **[DECISIÓN APROBADA]** | Su dueño son los proveedores externos y el sistema no controla su ciclo de vida (Restricción 1 de `REQ-01`). Persistirlos crearía copias desactualizadas. Se consultan en tiempo real vía `AdaptadorDeEventosExternos` con timeout de 2 s, sin implementar almacenamiento en caché local. |
-| **Zonas y ubicaciones geográficas** | Consultar (`REQ-01`) | **No** **[DECISIÓN APROBADA]** | No se cuenta ni se requiere un catálogo de normalización geográfica externa. Los filtros de país, departamento y ciudad se contrastan directamente contra los atributos textuales de ubicación de los eventos locales y remotos. |
+| **Eventos externos** (`datos.gov.co` y `api-colombia.com`) | Consultar (`REQ-01`) | **No** | Su dueño son los proveedores externos y el sistema no controla su ciclo de vida (Restricción 1 de `REQ-01`). Persistirlos crearía copias desactualizadas. Se consultan en tiempo real vía `AdaptadorDeEventosExternos` con timeout de 2 s, sin implementar almacenamiento en caché local. |
+| **Zonas y ubicaciones geográficas** | Consultar (`REQ-01`) | **No** | No se cuenta ni se requiere un catálogo de normalización geográfica externa. Los filtros de país, departamento y ciudad se contrastan directamente contra los atributos textuales de ubicación de los eventos locales y remotos. |
 | **Filtros de búsqueda y resultados** | Consultar (`REQ-01`) | **No** | Son transitorios por petición; ningún requerimiento de la Etapa 1 pide historial de búsquedas. |
 | **Token de sesión** | Autenticar (`REQ-13`), Crear Evento (`REQ-02`) | **No** **[SUPUESTO]** | Se asume un token autocontenido y firmado (JWT, Entregable 1 `IProveedorDeToken`). Si se exigiera revocación o cierre de sesión forzado, habría que persistir una lista de revocación (`OQ-10`). |
 | **Correo de confirmación enviado** | Registrar (`REQ-13`) | **No** | Lo despacha y conserva la API de Gmail; ningún requerimiento pide auditoría de envíos. |
