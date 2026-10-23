@@ -319,17 +319,17 @@ erDiagram
 
 **Testable examples**
 
-*Datos de prueba locales (todos en estado PUBLICADO y vigentes):* **E1** "Concierto Parque", Bogotá, 19:00–21:00, tarifas General $20.000 y VIP $50.000, cupos 30/100. **E2** "Taller Arte", Bogotá, 18:30–20:00, tarifa única $35.000, cupos 0/20. **E3** "Feria Libro", Bogotá, 18:00–22:00, Entrada libre $0, sin aforo limitado. **E4** "Obra Teatro", Bogotá, 14:00–16:00, tarifa $15.000, cupos 10/50. **E5** "Expo Medellín", Medellín, 09:00–11:00, tarifa $40.000, sin aforo limitado.
+*Datos de prueba locales (todos en estado PUBLICADO y vigentes):* **E1** "Concierto Parque", Bogotá, hoy 19:00–21:00, tarifas General $20.000 y VIP $50.000, cupos 30/100. **E2** "Taller Arte", Bogotá, hoy 18:30–20:00, tarifa única $35.000, cupos 0/20. **E3** "Feria Libro", Bogotá, hoy 18:00–22:00, Entrada libre $0, sin aforo limitado. **E4** "Obra Teatro", Bogotá, hoy 14:00–16:00, tarifa $15.000, cupos 10/50. **E5** "Expo Medellín", Medellín, hoy 09:00–11:00, tarifa $40.000, sin aforo limitado.
 
 | Case | Before | Request | Expected |
 |---|---|---|---|
-| V1 — Filtros combinados (AC.1.1) | E1–E5 cargados; APIs externas responden sin eventos de Bogotá | `ciudad = Bogotá, presupuestoMaximo = 50000, rango = hoy 18:00–22:00` | `eventos = [E1, E3]`, `externosDisponibles = true`. E2 se excluye por BR-01 y E4 por horario. |
+| V1 — Filtros combinados (AC.1.1) | E1–E5 cargados; APIs externas responden sin eventos de Bogotá | `ciudad = Bogotá, presupuestoMaximo = 50000, rango = hoy 18:00–22:00` | `eventos = [E1, E3]`. E2 se excluye por BR-01 y E4 por horario. |
 | V2 — BR-02 con múltiples tarifas | Igual | `ciudad = Bogotá, presupuestoMaximo = 30000` | E1 califica (General $20.000 ≤ $30.000, aunque VIP sea $50.000); también E3 y E4. E2 se excluye por BR-02 ($35.000 > $30.000) y además por BR-01. |
 | V3 — BR-01 | Igual | `ciudad = Bogotá, presupuestoMaximo = 40000, rango = hoy 18:00–22:00` | E2 (compatible en precio y horario, cupos = 0) **no** aparece. |
 | V4 — Excepción B | Igual; APIs externas no responden en 2 s | Mismo filtro de V1 | `eventos = [E1, E3]` (solo `LOCAL`), `externosDisponibles = false`; la UI muestra el aviso. Catálogo local sin cambios. |
 | V5 — Excepción A | Igual | `presupuestoMaximo = -1000` o `rango = hoy 22:00–18:00` | `ErrorValidacion(campo = presupuestoMaximo o rangoHorario)`; no se consulta repositorio ni APIs externas. |
 | V6 — Sin coincidencias (AC.1.2) | Igual | `ciudad = Medellín, presupuestoMaximo = 10000, rango = hoy 08:00–12:00` | `eventos = []`, éxito; la UI informa y sugiere ajustar filtros. |
-| V7 — Sin filtros (BR-03, AC.1.5) | Igual | `{}` | Éxito con el listado general de eventos vigentes, que incluye E2 solo si BR-01 no aplica (aquí E2 se excluye por cupos = 0). |
+| V7 — Sin filtros (BR-03, AC.1.5) | Igual | `{}` | Éxito con el listado general de eventos vigentes, aquí E2 se excluye por cupos = 0. |
 
 ---
 
