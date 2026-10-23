@@ -151,6 +151,7 @@ classDiagram
         -proveedorExterno: IProveedorEventosExternos
         +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~
         -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
+        -validarCoherenciaFiltro(filtro: FiltroEventosDTO) Boolean
     }
 
     class GestorEventos {
@@ -368,7 +369,7 @@ consultarEventos(filtro):
     
     listaFinal = []
     FOR evento IN eventosConsolidados:
-        IF evento.tieneCupoDisponible() Y evento.tarifaMinima <= filtro.presupuestoMaximo:
+        IF evento.tieneCupoDisponible() Y repositorio.tarifaMinimaDeEvento(evento.id) <= filtro.presupuestoMaximo:
             IF filtro.rangoHorario ES NULO O evento.horario.coincideConRango(filtro.rangoHorario):
                 listaFinal.agregar(mapearADTO(evento))
                 
