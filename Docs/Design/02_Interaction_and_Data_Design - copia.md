@@ -205,7 +205,7 @@ sequenceDiagram
 ### 2.2 Data model (Modelo de datos)
 
 **Representación elegida: Opción A — Relacional.**
-> Los datos de la Etapa 1 son entidades fuertemente relacionadas (usuario → evento → tarifas/horario), con restricciones de integridad (email único, FK de organizador, valores no negativos), y la creación de un evento con sus tarifas y horario debe ser **atómica**. Esto encaja con un modelo relacional ACID, coherente con ADR-0003 y ADR-0005. El modelo es independiente del motor concreto (ver la discrepancia PostgreSQL vs. "embebida/local" en `OQ-08`).
+> Los datos de la Etapa 1 son entidades fuertemente relacionadas (usuario → evento → tarifas/horario), con restricciones de integridad (email único, FK de organizador, valores no negativos), y la creación de un evento con sus tarifas y horario debe ser **atómica**. Esto encaja con un modelo relacional ACID, coherente con ADR-0003 y ADR-0005.
 
 ```mermaid
 erDiagram
@@ -371,7 +371,7 @@ erDiagram
 | `OQ-05` | En la Etapa 1, sin reservas ni marcado de asistencia, ¿quién actualiza `cupos_disponibles`? ¿Solo el organizador vía `REQ-02`? | BR-01 dependería de datos que nadie mantiene. | Stakeholders. |
 | `OQ-06` | `REQ-02` y `REQ-13` no tienen caso de uso formal (flujos y excepciones). | El diagrama 1.2 se basa en pasos derivados (marcados como supuesto). | Equipo: redactar los casos de uso en `Docs/Requirements/`. |
 | `OQ-07` | **[CERRADA / RESUELTA]** Normalización geográfica externa: se acordó que no se normaliza nada contra APIs externas; `api-colombia.com` y `datos.gov.co` son proveedores de eventos. La búsqueda geográfica opera por coincidencia directa de texto/atributos. | N/A — Resuelta en diseño v1.0. | Equipo Power Rangers. |
-| `OQ-08` | ¿Motor definitivo: PostgreSQL (ADR-0003) o relacional embebida/SQLite (ADR-0005, `REQ-01`)? | Inconsistencia documental; afecta tipos (`decimal`, `time`) y la concurrencia en la restricción `UNIQUE (email)`. | Equipo; actualizar ADRs. |
+| `OQ-08` | **[CERRADA / RESUELTA]** ¿Motor definitivo: PostgreSQL (ADR-0003) o relacional embebida/SQLite (ADR-0005, `REQ-01`)? | Inconsistencia documental; afecta tipos (`decimal`, `time`) y la concurrencia en la restricción `UNIQUE (email)`. | Equipo; actualizar ADRs. |
 | `OQ-09` | ¿Qué ve el usuario si la base de datos local no está disponible? `REQ-01` y `REQ-02` no lo especifican. | El contrato define `ErrorServicioNoDisponible` como supuesto. | Equipo. |
 | `OQ-10` | ¿Se requiere revocar tokens (cierre de sesión forzado, cuenta desactivada)? | Si sí, habría que persistir tokens o una lista de revocación (Sección 2.1). | Stakeholders / seguridad. |
 | `OQ-11` | BR-03 sin filtros: ¿"aleatorio" (Reglas de negocio) o "orden cronológico" (`REQ-01` Escenario 4)? ¿Hay límite de resultados (AC.1.4 menciona "límite")? | Resultados no deterministas dificultan las pruebas; sin límite, la respuesta puede crecer sin control. | Equipo / docente. |
