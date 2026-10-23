@@ -77,7 +77,7 @@ flowchart LR
         GW -->|"enrutar consultas y gestión de eventos"| GE
 
         GE -->|"recuperar eventos externos y zonas"| IE
-        IE -->|"consultar municipios (con caché)"| API_COL
+        IE -->|"consultar museos y parques (con caché)"| API_COL
         IE -->|"consultar catálogo público"| API_GOV
 
         GE -->|"persistir y consultar eventos"| PERS
