@@ -188,7 +188,8 @@ classDiagram
     class HorarioRango {
         -fechaInicio: DateTime
         -fechaFin: DateTime
-        +esValido() Boolean
+        +HorarioRango(horario: HorarioDTO)
+        -esValido() Boolean
         +coincideConRango(inicio: DateTime, fin: DateTime) Boolean
         +estaVigente(fechaReferencia: DateTime) Boolean
     }
@@ -198,7 +199,8 @@ classDiagram
         -horaInicio: Time
         -horaFin: Time
         -fechaLimite: DateTime
-        +esValido() Boolean
+        +HorarioRango(horario: HorarioDTO)
+        -esValido() Boolean
         +coincideConRango(inicio: DateTime, fin: DateTime) Boolean
         +estaVigente(fechaReferencia: DateTime) Boolean
     }
