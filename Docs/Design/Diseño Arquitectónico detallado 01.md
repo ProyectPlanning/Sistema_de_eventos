@@ -135,7 +135,6 @@ flowchart LR
 para mejor lectura se dividio en dos diagramas estructurales enfocados en cada controlador y módulo principal:
 
 #### 3.2.1 Diagrama de Clases — Componente Gestión de Eventos (`ControladorDeEventos`)
-
 ```mermaid
 classDiagram
     %% Capa de Entrada
@@ -150,7 +149,6 @@ classDiagram
     class ConsultadorEventos {
         -repositorio: IRepositorioDeEventos
         -proveedorExterno: IProveedorEventosExternos
-        -proveedorGeografico: IProveedorGeografico
         +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~
         -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
     }
@@ -220,23 +218,12 @@ classDiagram
         +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
     }
 
-    class AdaptadorEventosDatosGov {
+    class AdaptadorDeEventosExternos {
         -urlDatosGov: String
-        -timeoutMs: Integer
+        -urlApiColombia: String
         +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
-        -mapearJsonSODA(json: String) Evento
-    }
-
-    class IProveedorGeografico {
-        <<interface>>
-        +obtenerMunicipiosPorDepartamento(depto: String) List~String~
-    }
-
-    class AdaptadorApiColombia {
-        -cacheLocal: Map~String, List~String~~
-        -urlBase: String
-        +obtenerMunicipiosPorDepartamento(depto: String) List~String~
-        -cargarYCachearDatos()
+        +mapearApiColombia(json: String) EventoDTO
+        +mapearDatosGov(json: String) EventoDTO
     }
 
     %% Relaciones de Gestión de Eventos
@@ -244,9 +231,7 @@ classDiagram
     ControladorDeEventos --> GestorEventos : delega administración (REQ-02)
     ConsultadorEventos --> IRepositorioDeEventos : consulta locales
     ConsultadorEventos --> IProveedorEventosExternos : consulta externos
-    ConsultadorEventos --> IProveedorGeografico : normaliza zonas
-    IProveedorEventosExternos <|.. AdaptadorEventosDatosGov : implementa
-    IProveedorGeografico <|.. AdaptadorApiColombia : implementa
+    IProveedorEventosExternos <|.. AdaptadorDeEventosExternos : implementa
     GestorEventos --> Evento : manipula
     GestorEventos --> IRepositorioDeEventos : persiste
     Evento "1" *-- "1" HorarioEvento : delega reglas temporales
@@ -254,7 +239,10 @@ classDiagram
     HorarioEvento <|-- HorarioRecurrente : especializa
 ```
 
+
 ---
+
+
 
 #### 3.2.2 Diagrama de Clases — Componente Módulo de Usuarios y Perfiles (`ControladorDeUsuarios`)
 
