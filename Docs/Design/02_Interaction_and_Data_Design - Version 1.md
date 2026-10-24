@@ -87,7 +87,7 @@ sequenceDiagram
 
 | Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1 actualizado) |
 |---|---|---|---|
-| Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `ingresar filtros`,`solicitar consulta`,`consultar`,`consultarEventos` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req: ConsultaFiltrosDTO)`, ConsultadorEventos.consultarEventos(filtro: FiltroEventosDTO)|
+| Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `ingresar filtros`,`solicitar consulta`,`consultar`,`consultarEventos` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req)`, ConsultadorEventos.consultarEventos(filtro)|
 | Flujo principal, paso 3 (validar formato y coherencia) | `validarCoherenciaFiltro` | `FiltroEventosDTO` | `ConsultadorEventos.validarCoherenciaFiltro(filtro)`|
 | Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios` | `zonaGegrafica`,`presupuestoMax`,lista de `Evento` | `IRepositorioDeEventos.buscarPorCriterios(zonaGegrafica, presupuestoMax)`|
 | Flujo principal, paso 5 (consultar APIs de eventos externas) | `obtenerEventosExternos` | Filtro → `ResultadoEventosExternosDTO` | `IProveedorEventosExternos.obtenerEventosExternos(filtro)` implementado por `AdaptadorDeEventosExternos` |
@@ -111,8 +111,8 @@ sequenceDiagram
     participant EV as Evento
     participant REP as IRepositorioDeEventos
 
-    O->>WEB: completar formulario (título, descripción, horario, ubicación, tarifas, capacidad)
-    WEB->>GW: solicitar creación con token de sesión y CrearEventoDTO
+    O->>WEB: completar formulario para creación de evento
+    WEB->>GW: solicitar crear evento
     GW->>GU: validarTokenAcceso(token)
 
     alt token ausente, inválido o expirado
@@ -125,18 +125,18 @@ sequenceDiagram
             GW-->>WEB: rechazo por falta de autorización
             WEB-->>O: informar que no tiene permisos de organizador
         else rol ORGANIZADOR
-            GW->>CE: crear(evento)
+            GW->>CE: crear(req)
             CE->>GE: crearEvento(datos, idOrganizador)
-            GE->>EV: construir Evento con horario, tarifas y capacidad
-            EV->>EV: validar horario (esValido), al menos una tarifa, valores no negativos
+            GE->>EV: construir evento
+            EV->>EV: validar los datos del evento
             alt datos incoherentes
-                EV-->>GE: ErrorValidacion(campos)
-                GE-->>CE: ErrorValidacion(campos)
-                CE-->>GW: error de validación
+                EV-->>GE: campos inválidos
+                GE-->>CE: campos inválidos
+                CE-->>GW: campos inválidos
                 GW-->>WEB: rechazo con campos erróneos
                 WEB-->>O: señalar campos a corregir
             else datos válidos
-                GE->>REP: guardar(evento) en una sola transacción
+                GE->>REP: guardar(evento)
                 REP-->>GE: Evento con id asignado
                 GE-->>CE: EventoDTO
                 CE-->>GW: EventoDTO
@@ -150,16 +150,16 @@ sequenceDiagram
 
 | Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1) |
 |---|---|---|---|
-| Paso 1 — Organizador ingresa datos del evento (`US-02.1`) | `O->>WEB` | Título, descripción, horario, ubicación, tarifas, capacidad | Aplicación Web — captura de formularios |
-| Paso 2 — Enviar solicitud de creación **[SUPUESTO: paso derivado]** | `WEB->>GW` | Token + `CrearEventoDTO` | API Gateway — enrutamiento |
-| Paso 3 — Verificar identidad y rol (`REQ-02`: "usuarios autorizados") | `GW->>GU`, `GU-->>GW` | Token → `UsuarioDTO(id, rol)` | `GestorUsuarios.validarTokenAcceso(token)` / capacidad `validarSesion(token)` |
-| Paso 4 — Delegar creación | `GW->>CE`, `CE->>GE` | `CrearEventoDTO`, `idOrganizador` | `ControladorDeEventos.crear(...)`, `GestorEventos.crearEvento(datos, idOrganizador)` |
-| Paso 5 — Validar coherencia de horario, tarifas y capacidad (`REQ-02`) | `GE->>EV`, `EV->>EV` | Datos del evento | `Evento` (constructor / `actualizar`), `HorarioEvento.esValido()` |
-| Paso 6 — Persistir evento | `GE->>REP`, `REP-->>GE` | `Evento` → `Evento` con id | `IRepositorioDeEventos.guardar(evento)` |
-| Paso 7 — Confirmar publicación **[SUPUESTO: paso derivado]** | `GE-->>CE` … `WEB-->>O` | `EventoDTO` | `ControladorDeEventos.crear` → `EventoDTO` |
-| Excepción — token inválido **[SUPUESTO: derivada de la responsabilidad del Gateway]** | `alt token ausente, inválido o expirado` | Rechazo de autenticación | API Gateway / `validarTokenAcceso` |
-| Excepción — rol no organizador | `alt rol distinto de ORGANIZADOR` | Rechazo de autorización | API Gateway (autorización por rol), `Usuario.esOrganizador()` |
-| Excepción — datos incoherentes | `alt datos incoherentes` | `ErrorValidacion(campos)` | `Evento` / `HorarioEvento.esValido()` |
+| Paso 1 — Organizador ingresa los datos del evento | `completar formulario para creación de evento` | `CrearEventoDTO` | Aplicación Web — captura de formularios |
+| Paso 2 — Enviar solicitud de creación  | `solicitar crear evento` | Token, `CrearEventoDTO` | API Gateway — enrutamiento |
+| Paso 3 — Verificar identidad y rol | `validarTokenAcceso(token)` | Token ,`UsuarioDTO` | `GestorUsuarios.validarTokenAcceso(token)` |
+| Paso 4 — Delegar creación | `crear(req)` | `CrearEventoDTO`, `idOrganizador` | `ControladorDeEventos.crear(req)`, `GestorEventos.crearEvento(datos, idOrganizador)` |
+| Paso 5 — Validar coherencia de los datos del evento | `construir evento` | Datos del evento | constructor de `Evento`, `HorarioEvento.esValido()` |
+| Paso 6 — Persistir evento | `guardar(evento)` | `Evento` sin id asignada,`Evento` con id asignada | `IRepositorioDeEventos.guardar(evento)` |
+| Paso 7 — Confirmar publicación| `EventoDTO`,`confirmar pulicacíon de evento` | `EventoDTO` | `ControladorDeEventos.crear` → `EventoDTO` |
+| token inválido | `token ausente, inválido o expirado` | Rechazo de autenticación | API Gateway / `validarTokenAcceso` |
+| rol distinto de organizador | `rol distinto de ORGANIZADOR` | mensaje de Rechazo de autorización | API Gateway (autorización por rol), `Usuario.esOrganizador()` |
+| datos de evento inválidos | `datos incoherentes` | `ErrorValidacion(campos)` | constructor de `Evento` , `HorarioEvento.esValido()` |
 
 ---
 
