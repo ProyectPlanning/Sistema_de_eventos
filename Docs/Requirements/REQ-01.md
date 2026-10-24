@@ -105,13 +105,14 @@
 
 **Escenario 1 — Filtros combinados con coincidencias (Camino normal)**
 > **Dado** que el usuario se encuentra en la pantalla de búsqueda de actividades y existen eventos vigentes registrados en "Colombia", departamento "Bogotá D.C.", ciudad "Bogotá",  
-> **cuando** ingresa como presupuesto máximo "$50.000 COP", selecciona la ciudad "Bogotá" y define un rango horario de "18:00 a 22:00",  
+> **cuando** ingresa como presupuesto máximo "$50.000 COP", selecciona la ciudad "Bogotá" y define un rango horario de "hoy a las 18:00 a 22:00",  
 > **entonces** el sistema retorna y despliega la lista de eventos cuya ubicación coincida con "Bogotá", cuya tarifa mínima vigente sea menor o igual a $50.000 COP (conforme a BR-02), cuyo horario esté comprendido en el rango indicado y que tengan al menos 1 cupo disponible (conforme a BR-01).
 
 **Escenario 2 — Búsqueda sin coincidencias compatibles (Camino alternativo)**
-> **Dado** que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10.000 COP" en el rango de "08:00 a 12:00",  
+> **Dado** que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10.000 COP" en el rango de "hoy a las 08:00 a 12:00",  
 > **cuando** el usuario ejecuta la consulta con dichos filtros,  
 > **entonces** el sistema informa claramente que no se encontraron eventos que satisfagan todos los criterios simultáneamente.
+
 **Escenario 3 — Búsqueda de eventos de acceso libre / gratuitos**
 > **Dado** que existen eventos vigentes de entrada libre ($0 COP) en la ciudad seleccionada dentro del rango horario del usuario,  
 > **cuando** el usuario ejecuta la búsqueda ingresando un presupuesto máximo de "$0 COP",  
