@@ -170,20 +170,18 @@ sequenceDiagram
 | Information | Needed by (use cases) | Persisted? | Why (or why not) |
 |---|---|---|---|
 | **Usuario** (identificación, email, hash de contraseña, rol, estado) | Registrar/Autenticar (`REQ-13`), Crear Evento (`REQ-02`, autorización) | **Sí** | Es propiedad del sistema y debe sobrevivir entre sesiones; el email único y el rol son la base de la autorización. |
-| **Evento local** (título, descripción, ubicación, capacidad, cupos, estado, organizador) | Consultar (`REQ-01`), Crear/Modificar/Eliminar (`REQ-02`) | **Sí** | El sistema es el dueño autoritativo de los eventos creados por organizadores. |
-| **Tarifas del evento** (nombre, precio, vigencia) | Consultar (`REQ-01`, BR-02), Crear (`REQ-02`) | **Sí** | BR-02 trabaja sobre *múltiples* tarifas vigentes; `US-02.1` exige registrar los "productos ofrecidos". |
-| **Horario del evento** (rango continuo o recurrente) | Consultar (`REQ-01`, filtro horario), Crear (`REQ-02`) | **Sí** | Es parte del estado del evento; el Entregable 1 lo modela como `HorarioRango` / `HorarioRecurrente`. |
-| **Eventos externos** (`datos.gov.co` y `api-colombia.com`) | Consultar (`REQ-01`) | **No** | Su dueño son los proveedores externos y el sistema no controla su ciclo de vida (Restricción 1 de `REQ-01`). Persistirlos crearía copias desactualizadas. Se consultan en tiempo real vía `AdaptadorDeEventosExternos` con timeout de 2 s, sin implementar almacenamiento en caché local. |
-| **Zonas y ubicaciones geográficas** | Consultar (`REQ-01`) | **No** | No se cuenta ni se requiere un catálogo de normalización geográfica externa. Los filtros de país, departamento y ciudad se contrastan directamente contra los atributos textuales de ubicación de los eventos locales y remotos. |
-| **Filtros de búsqueda y resultados** | Consultar (`REQ-01`) | **No** | Son transitorios por petición; ningún requerimiento de la Etapa 1 pide historial de búsquedas. |
-| **Token de sesión** | Autenticar (`REQ-13`), Crear Evento (`REQ-02`) | **No** **[SUPUESTO]** | Se asume un token autocontenido y firmado (JWT, Entregable 1 `IProveedorDeToken`). Si se exigiera revocación o cierre de sesión forzado, habría que persistir una lista de revocación (`OQ-10`). |
-| **Correo de confirmación enviado** | Registrar (`REQ-13`) | **No** | Lo despacha y conserva la API de Gmail; ningún requerimiento pide auditoría de envíos. |
-| **Reportes de eventos sospechosos** | Mitigación de riesgo de `REQ-01` | **No en esta etapa** | El README lo programa para el Incremento 2; no se diseña aquí para no adelantar alcance. |
+| **Evento local** | Consultar (`REQ-01`), Crear/Modificar/Eliminar (`REQ-02`) | **Sí** | El sistema es el dueño autoritativo de los eventos creados por organizadores. |
+| **Tarifas del evento** | Consultar (`REQ-01`, BR-02), Crear (`REQ-02`) | **Sí** | BR-02 trabaja sobre múltiples tarifas vigentes; `US-02.1` exige registrar los productos ofrecidos.|
+| **Eventos externos** (`datos.gov.co` y `api-colombia.com`) | Consultar (`REQ-01`) | **No** | Su dueño son los proveedores externos y el sistema no controla su ciclo de vida. Persistirlos crearía copias desactualizadas. Se consultan en tiempo real vía `AdaptadorDeEventosExternos` con timeout de 2 s.|
+| **Filtros de búsqueda y resultados** | Consultar (`REQ-01`) | **No** | Son transitorios por petición |
+| **Token de sesión** | Autenticar (`REQ-13`), Crear Evento (`REQ-02`) | **No** | Se asume un token autocontenido y firmado (JWT, Entregable 1 `IProveedorDeToken`).|
+| **Correo de confirmación enviado** | Registrar (`REQ-13`) | **No** | Lo despacha y conserva la API de Gmail.|
+
 
 ### 2.2 Data model (Modelo de datos)
 
 **Representación elegida: Opción A — Relacional.**
-> Los datos de la Etapa 1 son entidades fuertemente relacionadas (usuario → evento → tarifas/horario), con restricciones de integridad (email único, FK de organizador, valores no negativos), y la creación de un evento con sus tarifas y horario debe ser **atómica**. Esto encaja con un modelo relacional ACID, coherente con ADR-0003 y ADR-0005.
+> Los datos de la Etapa 1 son entidades fuertemente relacionadas (usuario → evento → tarifas/horario), con restricciones de integridad (email único, FK de organizador, valores no negativos), y la creación de un evento con sus tarifas y horario debe ser **atómica**. Esto encaja con un modelo relacional, coherente con ADR-0003 y ADR-0005.
 
 ```mermaid
 erDiagram
