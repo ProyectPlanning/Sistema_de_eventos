@@ -330,7 +330,7 @@ classDiagram
 | `ControladorDeEventos` | Gestión de Eventos | Expone endpoints HTTP de la capa de entrada para consultar y administrar eventos; valida esquemas de entrada. | `ConsultadorEventos`, `GestorEventos` |
 | `ConsultadorEventos` | Gestión de Eventos | Coordina la consulta a la persistencia local y al adaptador externo unificado, unifica resultados y aplica filtros de dominio (BR-01, BR-02, BR-03). | `IRepositorioDeEventos`, `IProveedorEventosExternos` |
 | `GestorEventos` | Gestión de Eventos | Aplica reglas de creación, actualización y eliminación de eventos locales, validando permisos del organizador. | `Evento`, `IRepositorioDeEventos` |
-| `Evento` | Gestión de Eventos | Entidad de dominio raíz que encapsula el estado, tarifas, aforo y validaciones de vigencia y precio de un evento. | `HorarioEvento` |
+| `Evento` | Gestión de Eventos | Entidad de dominio que valida los campos en el momento de la creación y actaulización de un evento, además de validar el aforo  | `HorarioEvento` |
 | `HorarioEvento` | Gestión de Eventos | Clase abstracta (Value Object) que define el contrato de validación y solapamiento temporal. | Ninguno |
 | `HorarioRango` | Gestión de Eventos | Especialización de horario para eventos continuos delimitados por fecha/hora de inicio y fin. | `HorarioEvento` |
 | `HorarioRecurrente` | Gestión de Eventos | Especialización de horario para eventos periódicos por días de la semana y franja horaria. | `HorarioEvento` |
