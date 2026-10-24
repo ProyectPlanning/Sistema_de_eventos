@@ -212,7 +212,7 @@ classDiagram
         +obtenerPorId(id: Integer) Evento
         +obtenerTarifaMinimaDeEvento(id: Integer) Tarifa
         +actualizar(evento: EventoDTO) Boolean
-        +buscarPorCriterios(ciudad: String, presupuestoMax: Float) List~Evento~
+        +buscarPorCriterios(zonaGeografica: ZonaGeograficaDTO, presupuestoMax: Float) List~Evento~
         +eliminar(id: Integer) Boolean
     }
 
