@@ -77,7 +77,7 @@ flowchart LR
         GW -->|"enrutar consultas y gestión de eventos"| GE
 
         GE -->|"recuperar eventos externos y zonas"| IE
-        IE -->|"consultar municipios (con caché)"| API_COL
+        IE -->|"consultar museos y parques (con caché)"| API_COL
         IE -->|"consultar catálogo público"| API_GOV
 
         GE -->|"persistir y consultar eventos"| PERS
@@ -135,12 +135,11 @@ flowchart LR
 para mejor lectura se dividio en dos diagramas estructurales enfocados en cada controlador y módulo principal:
 
 #### 3.2.1 Diagrama de Clases — Componente Gestión de Eventos (`ControladorDeEventos`)
-
 ```mermaid
 classDiagram
     %% Capa de Entrada
     class ControladorDeEventos {
-        +consultar(req: ConsultaFiltrosDTO) ResumenEventosDTO
+        +consultar(req: ConsultaFiltrosDTO) List~EventoDTO~
         +crear(req: CrearEventoDTO) EventoDTO
         +modificar(id: Integer, req: ModificarEventoDTO) EventoDTO
         +eliminar(id: Integer) Boolean
@@ -150,9 +149,9 @@ classDiagram
     class ConsultadorEventos {
         -repositorio: IRepositorioDeEventos
         -proveedorExterno: IProveedorEventosExternos
-        -proveedorGeografico: IProveedorGeografico
         +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~
         -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
+        -validarCoherenciaFiltro(filtro: FiltroEventosDTO) Boolean
     }
 
     class GestorEventos {
@@ -169,16 +168,15 @@ classDiagram
         -titulo: String
         -descripcion: String
         -horario: HorarioEvento
-        -tarifaMinima: Float
-        -tarifaMaxima: Float
+        -tarifas: List~Tarifa~
         -cuposDisponibles: Integer
         -ubicacionCiudad: String
         -direccion: String
         -estado: EstadoEvento
-        +esCompatibleConFiltro(presupuestoMax: Float, ciudad: String, rango: HorarioRango) Boolean
+        -capacidadMáxima: Integer
+        +Evento(evento: CrearEventoDTO)
         +tieneCupoDisponible() Boolean
         +actualizar(titulo: String, desc: String, horario: HorarioEvento, precio: Float, cupos: Integer)
-        +cancelar()
     }
 
     class HorarioEvento {
@@ -191,7 +189,8 @@ classDiagram
     class HorarioRango {
         -fechaInicio: DateTime
         -fechaFin: DateTime
-        +esValido() Boolean
+        +HorarioRango(horario: HorarioDTO)
+        -esValido() Boolean
         +coincideConRango(inicio: DateTime, fin: DateTime) Boolean
         +estaVigente(fechaReferencia: DateTime) Boolean
     }
@@ -201,7 +200,8 @@ classDiagram
         -horaInicio: Time
         -horaFin: Time
         -fechaLimite: DateTime
-        +esValido() Boolean
+        +HorarioRecurrente(horario: HorarioDTO)
+        -esValido() Boolean
         +coincideConRango(inicio: DateTime, fin: DateTime) Boolean
         +estaVigente(fechaReferencia: DateTime) Boolean
     }
@@ -211,7 +211,9 @@ classDiagram
         <<interface>>
         +guardar(evento: Evento) Evento
         +obtenerPorId(id: Integer) Evento
-        +buscarPorCriterios(ciudad: String, presupuestoMax: Float) List~Evento~
+        +obtenerTarifaMinimaDeEvento(id: Integer) Tarifa
+        +actualizar(evento: EventoDTO) Boolean
+        +buscarPorCriterios(zonaGeografica: ZonaGeograficaDTO, presupuestoMax: Float) List~Evento~
         +eliminar(id: Integer) Boolean
     }
 
@@ -220,23 +222,12 @@ classDiagram
         +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
     }
 
-    class AdaptadorEventosDatosGov {
+    class AdaptadorDeEventosExternos {
         -urlDatosGov: String
-        -timeoutMs: Integer
+        -urlApiColombia: String
         +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
-        -mapearJsonSODA(json: String) Evento
-    }
-
-    class IProveedorGeografico {
-        <<interface>>
-        +obtenerMunicipiosPorDepartamento(depto: String) List~String~
-    }
-
-    class AdaptadorApiColombia {
-        -cacheLocal: Map~String, List~String~~
-        -urlBase: String
-        +obtenerMunicipiosPorDepartamento(depto: String) List~String~
-        -cargarYCachearDatos()
+        -mapearApiColombia(json: String) EventoDTO
+        -mapearDatosGov(json: String) EventoDTO
     }
 
     %% Relaciones de Gestión de Eventos
@@ -244,9 +235,7 @@ classDiagram
     ControladorDeEventos --> GestorEventos : delega administración (REQ-02)
     ConsultadorEventos --> IRepositorioDeEventos : consulta locales
     ConsultadorEventos --> IProveedorEventosExternos : consulta externos
-    ConsultadorEventos --> IProveedorGeografico : normaliza zonas
-    IProveedorEventosExternos <|.. AdaptadorEventosDatosGov : implementa
-    IProveedorGeografico <|.. AdaptadorApiColombia : implementa
+    IProveedorEventosExternos <|.. AdaptadorDeEventosExternos : implementa
     GestorEventos --> Evento : manipula
     GestorEventos --> IRepositorioDeEventos : persiste
     Evento "1" *-- "1" HorarioEvento : delega reglas temporales
@@ -254,7 +243,10 @@ classDiagram
     HorarioEvento <|-- HorarioRecurrente : especializa
 ```
 
+
 ---
+
+
 
 #### 3.2.2 Diagrama de Clases — Componente Módulo de Usuarios y Perfiles (`ControladorDeUsuarios`)
 
@@ -337,17 +329,15 @@ classDiagram
 | Clase | Componente al que pertenece | Responsabilidad | Colaboradores clave |
 |---|---|---|---|
 | `ControladorDeEventos` | Gestión de Eventos | Expone endpoints HTTP de la capa de entrada para consultar y administrar eventos; valida esquemas de entrada. | `ConsultadorEventos`, `GestorEventos` |
-| `ConsultadorEventos` | Gestión de Eventos | Coordina la consulta a la persistencia local y a los adaptadores externos (`datos.gov.co` y `api-colombia.com`), unifica resultados y aplica filtros de dominio (BR-01, BR-02, BR-03). | `IRepositorioDeEventos`, `IProveedorEventosExternos`, `IProveedorGeografico` |
+| `ConsultadorEventos` | Gestión de Eventos | Coordina la consulta a la persistencia local y al adaptador externo unificado, unifica resultados y aplica filtros de dominio (BR-01, BR-02, BR-03). | `IRepositorioDeEventos`, `IProveedorEventosExternos` |
 | `GestorEventos` | Gestión de Eventos | Aplica reglas de creación, actualización y eliminación de eventos locales, validando permisos del organizador. | `Evento`, `IRepositorioDeEventos` |
-| `Evento` | Gestión de Eventos | Entidad de dominio raíz que encapsula el estado, tarifas, aforo y validaciones de vigencia y precio de un evento. | `HorarioEvento` |
+| `Evento` | Gestión de Eventos | Entidad de dominio que valida los campos en el momento de la creación y actaulización de un evento, además de validar el aforo  | `HorarioEvento` |
 | `HorarioEvento` | Gestión de Eventos | Clase abstracta (Value Object) que define el contrato de validación y solapamiento temporal. | Ninguno |
 | `HorarioRango` | Gestión de Eventos | Especialización de horario para eventos continuos delimitados por fecha/hora de inicio y fin. | `HorarioEvento` |
 | `HorarioRecurrente` | Gestión de Eventos | Especialización de horario para eventos periódicos por días de la semana y franja horaria. | `HorarioEvento` |
 | `IRepositorioDeEventos` | Capa de Persistencia | Interfaz de abstracción DAO para operaciones de persistencia y búsqueda relacional de eventos. | `Evento` |
 | `IProveedorEventosExternos` | Integración de Eventos Externos | Interfaz que define el contrato para recuperar eventos de fuentes remotas. | `ResultadoEventosExternosDTO` |
-| `AdaptadorEventosDatosGov` | Integración de Eventos Externos | Implementa el consumo HTTP de `datos.gov.co`, gestionando timeouts (2 s) y mapeando JSON SODA a entidades de dominio. | (API de Datos Abiertos Gov.co) |
-| `IProveedorGeografico` | Integración de Eventos Externos | Interfaz que define la consulta de departamentos y municipios normalizados de Colombia. | `AdaptadorApiColombia` |
-| `AdaptadorApiColombia` | Integración de Eventos Externos | Consume `https://api-colombia.com/` aplicando **estrategia de caché local en memoria** para respetar el límite de 60 req/min por IP. | (API Colombia) |
+| `AdaptadorDeEventosExternos` | Integración de Eventos Externos | Implementa el consumo HTTP unificado de `datos.gov.co` y `api-colombia.com`, gestionando mapeos a entidades de dominio, timeouts y aplicando la estrategia de caché local. | (API de Datos Abiertos Gov.co, API Colombia) |
 | `ControladorDeUsuarios` | Módulo de Usuarios y Perfiles | Expone endpoints HTTP para registro y autenticación de usuarios. | `GestorUsuarios` |
 | `GestorUsuarios` | Módulo de Usuarios y Perfiles | Aplica lógica de negocio de registro: verificación de email único, hashing de contraseña, expedición de tokens y solicitud de email de bienvenida. | `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken`, `IServicioNotificaciones` |
 | `Usuario` | Módulo de Usuarios y Perfiles | Entidad de dominio que representa al usuario, su perfil, rol (Asistente/Organizador) y validación de hash de contraseña. | Ninguno |
@@ -379,7 +369,7 @@ consultarEventos(filtro):
     
     listaFinal = []
     FOR evento IN eventosConsolidados:
-        IF evento.tieneCupoDisponible() Y evento.tarifaMinima <= filtro.presupuestoMaximo:
+        IF evento.tieneCupoDisponible() Y repositorio.tarifaMinimaDeEvento(evento.id) <= filtro.presupuestoMaximo:
             IF filtro.rangoHorario ES NULO O evento.horario.coincideConRango(filtro.rangoHorario):
                 listaFinal.agregar(mapearADTO(evento))
                 

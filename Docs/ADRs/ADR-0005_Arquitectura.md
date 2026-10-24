@@ -38,7 +38,7 @@ flowchart TD
     end
 
     subgraph DATOS["3. Capa de Datos (Persistencia)"]
-        DB[("Base de Datos\n(Relacional Embebida / Local)")]
+        DB[("Base de Datos\n(Relacional)")]
     end
 
     subgraph TERCEROS["Servicios de Terceros (Sistemas Externos)"]
