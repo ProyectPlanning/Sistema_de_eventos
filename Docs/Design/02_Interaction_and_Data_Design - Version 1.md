@@ -244,12 +244,11 @@ erDiagram
 
 | Information | Authoritative owner (component responsible for maintaining it) | Consumed by (uses it without owning it) | Access through |
 |---|---|---|---|
-| Usuario (credenciales, rol, estado) | **Módulo de Usuarios y Perfiles** (`GestorUsuarios`) | API Gateway (identidad y rol para autorizar); Gestión de Eventos (solo el `idOrganizador` recibido del Gateway) | `GestorUsuarios.validarTokenAcceso(token)` para consumidores; `IRepositorioDeUsuario` solo lo usa el Módulo de Usuarios |
-| Evento local, Tarifa, Horario | **Gestión de Eventos** (`GestorEventos` escribe; `ConsultadorEventos` lee) | Aplicación Web (a través del API Gateway) | `ControladorDeEventos` hacia fuera; `IRepositorioDeEventos` solo lo usa Gestión de Eventos |
-| Eventos externos | **Sistemas externos `datos.gov.co` y `api-colombia.com`** (fuera de la frontera) | Gestión de Eventos (`ConsultadorEventos`) | `IProveedorEventosExternos` → `AdaptadorDeEventosExternos` (consultas en tiempo real directo) |
-| Token de sesión | **Módulo de Usuarios y Perfiles** lo emite (`IProveedorDeToken`); el cliente solo lo porta | API Gateway | `GestorUsuarios.validarTokenAcceso(token)` |
+| Usuario (credenciales, rol, estado) |**Módulo de Usuarios y Perfiles**| API Gateway (identidad y rol para autorizar); Gestión de Eventos (solo el `idOrganizador` recibido del Gateway) |`ControladorDeUsuarios`, `GestorUsuarios`, `IRepositorioUsuarios`|
+| Evento local, Tarifa, Horario | **Gestión de Eventos**  | Aplicación Web (a través del API Gateway) | `ControladorDeEventos`, `IRepositorioDeEventos`,`GestorEventos`,`ConsultadorEventos` |
+| Eventos externos |**Sistemas externos `datos.gov.co` y `api-colombia.com`**| Gestión de Eventos (`ConsultadorEventos`) | `IProveedorEventosExternos` → `AdaptadorDeEventosExternos` (consultas en tiempo real) |
+| Token de sesión |**Módulo de Usuarios y Perfiles**| API Gateway | `GestorUsuarios.validarTokenAcceso(token)` |
 
-> La **Capa de Persistencia** implementa los repositorios, pero **no es dueña** del significado de los datos: solo traduce entre entidades y tablas. Ningún módulo usa el repositorio de otro módulo (Gestión de Eventos no lee `USUARIO` directamente; para esto recibe el `idOrganizador` ya validado).
 
 ### 2.4 Business rules and invariants enforced in data (Reglas e invariantes)
 
