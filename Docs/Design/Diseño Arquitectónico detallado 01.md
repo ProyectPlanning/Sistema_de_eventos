@@ -173,6 +173,7 @@ classDiagram
         -ubicacionCiudad: String
         -direccion: String
         -estado: EstadoEvento
+        -capacidadMáxima: Integer
         +Evento(evento: CrearEventoDTO)
         +tieneCupoDisponible() Boolean
         +actualizar(titulo: String, desc: String, horario: HorarioEvento, precio: Float, cupos: Integer)
