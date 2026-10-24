@@ -209,7 +209,7 @@ erDiagram
         string direccion
         int capacidad_maxima "nulo si no tiene aforo limitado"
         int cupos_disponibles "nulo si no tiene aforo limitado"
-        string estado "PUBLICADO o CANCELADO"
+        string estado "VIGENTE, NO_VIGENTE"
         datetime fecha_creacion
         datetime fecha_actualizacion
     }
@@ -236,7 +236,7 @@ erDiagram
 | Entity / document type | Meaning in the system | Identifier | Constraints (required, unique, allowed values) |
 |---|---|---|---|
 | `USUARIO` | Persona registrada que consulta eventos (asistente) o los administra (organizador). | `id_usuario` | `email` obligatorio y **único**; `password_hash` obligatorio (nunca se guarda la contraseña plana); `rol ∈ {ASISTENTE, ORGANIZADOR}`; `activo` obligatorio. |
-| `EVENTO` | Evento local publicado por un organizador; el sistema es su dueño autoritativo. | `id_evento` | `id_organizador` obligatorio (FK a `USUARIO` con rol ORGANIZADOR); `capacidad_maxima` nula o `> 0`; `cupos_disponibles` nulo o `0 ≤ cupos ≤ capacidad_maxima`, y ambos nulos o ambos no nulos; `estado ∈ {VIGENTE, NO VIGENTE}`. |
+| `EVENTO` | Evento local publicado por un organizador; el sistema es su dueño autoritativo. | `id_evento` | `id_organizador` obligatorio (FK a `USUARIO` con rol ORGANIZADOR); `capacidad_maxima` nula o `> 0`; `cupos_disponibles` nulo o `0 ≤ cupos ≤ capacidad_maxima`, y ambos nulos o ambos no nulos; `estado ∈ {VIGENTE, NO_VIGENTE}`. |
 | `TARIFA` | Tipo de entrada con su precio en COP. | `id_tarifa` | `id_evento` obligatorio; `precio_cop ≥ 0` (0 = entrada libre); `nombre` único dentro del mismo evento; cada evento tiene **al menos una** tarifa. |
 | `HORARIO_EVENTO` | Programación temporal del evento: rango continuo o recurrencia semanal. | `id_horario` | `id_evento` obligatorio y único (1:1); `tipo ∈ {RANGO, RECURRENTE}`; si `RANGO`: `fecha_inicio` y `fecha_fin` obligatorias con `fecha_fin > fecha_inicio`; si `RECURRENTE`: `dias_semana`, `hora_inicio`, `hora_fin`, `fecha_limite` obligatorios. |
 
@@ -254,16 +254,16 @@ erDiagram
 
 | Business rule or invariant | Where it is enforced (component logic / data constraint / both) | How |
 |---|---|---|
-| **BR-01** — Solo se muestran eventos con aforo limitado si tienen al menos 1 cupo | **Ambos** | Lógica: `Evento.tieneCupoDisponible()` retorna verdadero si `capacidad_maxima` es nula o `cupos_disponibles ≥ 1`; se aplica en `aplicarReglasNegocio` a eventos locales y externos. Datos: `CHECK (cupos_disponibles >= 0 AND cupos_disponibles <= capacidad_maxima)`. |
-| **BR-02** — El evento califica si al menos una tarifa vigente es ≤ presupuesto | **Lógica** (con apoyo en la consulta) | `Evento.tarifaMinimaVigente() <= presupuestoMaximo`; el repositorio puede filtrar con `EXISTS (tarifa vigente con precio ≤ presupuesto)`. Se omite si no hay presupuesto (BR-03). Datos: `CHECK (precio_cop >= 0)`. |
-| **BR-03** — Filtros combinables u omitidos; sin filtros, listado general | **Lógica** | `CriteriosBusqueda` con campos opcionales; el repositorio y `aplicarReglasNegocio` ignoran los criterios nulos. Sin filtros se retorna el listado general de eventos vigentes (la estrategia "aleatoria" queda en `OQ-11`). |
-| Email único por usuario (`REQ-13`) | **Ambos** | Lógica: `GestorUsuarios` verifica `buscarPorEmail` antes de registrar. Datos: restricción `UNIQUE (email)`, que también protege ante registros simultáneos. |
-| Un evento tiene al menos una tarifa y un horario válido antes de publicarse (`REQ-02`, Entregable 1) | **Ambos** | Lógica: `Evento` rechaza la construcción sin tarifas o con `HorarioEvento.esValido() = falso`; `GestorEventos` guarda evento, tarifas y horario en **una sola transacción**. Datos: `HORARIO_EVENTO.id_evento` `NOT NULL UNIQUE`. La condición "≥ 1 tarifa" no es expresable con un `CHECK` simple y depende de la transacción. |
-| Fin de horario posterior al inicio | **Ambos** | Lógica: `HorarioRango.esValido()`, `HorarioRecurrente.esValido()`. Datos: `CHECK (tipo <> 'RANGO' OR fecha_fin > fecha_inicio)` y equivalente para `hora_fin > hora_inicio` en `RECURRENTE` (salvo eventos que cruzan medianoche, `OQ-01`). |
-| Coherencia de columnas según el tipo de horario | **Ambos** | Lógica: polimorfismo de `HorarioEvento`. Datos: `CHECK` por valor de `tipo` sobre las columnas obligatorias. |
-| Solo el organizador dueño modifica o cancela su evento | **Lógica** | `GestorEventos.modificarEvento` y `eliminarEvento` comparan `evento.idOrganizador` con el `idOrganizador` del token. Datos: `id_organizador NOT NULL` con FK a `USUARIO`. |
-| Solo usuarios con rol ORGANIZADOR crean eventos | **Lógica** | API Gateway (autorización por rol) con `Usuario.esOrganizador()`. Datos: `CHECK (rol IN ('ASISTENTE','ORGANIZADOR'))`. |
-| Eventos cancelados o vencidos no aparecen en la consulta (`REQ-01` paso 5) | **Lógica** | `aplicarReglasNegocio` descarta `estado = CANCELADO` y eventos con `HorarioEvento.estaVigente(ahora) = falso`. |
+| **BR-01** — Solo se muestran eventos con aforo limitado si tienen al menos 1 cupo | **Ambos** | Lógica: `Evento.tieneCupoDisponible()` retorna verdadero si `capacidad_maxima` es nula o `cupos_disponibles ≥ 1`; se aplica en `aplicarReglasNegocio` a eventos locales y externos. |
+| **BR-02** — El evento califica si al menos una tarifa vigente es ≤ presupuesto | **Lógica**| `IRepositorioDeEventos.obtenerTarifaMinimaDeEvento(id) <= presupuestoMaximo`.|
+| **BR-03** — Filtros combinables u omitidos; sin filtros, listado general | **Lógica** | `CriteriosBusqueda` con campos opcionales; el repositorio y `aplicarReglasNegocio` ignoran los criterios nulos.|
+| Email único por usuario | **Ambos** | Lógica: `GestorUsuarios` verifica `buscarPorEmail` antes de registrar.|
+| Un evento tiene al menos una tarifa y un horario válido antes de publicarse | **Ambos** | Lógica: `Evento` rechaza la construcción sin tarifas o con `HorarioEvento.esValido() = falso`.|
+| Fin de horario posterior al inicio | **Ambos** | Lógica: `HorarioRango.esValido()`, `HorarioRecurrente.esValido()`.|
+| Coherencia de columnas según el tipo de horario | **Ambos** | Lógica: polimorfismo de `HorarioEvento`.|
+| Solo el organizador dueño modifica o cancela su evento | **Lógica** | Antes de modificar o cancelar el evento se verifica que el token de usuario sea de tipo organizador. |
+| Solo usuarios con rol ORGANIZADOR crean eventos | **Lógica** | API Gateway  con `GestorUsuarios.validarTokenAcceso`. |
+| Eventos no vigentes o vencidos no aparecen en la consulta | **Lógica** | `aplicarReglasNegocio` descarta `estado = NO_VIGENTE` y eventos con `HorarioEvento.estaVigente(ahora) = falso`. |
 
 ---
 
