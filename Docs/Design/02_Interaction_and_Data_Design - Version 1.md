@@ -33,34 +33,34 @@ sequenceDiagram
     participant GOV as API datos.gov.co
     participant COL as API Colombia (api-colombia.com)
 
-    U->>WEB: ingresar filtros opcionales (zona, presupuesto, rango horario)
-    WEB->>GW: solicitar consulta de eventos con filtros
-    GW->>CE: consultar(ConsultaFiltrosDTO)
-    CE->>CO: consultarEventos(FiltroEventosDTO)
+    U->>WEB: ingresar filtros
+    WEB->>GW: solicitar consulta 
+    GW->>CE: consultar(req)
+    CE->>CO: consultarEventos(filtro)
     CO->>CO: validarCoherenciaFiltro(filtro)
 
     alt Excepción A - filtros inválidos
-        CO-->>CE: ErrorValidacion(campo, motivo)
+        CO-->>CE: Error de validación de filtros
         CE-->>GW: error de validación
-        GW-->>WEB: rechazo con campo erróneo
+        GW-->>WEB: campo erróneo y motivo
         WEB-->>U: resaltar campo y conservar los demás datos
     else filtros válidos
         CO->>REP: buscarPorCriterios(Ciudad, PresupuestoMax)
         REP-->>CO: lista de Evento locales candidatos
         CO->>EXT: obtenerEventosExternos(filtro)
 
-        par Consulta a API datos.gov.co (Eventos CTI)
+        par Consulta a API datos.gov.co 
             EXT->>GOV: consultar catálogo con timeout de 2 s
             alt respuesta exitosa a tiempo
-                GOV-->>EXT: registros JSON CTI
+                GOV-->>EXT: registros JSON 
                 EXT->>EXT: mapearDatosGov(json)
             else timeout (> 2 s) o error HTTP
                 EXT->>EXT: registrar advertencia y lista vacía para datos.gov.co
             end
-        and Consulta a API Colombia (Museos y Parques)
-            EXT->>COL: consultar catálogo de atracciones con timeout de 2 s
+        and Consulta a API Colombia 
+            EXT->>COL: consultar catálogo con timeout de 2 s
             alt respuesta exitosa a tiempo
-                COL-->>EXT: registros JSON atracciones
+                COL-->>EXT: registros JSON
                 EXT->>EXT: mapearApiColombia(json)
             else timeout (> 2 s) o error HTTP
                 EXT->>EXT: registrar advertencia y lista vacía para api-colombia
@@ -68,36 +68,35 @@ sequenceDiagram
         end
 
         alt al menos una API externa respondió
-            EXT-->>CO: ResultadoEventosExternosDTO(eventosExternos, disponibles = true)
+            EXT-->>CO: ResultadoEventosExternosDTO -> eventosExternos, disponibles = true
         else Excepción B - ambas APIs externas fallaron o timeout
-            EXT-->>CO: ResultadoEventosExternosDTO(lista vacía, disponibles = false)
+            EXT-->>CO: ResultadoEventosExternosDTO -> lista vacía, disponibles = false
         end
 
-        CO->>CO: unificar y aplicarReglasNegocio (BR-01, BR-02, BR-03, vigencia)
+        CO->>CO: unificar y aplicarReglasNegocio
         CO-->>CE: EventosDTO(eventos, externosDisponibles)
         CE-->>GW: EventosDTO
         GW-->>WEB: EventosDTO
         alt existen coincidencias
             WEB-->>U: lista de eventos compatibles (aviso si externosDisponibles = false)
         else Flujo alternativo - lista vacía
-            WEB-->>U: informar sin coincidencias, mantener filtros y sugerir ajustes
+            WEB-->>U: informar que no hay coincidencias
         end
     end
 ```
 
 | Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1 actualizado) |
 |---|---|---|---|
-| Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `U->>WEB`, `WEB->>GW`, `GW->>CE` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req: ConsultaFiltrosDTO)` |
-| Flujo principal, paso 3 (validar formato y coherencia) | `CE->>CO`, `CO->>CO validarCoherenciaFiltro` | `FiltroEventosDTO` | `ConsultadorEventos.consultarEventos(filtro)` (validación descrita en §3.4) |
-| Flujo principal, paso 4 (consultar BD local) | `CO->>REP`, `REP-->>CO` | Criterios opcionales → lista de `Evento` | `IRepositorioDeEventos.buscarPorCriterios(...)` *(firma ajustada, ver Sección 4)* |
-| Flujo principal, paso 4 (consultar APIs de eventos externas) | `CO->>EXT`, `EXT->>GOV`, `EXT->>COL`, `EXT-->>CO` | Filtro → `ResultadoEventosExternosDTO` | `IProveedorEventosExternos.obtenerEventosExternos(filtro)` implementado por `AdaptadorDeEventosExternos` |
-| Flujo principal, paso 5 (consolidar y aplicar BR-01, BR-02) | `CO->>CO unificar y aplicarReglasNegocio` | Lista unificada de `Evento` | `ConsultadorEventos.aplicarReglasNegocio(eventos, filtro)` |
-| Flujo principal, paso 6 (presentar resultados) | `CO-->>CE`, `CE-->>GW`, `GW-->>WEB`, `WEB-->>U` | `EventosDTO` | `ControladorDeEventos.consultar` → `EventosDTO` |
-| Flujo alternativo (sin coincidencias) | `alt Flujo alternativo` en `WEB-->>U` | `EventosDTO` con lista vacía | Mismo retorno de `consultarEventos` |
-| Excepción A (criterios malformados) | `alt Excepción A` | `ErrorValidacion(campo, motivo)` | `validarCoherenciaFiltro` en `ConsultadorEventos` |
-| Excepción B (timeout o indisponibilidad externa) | `alt Excepción B` | `ResultadoEventosExternosDTO(disponible = false)` → `externosDisponibles = false` | `AdaptadorDeEventosExternos.obtenerEventosExternos` (timeout 2 s, fallback y advertencia) |
+| Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `ingresar filtros`,`solicitar consulta`,`consultar`,`consultarEventos` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req: ConsultaFiltrosDTO)`, ConsultadorEventos.consultarEventos(filtro: FiltroEventosDTO)|
+| Flujo principal, paso 3 (validar formato y coherencia) | `validarCoherenciaFiltro` | `FiltroEventosDTO` | `ConsultadorEventos.validarCoherenciaFiltro(filtro)`|
+| Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios` | `zonaGegrafica`,`presupuestoMax`,lista de `Evento` | `IRepositorioDeEventos.buscarPorCriterios(zonaGegrafica, presupuestoMax)`|
+| Flujo principal, paso 5 (consultar APIs de eventos externas) | `obtenerEventosExternos` | Filtro → `ResultadoEventosExternosDTO` | `IProveedorEventosExternos.obtenerEventosExternos(filtro)` implementado por `AdaptadorDeEventosExternos` |
+| Flujo principal, paso 6 (consolidar y aplicar BR-01, BR-02) | `unificar y aplicarReglasNegocio` | Lista unificada de `Evento` cumpliendo los filtros dados | `ConsultadorEventos.aplicarReglasNegocio(eventos, filtro)` |
+| Flujo principal, paso 7 (presentar resultados) | `EventosDTO` | `EventosDTO` | `ControladorDeEventos.consultar` devuelve lista de `EventosDTO` |
+| Flujo alternativo (sin coincidencias) | `informar que no hay coincidencias` | `EventosDTO` con lista vacía |`ControladorDeEventos.consultar` devuelve lista de `EventosDTO`|
+| Excepción A (criterios malformados) | `Excepción A` | campo erróneo y motivo | `validarCoherenciaFiltro` en `ConsultadorEventos` |
+| Excepción B (timeout o indisponibilidad externa) | `Excepción B` | `ResultadoEventosExternosDTO`,`externosDisponibles = false` | `AdaptadorDeEventosExternos.obtenerEventosExternos`, timeout 2 s, fallback y advertencia |
 
-*Verificación:* cada mensaje tiene propósito y respuesta; el orden respeta el caso de uso (validar → consultar → consolidar → presentar); los tres flujos no felices de `REQ-01` están cubiertos; la Excepción B no bloquea al usuario, cumpliendo la postcondición del caso de uso.
 
 ### 1.2 Administrar Eventos (Crear Evento) — from requirement REQ-02
 
