@@ -140,7 +140,7 @@ sequenceDiagram
                 REP-->>GE: Evento con id asignado
                 GE-->>CE: EventoDTO
                 CE-->>GW: EventoDTO
-                GW-->>WEB: evento creado
+                GW-->>WEB: EventoDTO
                 WEB-->>O: confirmar publicación del evento
             end
         end
