@@ -139,7 +139,7 @@ para mejor lectura se dividio en dos diagramas estructurales enfocados en cada c
 classDiagram
     %% Capa de Entrada
     class ControladorDeEventos {
-        +consultar(req: ConsultaFiltrosDTO) List~EventoDTO~
+        +consultar(req: ConsultaFiltrosDTO) EventosDTO
         +crear(req: CrearEventoDTO) EventoDTO
         +modificar(id: Integer, req: ModificarEventoDTO) EventoDTO
         +eliminar(id: Integer) Boolean
@@ -149,7 +149,7 @@ classDiagram
     class ConsultadorEventos {
         -repositorio: IRepositorioDeEventos
         -proveedorExterno: IProveedorEventosExternos
-        +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~
+        +consultarEventos(filtro: FiltroEventosDTO) EventosDTO
         -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
         -validarCoherenciaFiltro(filtro: FiltroEventosDTO) Boolean
     }
@@ -170,13 +170,23 @@ classDiagram
         -horario: HorarioEvento
         -tarifas: List~Tarifa~
         -cuposDisponibles: Integer
-        -ubicacionCiudad: String
+        -pais: String
+        -departamento: String
+        -ciudad: String
         -direccion: String
         -estado: EstadoEvento
         -capacidadMáxima: Integer
         +Evento(evento: CrearEventoDTO)
         +tieneCupoDisponible() Boolean
-        +actualizar(titulo: String, desc: String, horario: HorarioEvento, precio: Float, cupos: Integer)
+        +actualizar(titulo: String, desc: String, horario: HorarioEvento, tarifas: List~Tarifa~, cupos: Integer)
+    }
+
+
+    class Tarifa {
+        -id: Integer
+        -nombre: String
+        -precioCop: Decimal
+        -vigente: Boolean
     }
 
     class HorarioEvento {
@@ -238,7 +248,7 @@ classDiagram
     IProveedorEventosExternos <|.. AdaptadorDeEventosExternos : implementa
     GestorEventos --> Evento : manipula
     GestorEventos --> IRepositorioDeEventos : persiste
-    Evento "1" *-- "1" HorarioEvento : delega reglas temporales
+    Evento "1" *-- "1..*" Tarifa : ofrece
     HorarioEvento <|-- HorarioRango : especializa
     HorarioEvento <|-- HorarioRecurrente : especializa
 ```
@@ -369,7 +379,7 @@ consultarEventos(filtro):
     
     listaFinal = []
     FOR evento IN eventosConsolidados:
-        IF evento.tieneCupoDisponible() Y repositorio.tarifaMinimaDeEvento(evento.id) <= filtro.presupuestoMaximo:
+        IF evento.tieneCupoDisponible() Y repositorio.obtenerTarifaMinimaDeEvento(evento.id) <= filtro.presupuestoMaximo:
             IF filtro.rangoHorario ES NULO O evento.horario.coincideConRango(filtro.rangoHorario):
                 listaFinal.agregar(mapearADTO(evento))
                 
