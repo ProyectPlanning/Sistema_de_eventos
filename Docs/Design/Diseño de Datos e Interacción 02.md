@@ -73,6 +73,10 @@ sequenceDiagram
             EXT-->>CO: ResultadoEventosExternosDTO -> lista vacía, disponibles = false
         end
 
+        loop por cada evento local candidato
+            CO->>REP: obtenerTarifaMinimaDeEvento(idEvento)
+            REP-->>CO: tarifa mínima vigente
+        end
         CO->>CO: unificar y aplicarReglasNegocio
         CO-->>CE: EventosDTO(eventos, externosDisponibles)
         CE-->>GW: EventosDTO
@@ -85,18 +89,17 @@ sequenceDiagram
     end
 ```
 
-| Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1 actualizado) |
+| Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1) |
 |---|---|---|---|
-| Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `ingresar filtros`,`solicitar consulta`,`consultar`,`consultarEventos` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req)`, ConsultadorEventos.consultarEventos(filtro)|
-| Flujo principal, paso 3 (validar formato y coherencia) | `validarCoherenciaFiltro` | `FiltroEventosDTO` | `ConsultadorEventos.validarCoherenciaFiltro(filtro)`|
-| Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios` | `zonaGegrafica`,`presupuestoMax`,lista de `Evento` | `IRepositorioDeEventos.buscarPorCriterios(zonaGegrafica, presupuestoMax)`|
-| Flujo principal, paso 5 (consultar APIs de eventos externas) | `obtenerEventosExternos` | Filtro → `ResultadoEventosExternosDTO` | `IProveedorEventosExternos.obtenerEventosExternos(filtro)` implementado por `AdaptadorDeEventosExternos` |
-| Flujo principal, paso 6 (consolidar y aplicar BR-01, BR-02) | `unificar y aplicarReglasNegocio` | Lista unificada de `Evento` cumpliendo los filtros dados | `ConsultadorEventos.aplicarReglasNegocio(eventos, filtro)` |
-| Flujo principal, paso 7 (presentar resultados) | `EventosDTO` | `EventosDTO` | `ControladorDeEventos.consultar` devuelve lista de `EventosDTO` |
-| Flujo alternativo (sin coincidencias) | `informar que no hay coincidencias` | `EventosDTO` con lista vacía |`ControladorDeEventos.consultar` devuelve lista de `EventosDTO`|
-| Excepción A (criterios malformados) | `Excepción A` | campo erróneo y motivo | `validarCoherenciaFiltro` en `ConsultadorEventos` |
-| Excepción B (timeout o indisponibilidad externa) | `Excepción B` | `ResultadoEventosExternosDTO`,`externosDisponibles = false` | `AdaptadorDeEventosExternos.obtenerEventosExternos`, timeout 2 s, fallback y advertencia |
-
+| Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `ingresar filtros`, `solicitar consulta`, `consultar`, `consultarEventos` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req)`, `ConsultadorEventos.consultarEventos(filtro)` |
+| Flujo principal, paso 3 (validar formato y coherencia) | `validarCoherenciaFiltro` | `FiltroEventosDTO` | `ConsultadorEventos.validarCoherenciaFiltro(filtro)` |
+| Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios`, `obtenerTarifaMinimaDeEvento` | `zonaGeografica`, `presupuestoMax`, lista de `Evento`, tarifa mínima | `IRepositorioDeEventos.buscarPorCriterios(zonaGeografica, presupuestoMax)`, `IRepositorioDeEventos.obtenerTarifaMinimaDeEvento(id)` |
+| Flujo principal, paso 4 (consultar APIs de eventos externas) | `obtenerEventosExternos` | Filtro → `ResultadoEventosExternosDTO` | `IProveedorEventosExternos.obtenerEventosExternos(filtro)` implementado por `AdaptadorDeEventosExternos` |
+| Flujo principal, paso 5 (consolidar y aplicar BR-01, BR-02) | `unificar y aplicarReglasNegocio` | Lista unificada de `Evento` cumpliendo los filtros dados | `ConsultadorEventos.aplicarReglasNegocio(eventos, filtro)` |
+| Flujo principal, paso 6 (presentar resultados) | `EventosDTO` | `EventosDTO` | `ControladorDeEventos.consultar` devuelve `EventosDTO` |
+| Flujo alternativo (sin coincidencias, paso 5) | `informar que no hay coincidencias` | `EventosDTO` con lista vacía | `ControladorDeEventos.consultar` devuelve `EventosDTO` |
+| Excepción A (criterios malformados, paso 3) | `Excepción A` | campo erróneo y motivo | `validarCoherenciaFiltro` en `ConsultadorEventos` |
+| Excepción B (timeout o indisponibilidad externa, paso 4) | `Excepción B` | `ResultadoEventosExternosDTO`, `externosDisponibles = false` | `AdaptadorDeEventosExternos.obtenerEventosExternos`, timeout 2 s, fallback y advertencia |
 
 ### 1.2 Administrar Eventos (Crear Evento) — from requirement REQ-02
 
@@ -156,10 +159,12 @@ sequenceDiagram
 | Paso 4 — Delegar creación | `crear(req)` | `CrearEventoDTO`, `idOrganizador` | `ControladorDeEventos.crear(req)`, `GestorEventos.crearEvento(datos, idOrganizador)` |
 | Paso 5 — Validar coherencia de los datos del evento | `construir evento` | Datos del evento | constructor de `Evento`, `HorarioEvento.esValido()` |
 | Paso 6 — Persistir evento | `guardar(evento)` | `Evento` sin id asignada,`Evento` con id asignada | `IRepositorioDeEventos.guardar(evento)` |
-| Paso 7 — Confirmar publicación| `EventoDTO`,`confirmar pulicacíon de evento` | `EventoDTO` | `ControladorDeEventos.crear` → `EventoDTO` |
+| Paso 7 — Confirmar publicación| `EventoDTO`,`confirmar publicacíín de evento` | `EventoDTO` | `ControladorDeEventos.crear` → `EventoDTO` |
 | token inválido | `token ausente, inválido o expirado` | Rechazo de autenticación | API Gateway / `validarTokenAcceso` |
 | rol distinto de organizador | `rol distinto de ORGANIZADOR` | mensaje de Rechazo de autorización | API Gateway (autorización por rol), `Usuario.esOrganizador()` |
 | datos de evento inválidos | `datos incoherentes` | `ErrorValidacion(campos)` | constructor de `Evento` , `HorarioEvento.esValido()` |
+
+> **Nota de trazabilidad:** `REQ-02` está definido en `Requerimientos funcionales.md` y en la historia `US-02.1`, pero todavía no cuenta con un caso de uso detallado como el de `REQ-01`. Por esta razón, los pasos 1 a 7 de la tabla anterior se declaran como **[SUPUESTO]** del equipo, derivados de `US-02.1` y de la regla de dominio "un evento debe tener al menos una tarifa y un horario válido antes de publicarse", y se confirmarán cuando se redacte el caso de uso de `REQ-02`. Asimismo, `US-02.1` menciona imagen, tipo de evento, atributos y productos ofrecidos, que no se modelan en esta etapa **[SUPUESTO]**.
 
 ---
 
@@ -249,6 +254,7 @@ erDiagram
 | Eventos externos |**Sistemas externos `datos.gov.co` y `api-colombia.com`**| Gestión de Eventos (`ConsultadorEventos`) | `IProveedorEventosExternos` → `AdaptadorDeEventosExternos` (consultas en tiempo real) |
 | Token de sesión |**Módulo de Usuarios y Perfiles**| API Gateway | `GestorUsuarios.validarTokenAcceso(token)` |
 
+> Todo lo persistido reside en una única base de datos relacional, a la que se accede exclusivamente a través de la Capa de Persistencia (`IRepositorioDeEventos`, `IRepositorioUsuarios`). Esta capa es el medio de acceso y no es dueña de ninguna información: la propiedad de cada dato corresponde al módulo indicado en la tabla.
 
 ### 2.4 Business rules and invariants enforced in data (Reglas e invariantes)
 
@@ -257,13 +263,11 @@ erDiagram
 | **BR-01** — Solo se muestran eventos con aforo limitado si tienen al menos 1 cupo | **Ambos** | Lógica: `Evento.tieneCupoDisponible()` retorna verdadero si `capacidad_maxima` es nula o `cupos_disponibles ≥ 1`; se aplica en `aplicarReglasNegocio` a eventos locales y externos. |
 | **BR-02** — El evento califica si al menos una tarifa vigente es ≤ presupuesto | **Lógica**| `IRepositorioDeEventos.obtenerTarifaMinimaDeEvento(id) <= presupuestoMaximo`.|
 | **BR-03** — Filtros combinables u omitidos; sin filtros, listado general | **Lógica** | `CriteriosBusqueda` con campos opcionales; el repositorio y `aplicarReglasNegocio` ignoran los criterios nulos.|
-| Email único por usuario | **Ambos** | Lógica: `GestorUsuarios` verifica `buscarPorEmail` antes de registrar.|
-| Un evento tiene al menos una tarifa y un horario válido antes de publicarse | **Ambos** | Lógica: `Evento` rechaza la construcción sin tarifas o con `HorarioEvento.esValido() = falso`.|
-| Fin de horario posterior al inicio | **Ambos** | Lógica: `HorarioRango.esValido()`, `HorarioRecurrente.esValido()`.|
-| Coherencia de columnas según el tipo de horario | **Ambos** | Lógica: polimorfismo de `HorarioEvento`.|
-| Solo el organizador dueño modifica o cancela su evento | **Lógica** | Antes de modificar o cancelar el evento se verifica que el token de usuario sea de tipo organizador. |
-| Solo usuarios con rol ORGANIZADOR crean eventos | **Lógica** | API Gateway  con `GestorUsuarios.validarTokenAcceso`. |
-| Eventos no vigentes o vencidos no aparecen en la consulta | **Lógica** | `aplicarReglasNegocio` descarta `estado = NO_VIGENTE` y eventos con `HorarioEvento.estaVigente(ahora) = falso`. |
+| Email único por usuario | **Ambos** | Lógica: `GestorUsuarios` verifica `buscarPorEmail` antes de registrar. Datos: restricción `UNIQUE(email)` en `USUARIO`. |
+| Un evento tiene al menos una tarifa y un horario válido antes de publicarse | **Lógica** | `Evento` rechaza la construcción sin tarifas o con `HorarioEvento.esValido() = falso`; el repositorio guarda evento, tarifas y horario en una sola transacción. |
+| Fin de horario posterior al inicio | **Ambos** | Lógica: `HorarioRango.esValido()`, `HorarioRecurrente.esValido()`. Datos: `CHECK(fecha_fin > fecha_inicio)` en `HORARIO_EVENTO` para el tipo `RANGO`. |
+| Coherencia de columnas según el tipo de horario | **Ambos** | Lógica: polimorfismo de `HorarioEvento`. Datos: `CHECK` que exige las columnas de `RANGO` o las de `RECURRENTE` según el valor de `tipo`. |
+| Solo el organizador dueño modifica o cancela su evento | **Ambos** | Lógica: `GestorEventos` compara el `idOrganizador` del usuario autenticado con el `id_organizador` del evento antes de modificarlo o cancelarlo. Datos: FK `id_organizador` hacia `USUARIO`. |
 
 ---
 
@@ -276,10 +280,10 @@ erDiagram
 |---|---|
 | **Operation and purpose** | `consultarEventos(filtro: FiltroEventosDTO) : EventosDTO`. Retorna los eventos vigentes, locales y externos (de `datos.gov.co` y `api-colombia.com`), compatibles con los criterios provistos por el asistente.|
 | **Input** (parameters and types) | `FiltroEventosDTO`: `pais: String`, `departamento: String`, `ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: horario recurrente o por rango`. |
-| **Output** (successful result and data structure) | `List<EventoDTO>`. `lista de eventos que cumplen con los filtros, (lista vacía si no hay eventos que cumplan con los filtros)`. |
-| **Preconditions** (what the caller must satisfy before invoking) | El filtro llega con tipos correctos. |
+| **Output** (successful result and data structure) | `EventosDTO`: `eventos: List<EventoDTO>` (lista vacía si ningún evento cumple los filtros) y `externosDisponibles: Boolean` (`false` solo si ambas fuentes externas fallaron o superaron 2 s). |
+| **Preconditions** (what the caller must satisfy before invoking) | (1) El llamador es `ControladorDeEventos`, que ya validó que los campos del filtro tienen el tipo correcto. (2) Todos los campos de `FiltroEventosDTO` son opcionales (BR-03); un filtro vacío es válido. |
 | **Postconditions** (what is guaranteed on successful completion) | (1) Cada evento retornado cumple **todos** los criterios provistos. (2) Si hay presupuesto, cada evento tiene al menos una tarifa vigente ≤ presupuesto. (3) Ningún evento con aforo limitado tiene 0 cupos. (4) `externosDisponibles = false` **solo si** ambas fuentes externas fallaron o superaron 2 s; en ese caso `eventos` solo contiene eventos locales.|
-| **Failure outcomes** (each failure, and what state is left after it) | **`ErrorValidacion(campo, motivo)`** (Excepción A): presupuesto negativo, `rangoHorario.fin ≤ rangoHorario.inicio` o rango incompleto (solo inicio o solo fin); no se consulta ninguna fuente y se muestra mensaje de error en los campos. **`ErrorServicioNoDisponible`** Se muestra un mensaje informando que el servicio no está disponible |
+| **Failure outcomes** (each failure, and what state is left after it) | **`ErrorValidacion(campo, motivo)`** (Excepción A): presupuesto negativo, `rangoHorario.fin ≤ rangoHorario.inicio` o rango incompleto (solo inicio o solo fin); no se consulta ninguna fuente y la interfaz señala los campos erróneos conservando los demás datos. **Falla de una o de ambas fuentes externas** (Excepción B): no es un error para quien invoca; la operación termina con éxito entregando los eventos locales y los de la fuente que sí respondió, con `externosDisponibles = false` solo si fallaron ambas. En ningún caso se modifica el estado del sistema. |
 | **Invariants and side effects** (what must stay true, what may change) | **Solo lectura:** la operación **no modifica** el catálogo local, usuarios ni tarifas. Efectos permitidos: registrar una advertencia en el log cuando falla una fuente externa. |
 
 **Testable examples**
@@ -304,12 +308,16 @@ erDiagram
 |---|---|
 | Every participant in a sequence diagram is an actor, a component, a class or an external system from Deliverable 1 | **Cumple.** Actores: Asistente, Organizador (Usuario del Entregable 1). Componentes: Aplicación Web, API Gateway. Clases: `ControladorDeEventos`, `ConsultadorEventos`, `GestorEventos`, `Evento`, `GestorUsuarios`, `IRepositorioDeEventos`, `AdaptadorDeEventosExternos`. Sistemas externos: API datos.gov.co, API Colombia (`api-colombia.com`). |
 | Every message corresponds to a capability, operation or contract | **Cumple** Todos los mensajes mapean a operaciones del Entregable 1. |
-| Every entity or document type is reflected in the class diagrams, or the reason it is not is stated | **Cumple parcialmente.** `USUARIO` ↔ `Usuario`, `EVENTO` ↔ `Evento`, `HORARIO_EVENTO` ↔ `HorarioEvento` / `HorarioRango` / `HorarioRecurrente`. TARIFA no tiene clase asociada porque se trata como un tipo de dato dentro de evento.|
+| Every entity or document type is reflected in the class diagrams, or the reason it is not is stated | **Cumple.** `USUARIO` ↔ `Usuario`, `EVENTO` ↔ `Evento` (con `pais`, `departamento` y `ciudad`), `TARIFA` ↔ `Tarifa` (clase agregada al Entregable 1 en este entregable), `HORARIO_EVENTO` ↔ `HorarioEvento` / `HorarioRango` / `HorarioRecurrente`. |
 | Every persisted information element has exactly one authoritative owner | **Cumple.** Usuario → Módulo de Usuarios; Evento, Tarifa y Horario → Gestión de Eventos. |
 | The contract agrees with the sequence diagram and with the data model (same behavior in all three views) | **Cumple** `externosDisponibles` aparece en el diagrama (Excepción B), en el contrato (postcondición 4). Se usa `TARIFA.vigente` y `precio_cop` en el modelo, `tarifaMinimaVigente` en el contrato y la regla se implementa en `aplicarReglasNegocio`.|
 
 **Changes made to Deliverable 1 because of this deliverable**
-> Se unificó las APIs externas en `AdaptadorDeEventosExternos` para consultar eventos (CTI en `datos.gov.co` y museos/parques en `api-colombia.com`), eliminando la interfaz `IProveedorGeografico`. Asimismo, se prescinde de cualquier capa de caché local.
+> Al concretar el comportamiento y los datos se actualizó el Entregable 1 en los siguientes puntos:
+> 1. Se unificó el consumo de las APIs externas en `AdaptadorDeEventosExternos` (CTI en `datos.gov.co` y museos/parques en `api-colombia.com`), eliminando la interfaz `IProveedorGeografico`, los adaptadores `AdaptadorEventosDatosGov` y `AdaptadorApiColombia` y la operación `obtenerDepartamentosYCiudades()`, ya que ningún flujo de los casos de uso seleccionados los utiliza.
+> 2. `ConsultadorEventos.consultarEventos` y `ControladorDeEventos.consultar` pasan a retornar `EventosDTO` (lista de eventos y bandera `externosDisponibles`) para poder informar la Excepción B.
+> 3. Se agregó la clase `Tarifa` al diagrama de clases de Gestión de Eventos, coherente con la entidad `TARIFA` del modelo de datos.
+> 4. `Evento` incorpora los atributos `pais` y `departamento`, y su operación `actualizar` recibe la lista de tarifas en lugar de un precio único.
 ---
 
 ## 5. Open Questions (Preguntas abiertas)
@@ -317,7 +325,8 @@ erDiagram
 | ID | Pregunta | Consecuencia si no se resuelve | Decisión necesaria / responsable |
 |---|---|---|---|
 | `OQ-01` | Los eventos externos de `datos.gov.co` o `api-colombia.com` pueden no traer precio ni cupos. ¿Se incluyen o se excluyen cuando el usuario filtra por presupuesto o aforo? | BR-01 y BR-02 no pueden evaluarse sobre datos ausentes; incluirlos o excluirlos cambia los resultados. | Equipo, tras revisar el esquema real de ambos datasets. |
-
+| `OQ-02` | Política ante HTTP 429 de una API externa (reintentos) — pregunta abierta 2 de `REQ-01`. | Hoy el 429 se trata como "error HTTP" y activa el fallback con eventos locales; no hay política de reintentos definida. | Equipo. |
+| `OQ-03` | `REQ-02` aún no tiene un caso de uso detallado; los pasos del diagrama 1.2 son supuestos derivados de `US-02.1`. | La trazabilidad del diagrama 1.2 queda sujeta a la redacción del caso de uso de `REQ-02`. | Equipo. |
 ---
 
 ## 6. Optional — AI-Assisted Design Reflection (Reflexión sobre diseño asistido por IA)
@@ -334,14 +343,14 @@ erDiagram
 
 ## 7. Consistency Checklist (Lista de verificación)
 
-- [ ] Two use cases from the project, each traceable to a Use Case written in the requirements. — *1.1 sí (`REQ-01`). Falta 1.2*
+- [ ] Two use cases from the project, each traceable to a Use Case written in the requirements. — *1.1 trazable a `REQ-01`. 1.2 trazable a `US-02.1`, pero `REQ-02` aún no tiene caso de uso detallado; sus pasos se declaran como supuestos (ver `OQ-03`).*
 - [x] Each sequence diagram shows the main flow and at least one alternative or exception flow.
 - [x] No business behavior is invented: anything unspecified is marked as an assumption or Open Question.
 - [x] Section 2.1 explains what is NOT persisted as well as what is.
 - [x] The data model has identifiers, relationships and constraints, not only boxes.
 - [x] Every piece of principal information has one authoritative owner, and consumers are listed (Section 2.3).
 - [x] The contract defines input, output, preconditions, postconditions and failure outcomes.
-- [x] Sequence, data model and contract describe the same behavior. — 
+- [x] Sequence, data model and contract describe the same behavior.
 - [x] Diagrams render correctly on GitHub (or the exported images are embedded).
 
 ---
