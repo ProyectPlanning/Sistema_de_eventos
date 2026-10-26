@@ -45,7 +45,7 @@ sequenceDiagram
         GW-->>WEB: campo erróneo y motivo
         WEB-->>U: resaltar campo y conservar los demás datos
     else filtros válidos
-        CO->>REP: buscarPorCriterios(Ciudad, PresupuestoMax)
+        CO->>REP: buscarPorCriterios(zonaGeografica,presupuestoMax)
         REP-->>CO: lista de Evento locales candidatos
         CO->>EXT: obtenerEventosExternos(filtro)
 
@@ -269,32 +269,32 @@ erDiagram
 
 ## 3. Interface Contract (Contrato de interfaz)
 
-**Interaction chosen** (from diagram 1.1, message `CE->>CO: consultarEventos(FiltroEventosDTO)`):
+**Interaction chosen** (from diagram 1.1, message `consultarEventos`):
 > Operación `consultarEventos(filtro)` **provista por Gestión de Eventos** (`ConsultadorEventos`) y **consumida por** `ControladorDeEventos`, que la expone al API Gateway. Se elige porque concentra todo el comportamiento del capstone (`REQ-01`): BR-01, BR-02, BR-03, Excepción A, Excepción B y flujo alternativo.
 
 | Element | Specification |
 |---|---|
-| **Operation and purpose** | `consultarEventos(filtro: FiltroEventosDTO) : EventosDTO`. Retorna los eventos vigentes, locales y externos (de `datos.gov.co` y `api-colombia.com`), compatibles con los criterios provistos por el asistente, aplicando BR-01, BR-02 y BR-03 en tiempo real sin requerir normalizaciones externas ni caché local. |
-| **Input** (parameters and types) | `FiltroEventosDTO`, todos los campos **opcionales** (BR-03): `pais: String`, `departamento: String`, `ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: { inicio: DateTime, fin: DateTime }`. |
-| **Output** (successful result and data structure) | `List<EventoDTO>`. `EventoDTO { id: String, origen: LOCAL o EXTERNO, titulo: String, pais, departamento, ciudad, direccion: String, horario: HorarioDTO, tarifaMinimaVigente: Decimal o nulo, cuposDisponibles: Integer o nulo}`. |
-| **Preconditions** (what the caller must satisfy before invoking) | El filtro llega con tipos correctos (validación de esquema en `ControladorDeEventos`). |
-| **Postconditions** (what is guaranteed on successful completion) | (1) Cada evento retornado cumple **todos** los criterios provistos y ninguno de los omitidos se usa para descartar (BR-03). (2) Si hay presupuesto, cada evento tiene al menos una tarifa vigente ≤ presupuesto (BR-02). (3) Ningún evento con aforo limitado tiene 0 cupos (BR-01). (4) Ningún evento está cancelado ni vencido. (5) `externosDisponibles = false` **si y solo si** ambas fuentes externas fallaron o superaron 2 s; en ese caso `eventos` solo contiene eventos locales. (6) Sin filtros, se retorna el listado general de eventos vigentes en orden cronológico. |
+| **Operation and purpose** | `consultarEventos(filtro: FiltroEventosDTO) : EventosDTO`. Retorna los eventos vigentes, locales y externos (de `datos.gov.co` y `api-colombia.com`), compatibles con los criterios provistos por el asistente.|
+| **Input** (parameters and types) | `FiltroEventosDTO`: `pais: String`, `departamento: String`, `ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: horario recurrente o por rango`. |
+| **Output** (successful result and data structure) | `List<EventoDTO>`. `lista de eventos que cumplen con los filtros, (lista vacía si no hay eventos que cumplan con los filtros)`. |
+| **Preconditions** (what the caller must satisfy before invoking) | El filtro llega con tipos correctos. |
+| **Postconditions** (what is guaranteed on successful completion) | (1) Cada evento retornado cumple **todos** los criterios provistos. (2) Si hay presupuesto, cada evento tiene al menos una tarifa vigente ≤ presupuesto. (3) Ningún evento con aforo limitado tiene 0 cupos. (4) `externosDisponibles = false` **solo si** ambas fuentes externas fallaron o superaron 2 s; en ese caso `eventos` solo contiene eventos locales.|
 | **Failure outcomes** (each failure, and what state is left after it) | **`ErrorValidacion(campo, motivo)`** (Excepción A): presupuesto negativo, `rangoHorario.fin ≤ rangoHorario.inicio` o rango incompleto (solo inicio o solo fin); no se consulta ninguna fuente y se muestra mensaje de error en los campos. **`ErrorServicioNoDisponible`** Se muestra un mensaje informando que el servicio no está disponible |
 | **Invariants and side effects** (what must stay true, what may change) | **Solo lectura:** la operación **no modifica** el catálogo local, usuarios ni tarifas. Efectos permitidos: registrar una advertencia en el log cuando falla una fuente externa. |
 
 **Testable examples**
 
-*Datos de prueba locales (todos en estado PUBLICADO y vigentes):* **E1** "Concierto Parque", Bogotá, hoy 19:00–21:00, tarifas General $20.000 y VIP $50.000, cupos 30/100. **E2** "Taller Arte", Bogotá, hoy 18:30–20:00, tarifa única $35.000, cupos 0/20. **E3** "Feria Libro", Bogotá, hoy 18:00–22:00, Entrada libre $0, sin aforo limitado. **E4** "Obra Teatro", Bogotá, hoy 14:00–16:00, tarifa $15.000, cupos 10/50. **E5** "Expo Medellín", Medellín, hoy 09:00–11:00, tarifa $40.000, sin aforo limitado.
+*Datos de prueba locales:* **E1** "Concierto Parque", Bogotá, hoy 19:00–21:00, tarifas General $20.000 y VIP $50.000, cupos 30/100. **E2** "Taller Arte", Bogotá, hoy 18:30–20:00, tarifa única $35.000, cupos 0/20. **E3** "Feria Libro", Bogotá, hoy 18:00–22:00, Entrada libre $0, sin aforo limitado. **E4** "Obra Teatro", Bogotá, hoy 14:00–16:00, tarifa $15.000, cupos 10/50. **E5** "Expo Medellín", Medellín, hoy 09:00–11:00, tarifa $40.000, sin aforo limitado.
 
 | Case | Before | Request | Expected |
 |---|---|---|---|
-| V1 — Filtros combinados (AC.1.1) | E1–E5 cargados; APIs externas responden sin eventos de Bogotá | `ciudad = Bogotá, presupuestoMaximo = 50000, rango = hoy 18:00–22:00` | `eventos = [E1, E3]`. E2 se excluye por BR-01 y E4 por horario. |
-| V2 — BR-02 con múltiples tarifas | Igual | `ciudad = Bogotá, presupuestoMaximo = 30000` | E1 califica (General $20.000 ≤ $30.000, aunque VIP sea $50.000); también E3 y E4. E2 se excluye por BR-02 ($35.000 > $30.000) y además por BR-01. |
-| V3 — BR-01 | Igual | `ciudad = Bogotá, presupuestoMaximo = 40000, rango = hoy 18:00–22:00` | E2 (compatible en precio y horario, cupos = 0) **no** aparece. |
-| V4 — Excepción B | Igual; APIs externas no responden en 2 s | Mismo filtro de V1 | `eventos = [E1, E3]` (solo `LOCAL`), `externosDisponibles = false`; la UI muestra el aviso. Catálogo local sin cambios. |
-| V5 — Excepción A | Igual | `presupuestoMaximo = -1000` o `rango = hoy 22:00–18:00` | `ErrorValidacion(campo = presupuestoMaximo o rangoHorario)`; no se consulta repositorio ni APIs externas. |
-| V6 — Sin coincidencias (AC.1.2) | Igual | `ciudad = Medellín, presupuestoMaximo = 10000, rango = hoy 08:00–12:00` | `eventos = []`, éxito; la UI informa y sugiere ajustar filtros. |
-| V7 — Sin filtros (BR-03, AC.1.5) | Igual | `{}` | Éxito con el listado general de eventos vigentes, aquí E2 se excluye por cupos = 0. |
+| v1-Filtros combinados | E1–E5 cargados; APIs externas responden sin eventos de Bogotá | `ciudad = Bogotá, presupuestoMaximo = 50000, rango = hoy 18:00–22:00` | `eventos = [E1, E3]`. |
+| con múltiples tarifas | Igual | `ciudad = Bogotá, presupuestoMaximo = 30000` | E1 califica (General $20.000 ≤ $30.000, aunque VIP sea $50.000); también E3 y E4.|
+| cupos disponibles | Igual al primer caso | `ciudad = Bogotá, presupuestoMaximo = 40000, rango = hoy 18:00–22:00` | E2 (compatible en precio y horario, cupos = 0) **no** aparece. |
+|  Excepción B | Igual; APIs externas no responden en 2 s | Mismo filtro de V1 | `eventos = [E1, E3]` (solo `LOCAL`), `externosDisponibles = false`; la UI muestra el aviso.|
+| Excepción A | Igual | `presupuestoMaximo = -1000` o `rango = hoy 22:00–18:00` | `ErrorValidacion(campo = presupuestoMaximo y rangoHorario)`; no se consulta repositorio ni APIs externas. |
+| Sin coincidencias | Igual | `ciudad = Medellín, presupuestoMaximo = 10000, rango = hoy 08:00–12:00` | `eventos = []`, éxito; la UI informa y sugiere ajustar filtros. |
+| Sin filtros | Igual | `{}` | Éxito con el listado de eventos aleatorios, aquí E2 se excluye por cupos = 0. |
 
 ---
 
@@ -302,46 +302,21 @@ erDiagram
 
 | Check | Result |
 |---|---|
-| Every participant in a sequence diagram is an actor, a component, a class or an external system from Deliverable 1 | **Cumple.** Actores: Asistente, Organizador (Usuario del Entregable 1 §2.1). Componentes: Aplicación Web, API Gateway. Clases: `ControladorDeEventos`, `ConsultadorEventos`, `GestorEventos`, `Evento`, `GestorUsuarios`, `IRepositorioDeEventos`, `AdaptadorDeEventosExternos`. Sistemas externos: API datos.gov.co, API Colombia (`api-colombia.com`). |
-| Every message corresponds to a capability, operation or contract | **Cumple con ajustes.** Todos los mensajes mapean a operaciones del Entregable 1 actualizado (tablas de §1.1 y §1.2). |
-| Every entity or document type is reflected in the class diagrams, or the reason it is not is stated | **Cumple parcialmente.** `USUARIO` ↔ `Usuario`, `EVENTO` ↔ `Evento`, `HORARIO_EVENTO` ↔ `HorarioEvento` / `HorarioRango` / `HorarioRecurrente`. **`TARIFA` no existe** en el diagrama de clases del Entregable 1 → cambio 2. |
-| Every persisted information element has exactly one authoritative owner | **Cumple.** Usuario → Módulo de Usuarios; Evento, Tarifa y Horario → Gestión de Eventos (Sección 2.3). Los datos externos no se persisten. |
-| The contract agrees with the sequence diagram and with the data model (same behavior in all three views) | **Cumple tras aplicar los cambios 1–3.** `externosDisponibles` aparece en el diagrama (Excepción B), en el contrato (postcondición 5) y en V4. BR-02 usa `TARIFA.vigente` y `precio_cop` en el modelo, `tarifaMinimaVigente` en el contrato y la regla en `aplicarReglasNegocio`. El pseudocódigo actual del Entregable 1 §3.4 **no** concuerda (ver cambio 3). |
+| Every participant in a sequence diagram is an actor, a component, a class or an external system from Deliverable 1 | **Cumple.** Actores: Asistente, Organizador (Usuario del Entregable 1). Componentes: Aplicación Web, API Gateway. Clases: `ControladorDeEventos`, `ConsultadorEventos`, `GestorEventos`, `Evento`, `GestorUsuarios`, `IRepositorioDeEventos`, `AdaptadorDeEventosExternos`. Sistemas externos: API datos.gov.co, API Colombia (`api-colombia.com`). |
+| Every message corresponds to a capability, operation or contract | **Cumple** Todos los mensajes mapean a operaciones del Entregable 1. |
+| Every entity or document type is reflected in the class diagrams, or the reason it is not is stated | **Cumple parcialmente.** `USUARIO` ↔ `Usuario`, `EVENTO` ↔ `Evento`, `HORARIO_EVENTO` ↔ `HorarioEvento` / `HorarioRango` / `HorarioRecurrente`. TARIFA no tiene clase asociada porque se trata como un tipo de dato dentro de evento.|
+| Every persisted information element has exactly one authoritative owner | **Cumple.** Usuario → Módulo de Usuarios; Evento, Tarifa y Horario → Gestión de Eventos. |
+| The contract agrees with the sequence diagram and with the data model (same behavior in all three views) | **Cumple** `externosDisponibles` aparece en el diagrama (Excepción B), en el contrato (postcondición 4). Se usa `TARIFA.vigente` y `precio_cop` en el modelo, `tarifaMinimaVigente` en el contrato y la regla se implementa en `aplicarReglasNegocio`.|
 
 **Changes made to Deliverable 1 because of this deliverable**
-> **Alineación con el Entregable 1 actualizado (`Diseño Arquitectónico detallado 01 (1).md`):**
-> Se verificó que el equipo ya integró en el Entregable 1 la unificación de APIs externas en `AdaptadorDeEventosExternos` para consultar eventos (CTI en `datos.gov.co` y museos/parques en `api-colombia.com`), eliminando la interfaz `IProveedorGeografico` y descartando cualquier normalización geográfica externa. Asimismo, se prescinde de cualquier capa de caché local.
->
-> Los siguientes cambios permanecen **pendientes** de actualización en el Entregable 1:
->
-> 1. **`IRepositorioDeEventos.buscarPorCriterios(ciudad, presupuestoMax)`** → `buscarPorCriterios(criterios: CriteriosBusqueda)` con campos opcionales (país, departamento, ciudad, presupuesto). La firma actual obliga a enviar ciudad y presupuesto y contradice BR-03.
-> 2. **Clase `Evento`:** reemplazar `tarifaMinima: Float` y `tarifaMaxima: Float` por una composición `Evento "1" *-- "1..*" Tarifa`, añadir la clase `Tarifa (nombre, precio, vigente)` y el método derivado `tarifaMinimaVigente()` (D-DAT-1). Hacer `cuposDisponibles` opcional y añadir `capacidadMaxima` (D-DAT-4).
-> 3. **Pseudocódigo §3.4 (`consultarEventos`):** (a) el *timeout* lo absorbe `AdaptadorDeEventosExternos` y retorna `disponibles = false`, en línea con ADR-0004, en lugar de capturar `TimeoutError` en `ConsultadorEventos`; (b) retornar `EventosDTO` con `externosDisponibles` en lugar de `List<EventoDTO>`; (c) la condición `evento.tarifaMinima <= filtro.presupuestoMaximo` debe omitirse cuando no hay presupuesto (BR-03) y usar la tarifa mínima **vigente**; (d) excluir eventos cancelados o vencidos.
-> 4. **`ControladorDeEventos.crear(req)`, `modificar(id, req)` y `eliminar(id)`** deben recibir el `idOrganizador` del contexto autenticado que entrega el API Gateway, nunca del cuerpo de la petición.
-> 5. **Base de datos:** unificar la decisión. ADR-0003 dice PostgreSQL (y descarta SQLite), ADR-0005 dice "PostgreSQL / SQLite" y el Entregable 1 y `REQ-01` dicen "relacional embebida / local". Además, ADR-0003 justifica la decisión con reservas y pagos, que no están en el alcance. Este entregable es independiente del motor (`OQ-08`).
-> 6. **Crear ADR-0006** (polimorfismo de horarios), referenciado en el Entregable 1 pero inexistente; debe incluir la estrategia de persistencia D-DAT-2.
-> 7. **Nombres de interfaces:** ADR-0004 usa `IServicioCorreo` e `IServicioMapas`; el Entregable 1 usa `IServicioNotificaciones` y no define una interfaz para Google Maps. Hay que alinear los nombres.
-> 8. **Criterios de aceptación:** AC.1.4 usa "Bogotá" y `REQ-01` Escenario 4 usa "Cali". AC.1.1 exige horario "totalmente contenido", mientras `REQ-01` deja abierta la semántica de solapamiento (`OQ-01`).
-
+> Se unificó las APIs externas en `AdaptadorDeEventosExternos` para consultar eventos (CTI en `datos.gov.co` y museos/parques en `api-colombia.com`), eliminando la interfaz `IProveedorGeografico`. Asimismo, se prescinde de cualquier capa de caché local.
 ---
 
 ## 5. Open Questions (Preguntas abiertas)
 
 | ID | Pregunta | Consecuencia si no se resuelve | Decisión necesaria / responsable |
 |---|---|---|---|
-| `OQ-01` | ¿El filtro horario usa **contención total** (AC.1.1) o **solapamiento parcial**? ¿Cómo se tratan los eventos que cruzan la medianoche (ej. 21:00–03:00)? | `coincideConRango` y el `CHECK hora_fin > hora_inicio` pueden excluir eventos nocturnos válidos o incluir eventos no compatibles. | Equipo con el docente; reflejar en AC.1.1 y en `HorarioRango`. |
-| `OQ-02` | **[CERRADA / RESUELTA]** ¿El rango horario incluye fecha (`US-01.2` habla de "días y horarios") o solo horas (AC.1.1)? Si solo trae horas, ¿qué fecha se asume? | El contrato podría no reflejar lo que captura la UI. | Equipo (UX y requerimientos). |
-| `OQ-03` | ¿Los eventos externos se persisten localmente o solo se consultan en tiempo real? | Persistirlos cambia la Sección 2.1, añade una entidad y un proceso de sincronización y crea riesgo de datos desactualizados. | Equipo; hoy: no persistir (decisión propuesta). |
-| `OQ-04` | ¿"Eliminar evento" (`US-02.3`) es borrado físico o cancelación lógica? | Afecta el modelo (`estado`), las consultas y la futura `REQ-12`. | Stakeholders / docente; hoy: cancelación lógica (D-DAT-5). |
-| `OQ-05` | En la Etapa 1, sin reservas ni marcado de asistencia, ¿quién actualiza `cupos_disponibles`? ¿Solo el organizador vía `REQ-02`? | BR-01 dependería de datos que nadie mantiene. | Stakeholders. |
-| `OQ-06` | `REQ-02` y `REQ-13` no tienen caso de uso formal (flujos y excepciones). | El diagrama 1.2 se basa en pasos derivados (marcados como supuesto). | Equipo: redactar los casos de uso en `Docs/Requirements/`. |
-| `OQ-07` | **[CERRADA / RESUELTA]** Normalización geográfica externa: se acordó que no se normaliza nada contra APIs externas; `api-colombia.com` y `datos.gov.co` son proveedores de eventos. La búsqueda geográfica opera por coincidencia directa de texto/atributos. | N/A — Resuelta en diseño v1.0. | Equipo Power Rangers. |
-| `OQ-08` | **[CERRADA / RESUELTA]** ¿Motor definitivo: PostgreSQL (ADR-0003) o relacional embebida/SQLite (ADR-0005, `REQ-01`)? | Inconsistencia documental; afecta tipos (`decimal`, `time`) y la concurrencia en la restricción `UNIQUE (email)`. | Equipo; actualizar ADRs. |
-| `OQ-09` | ¿Qué ve el usuario si la base de datos local no está disponible? `REQ-01` y `REQ-02` no lo especifican. | El contrato define `ErrorServicioNoDisponible` como supuesto. | Equipo. |
-| `OQ-10` | ¿Se requiere revocar tokens (cierre de sesión forzado, cuenta desactivada)? | Si sí, habría que persistir tokens o una lista de revocación (Sección 2.1). | Stakeholders / seguridad. |
-| `OQ-11` | **[CERRADA / RESUELTA]** BR-03 sin filtros: ¿"aleatorio" (Reglas de negocio) o "orden cronológico" (`REQ-01` Escenario 4)? ¿Hay límite de resultados (AC.1.4 menciona "límite")? | Resultados no deterministas dificultan las pruebas; sin límite, la respuesta puede crecer sin control. | Equipo / docente. |
-| `OQ-12` | Los eventos externos de `datos.gov.co` o `api-colombia.com` pueden no traer precio ni cupos. ¿Se incluyen o se excluyen cuando el usuario filtra por presupuesto o aforo? | BR-01 y BR-02 no pueden evaluarse sobre datos ausentes; incluirlos o excluirlos cambia los resultados. | Equipo, tras revisar el esquema real de ambos datasets. |
-| `OQ-13` | Política ante HTTP 429 de una API externa (reintentos ante rate limit) — pregunta abierta 2 de `REQ-01`. | Al no existir caché local, si una API remota supera cuotas (ej. 60 req/min), el timeout o error 429 es absorbido por el adaptador activando el fallback local de forma inmediata. | Equipo. |
+| `OQ-01` | Los eventos externos de `datos.gov.co` o `api-colombia.com` pueden no traer precio ni cupos. ¿Se incluyen o se excluyen cuando el usuario filtra por presupuesto o aforo? | BR-01 y BR-02 no pueden evaluarse sobre datos ausentes; incluirlos o excluirlos cambia los resultados. | Equipo, tras revisar el esquema real de ambos datasets. |
 
 ---
 
@@ -349,22 +324,24 @@ erDiagram
 
 > *Sección para completar por el equipo. No se describe aquí una experiencia que el equipo no haya tenido.*
 >
-> **Recomendación de la IA:** _[describir la recomendación concreta, ej. "unificar la consulta de eventos externos en AdaptadorDeEventosExternos sin normalización geográfica ni caché local" o "crear la entidad TARIFA"]_
-> **Decisión del equipo:** _[Aceptada / Modificada / Rechazada]_
-> **Razón:** _[por qué, con referencia a requisitos, reglas o restricciones]_
+> **Recomendación de la IA:** Crear la entidad `TARIFA`
+> 
+> **Decisión del equipo:** Aceptada
+> 
+> **Razón:** Como un evento puede tener diferente tipos de tarifas (cada una con su nombre, precio, estado), es más natural verla como una entidad aparte que se relaciona con `EVENTO`
 
 ---
 
 ## 7. Consistency Checklist (Lista de verificación)
 
-- [ ] Two use cases from the project, each traceable to a Use Case written in the requirements. — *1.1 sí (`REQ-01` §4.3). 1.2 solo es trazable a `US-02.1` y a la descripción de `REQ-02`, porque no existe un caso de uso formal (`OQ-06`).*
+- [ ] Two use cases from the project, each traceable to a Use Case written in the requirements. — *1.1 sí (`REQ-01`). Falta 1.2*
 - [x] Each sequence diagram shows the main flow and at least one alternative or exception flow.
 - [x] No business behavior is invented: anything unspecified is marked as an assumption or Open Question.
 - [x] Section 2.1 explains what is NOT persisted as well as what is.
 - [x] The data model has identifiers, relationships and constraints, not only boxes.
 - [x] Every piece of principal information has one authoritative owner, and consumers are listed (Section 2.3).
 - [x] The contract defines input, output, preconditions, postconditions and failure outcomes.
-- [ ] Sequence, data model and contract describe the same behavior. — *Sí entre las tres vistas de este documento, pero el Entregable 1 aún no refleja los cambios 1–4 de la Sección 4.*
-- [ ] Diagrams render correctly on GitHub (or the exported images are embedded). — *Sintaxis revisada manualmente; falta confirmar el render al subir el archivo a GitHub.*
+- [x] Sequence, data model and contract describe the same behavior. — 
+- [x] Diagrams render correctly on GitHub (or the exported images are embedded).
 
 ---
