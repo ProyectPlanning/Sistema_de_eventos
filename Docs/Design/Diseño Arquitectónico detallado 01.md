@@ -356,10 +356,10 @@ Operación seleccionada: `consultarEventos(filtro)` de la clase `ConsultadorEven
 ```text
 consultarEventos(filtro):
     validarCoherenciaFiltro(filtro) // Lanza ErrorValidacion si precios son negativos o fechas incoherentes
-    eventosLocales = repositorio.buscarPorCriterios(filtro.ciudad, filtro.presupuestoMaximo)
+    eventosLocales = repositorio.buscarPorCriterios(filtro.zonaGeografica, filtro.presupuestoMaximo)
     
     TRY:
-        respuestaExterna = proveedorExterno.obtenerEventosExternos(filtro) // timeout max 2000 ms a datos.gov.co
+        respuestaExterna = IProveedorEventosExternos.obtenerEventosExternos(filtro) // timeout max 2000 ms
         eventosExternos = respuestaExterna.eventosValidados
     EXCEPTION (TimeoutError, NetworkError):
         registrarAdvertencia("API externa inaccesible; continuando con catálogo local")
