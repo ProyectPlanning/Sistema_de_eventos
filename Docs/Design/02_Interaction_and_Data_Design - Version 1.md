@@ -89,7 +89,7 @@ sequenceDiagram
 |---|---|---|---|
 | Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `ingresar filtros`,`solicitar consulta`,`consultar`,`consultarEventos` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req)`, ConsultadorEventos.consultarEventos(filtro)|
 | Flujo principal, paso 3 (validar formato y coherencia) | `validarCoherenciaFiltro` | `FiltroEventosDTO` | `ConsultadorEventos.validarCoherenciaFiltro(filtro)`|
-| Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios` | `zonaGegrafica`,`presupuestoMax`,lista de `Evento` | `IRepositorioDeEventos.buscarPorCriterios(zonaGegrafica, presupuestoMax)`|
+| Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios` | `zonaGeografica`,`presupuestoMax`,lista de `Evento` | `IRepositorioDeEventos.buscarPorCriterios(zonaGeografica, presupuestoMax)`|
 | Flujo principal, paso 5 (consultar APIs de eventos externas) | `obtenerEventosExternos` | Filtro → `ResultadoEventosExternosDTO` | `IProveedorEventosExternos.obtenerEventosExternos(filtro)` implementado por `AdaptadorDeEventosExternos` |
 | Flujo principal, paso 6 (consolidar y aplicar BR-01, BR-02) | `unificar y aplicarReglasNegocio` | Lista unificada de `Evento` cumpliendo los filtros dados | `ConsultadorEventos.aplicarReglasNegocio(eventos, filtro)` |
 | Flujo principal, paso 7 (presentar resultados) | `EventosDTO` | `EventosDTO` | `ControladorDeEventos.consultar` devuelve lista de `EventosDTO` |
@@ -156,7 +156,7 @@ sequenceDiagram
 | Paso 4 — Delegar creación | `crear(req)` | `CrearEventoDTO`, `idOrganizador` | `ControladorDeEventos.crear(req)`, `GestorEventos.crearEvento(datos, idOrganizador)` |
 | Paso 5 — Validar coherencia de los datos del evento | `construir evento` | Datos del evento | constructor de `Evento`, `HorarioEvento.esValido()` |
 | Paso 6 — Persistir evento | `guardar(evento)` | `Evento` sin id asignada,`Evento` con id asignada | `IRepositorioDeEventos.guardar(evento)` |
-| Paso 7 — Confirmar publicación| `EventoDTO`,`confirmar pulicacíon de evento` | `EventoDTO` | `ControladorDeEventos.crear` → `EventoDTO` |
+| Paso 7 — Confirmar publicación| `EventoDTO`,`confirmar publicacíon de evento` | `EventoDTO` | `ControladorDeEventos.crear` → `EventoDTO` |
 | token inválido | `token ausente, inválido o expirado` | Rechazo de autenticación | API Gateway / `validarTokenAcceso` |
 | rol distinto de organizador | `rol distinto de ORGANIZADOR` | mensaje de Rechazo de autorización | API Gateway (autorización por rol), `Usuario.esOrganizador()` |
 | datos de evento inválidos | `datos incoherentes` | `ErrorValidacion(campos)` | constructor de `Evento` , `HorarioEvento.esValido()` |
