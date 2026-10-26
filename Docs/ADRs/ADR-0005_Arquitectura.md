@@ -71,7 +71,7 @@ Es el núcleo del sistema, desarrollado como una aplicación modular (NestJS / T
 
 #### 4. Frontera de Integración con Servicios de Terceros
 APIs externas ubicadas fuera del límite del sistema, consumidas a través de la capa adaptadora (definida en el ADR-0004):
-* **API de Eventos:** Integración con `https://api-colombia.com/` (datos territoriales y contexto nacional como museos o parques con caché local) y `https://www.datos.gov.co/.../xm7a-7paj/about_data` (eventos oficiales abiertos).
+* **API de Eventos:** Integración con `https://api-colombia.com/` (atracciones turísticas como museos y parques naturales) y `https://www.datos.gov.co/.../xm7a-7paj/about_data` (eventos oficiales abiertos).
 * **API de Google Maps:** Geocodificación.
 * **API de Gmail:** Servicio externo para el despacho de correos electrónicos transaccionales.
 
