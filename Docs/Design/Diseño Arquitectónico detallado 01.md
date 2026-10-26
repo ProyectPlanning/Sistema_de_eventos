@@ -21,7 +21,7 @@
 
 | Requerimiento / ID Caso de Uso | Por qué moldea la estructura | Atributo de calidad, restricción o regla de negocio involucrada |
 |---|---|---|
-| **REQ-01 / Consultar y Filtrar Eventos** | Requiere evaluar criterios multidimensionales (presupuesto, horario y zona), consultando tanto registros locales como APIs externas de eventos. Demanda aislar las llamadas externas detrás de adaptadores con estrategia de caché y fallback para que la lentitud o cuotas de terceros no degraden la experiencia. | **Restricción:** Integrar APIs externas bajo límites de cuota (60 req/min por IP en `api-colombia.com`). **Calidad:** Disponibilidad de la experiencia de consulta, tolerancia a fallos y bajo tiempo de respuesta. **Reglas:** BR-01 (al menos 1 cupo disponible), BR-02 (tarifa mínima y presupuesto) y BR-03 (filtros combinables). |
+| **REQ-01 / Consultar y Filtrar Eventos** | Requiere evaluar criterios multidimensionales (presupuesto, horario y zona), consultando tanto registros locales como APIs externas de eventos. Demanda aislar las llamadas externas detrás de adaptadores con timeout estricto y fallback para que la lentitud, las caídas o las cuotas de terceros no degraden la experiencia. | **Restricción:** Integrar APIs externas bajo límites de cuota (60 req/min por IP en `api-colombia.com`). **Calidad:** Disponibilidad de la experiencia de consulta, tolerancia a fallos y bajo tiempo de respuesta. **Reglas:** BR-01 (al menos 1 cupo disponible), BR-02 (tarifa mínima y presupuesto) y BR-03 (filtros combinables). |
 | **REQ-02 / Administrar Eventos** | Las operaciones de creación, edición y cancelación de eventos alteran el estado del catálogo y requieren validación de coherencia en fechas, aforos y precios, además de control transaccional en el almacenamiento. | **Calidad:** Consistencia e integridad de datos. **Regla de dominio:** Un evento debe poseer al menos una tarifa y un horario válido antes de ser publicado en el catálogo. |
 | **REQ-13 / Registro y Creación de Cuenta** | La identificación de usuarios exige separar las responsabilidades de gestión de credenciales, hashing seguro y emisión de tokens de la lógica de eventos, controlando el acceso a operaciones administrativas y disparando notificaciones de confirmación vía correo. | **Restricción:** Políticas de seguridad y unicidad de cuenta. **Calidad:** Confidencialidad, desacoplamiento de la identidad y trazabilidad de sesión. |
 
@@ -36,7 +36,7 @@
 | Elemento fuera del sistema | Tipo | Cómo interactúa el sistema con él |
 |---|---|---|
 | **Usuario (Asistente / Gestor)** | Actor humano | Interactúa con la Aplicación Web para autenticarse, consultar y filtrar eventos compatibles, o crear y modificar eventos si posee permisos de organizador. |
-| **API de Eventos y Datos Territoriales** | Sistemas externos | 1. `https://api-colombia.com/`: Datos de atracciones turísticas que Colombia tiene para ofrecer, desde museos hasta parques naturales., operada bajo límite de 60 req/min y recomienda caché local.<br/>2. `https://www.datos.gov.co/.../xm7a-7paj/about_data`: Catálogo oficial de eventos abiertos nacionales e internacionales de CTI. |
+| **API de Eventos y Datos Territoriales** | Sistemas externos | 1. `https://api-colombia.com/`: Datos de atracciones turísticas que Colombia tiene para ofrecer, desde museos hasta parques naturales, operada bajo un límite de 60 req/min por IP.<br/> `https://www.datos.gov.co/.../xm7a-7paj/about_data`: Catálogo oficial de eventos abiertos nacionales e internacionales de CTI. |
 | **API de Google Maps** | Sistema externo | El sistema interactúa con ella para geocodificación y normalización de direcciones. |
 | **API de Gmail** | Sistema externo | Servicio de correo externo utilizado por el sistema para confirmación de registro (`REQ-13`) y alertas de cuenta. |
 
@@ -76,8 +76,8 @@ flowchart LR
         GW -->|"enrutar autenticación y registro"| GU
         GW -->|"enrutar consultas y gestión de eventos"| GE
 
-        GE -->|"recuperar eventos externos y zonas"| IE
-        IE -->|"consultar museos y parques (con caché)"| API_COL
+        GE -->|"recuperar eventos externos"| IE
+        IE -->|"consultar museos y parques"| API_COL
         IE -->|"consultar catálogo público"| API_GOV
 
         GE -->|"persistir y consultar eventos"| PERS
@@ -109,7 +109,7 @@ flowchart LR
 | **Aplicación Web** | Front-End | Renderizar vistas interactivas, capturar formularios de filtrado, creación de eventos y registro, y presentar resultados. | `REQ-01`, `REQ-02`, `REQ-13` | Interacción de usuario, captura de filtros y visualización de catálogo. | Enviar solicitudes HTTP/REST hacia el API Gateway. | API Gateway |
 | **API Gateway** | Back-End | Punto único de entrada al Back-End: autentica peticiones, valida tokens de sesión y enruta las solicitudes al módulo de negocio correspondiente. | `REQ-01`, `REQ-02`, `REQ-13` | Enrutamiento de solicitudes, validación de sesión y autorización por rol. | Ejecutar casos de uso en módulos de negocio. | Gestión de Eventos, Módulo de Usuarios y Perfiles |
 | **Gestión de Eventos** | Back-End | Contiene la lógica de dominio de eventos: validación de reglas BR-01, BR-02 y BR-03, cálculo de solapamiento horario y orquestación de operaciones CRUD. | `REQ-01`, `REQ-02` | `consultarEventos(filtro)`, `crearEvento(datos)`, `modificarEvento(id, datos)`, `eliminarEvento(id)`. | Consultar eventos locales y obtener eventos de terceros formateados. | Integración de Eventos Externos, Capa de Persistencia |
-| **Integración de Eventos Externos** | Back-End | Adaptadores que aíslan la comunicación con las APIs externas (`api-colombia.com` y `datos.gov.co`), gestionando la caché local para respetar el límite de 60 req/min y aplicando fallback ante timeouts. | `REQ-01` | `obtenerEventosExternos(filtro)`, `obtenerDepartamentosYCiudades()` | Consumir APIs REST externas bajo cuotas y timeouts estrictos. | API Colombia, Datos Abiertos Gov.co |
+| **Integración de Eventos Externos** | Back-End | Adaptador que aísla la comunicación con las APIs externas (`api-colombia.com` y `datos.gov.co`), aplicando un timeout estricto de 2 segundos y fallback ante la indisponibilidad o los errores de los proveedores. | `REQ-01` | `obtenerEventosExternos(filtro)` | Consumir APIs REST externas bajo cuotas y timeouts estrictos. | API Colombia, Datos Abiertos Gov.co |
 | **Módulo de Usuarios y Perfiles** | Back-End | Gestionar el registro de usuarios, validación de credenciales, hashing seguro de contraseñas y emisión de tokens de autenticación. | `REQ-13` | `registrarUsuario(datos)`, `autenticarUsuario(credenciales)`, `validarSesion(token)`. | Guardar credenciales y solicitar confirmación por email. | Capa de Persistencia, Módulo de Notificaciones |
 | **Módulo de Notificaciones** | Back-End | Gestionar el despacho de mensajes y correos transaccionales a usuarios. En la Primera Etapa atiende la confirmación de registro (`REQ-13`) vía Gmail; en fases posteriores atenderá avisos de eventos modificados (`REQ-12`). | `REQ-13` | `despacharCorreoConfirmacion(usuario)` | Consumir API de Gmail externa. | API de Gmail (Terceros) |
 | **Capa de Persistencia** | Back-End | Implementar repositorios y DAOs para abstraer las sentencias SQL y desacoplar a las entidades de negocio de los detalles del motor de base de datos. | `REQ-01`, `REQ-02`, `REQ-13` | `guardarEvento()`, `buscarEventos()`, `guardarUsuario()`, `buscarUsuarioPorEmail()`. | Conectividad y ejecución relacional. | Base de Datos |
@@ -337,7 +337,7 @@ classDiagram
 | `HorarioRecurrente` | Gestión de Eventos | Especialización de horario para eventos periódicos por días de la semana y franja horaria. | `HorarioEvento` |
 | `IRepositorioDeEventos` | Capa de Persistencia | Interfaz de abstracción DAO para operaciones de persistencia y búsqueda relacional de eventos. | `Evento` |
 | `IProveedorEventosExternos` | Integración de Eventos Externos | Interfaz que define el contrato para recuperar eventos de fuentes remotas. | `ResultadoEventosExternosDTO` |
-| `AdaptadorDeEventosExternos` | Integración de Eventos Externos | Implementa el consumo HTTP unificado de `datos.gov.co` y `api-colombia.com`, gestionando mapeos a entidades de dominio, timeouts y aplicando la estrategia de caché local. | (API de Datos Abiertos Gov.co, API Colombia) |
+| `AdaptadorDeEventosExternos` | Integración de Eventos Externos | Implementa el consumo HTTP unificado de `datos.gov.co` y `api-colombia.com`, gestionando mapeos a entidades de dominio, el timeout de 2 segundos y el fallback ante fallas del proveedor. | (API de Datos Abiertos Gov.co, API Colombia) |
 | `ControladorDeUsuarios` | Módulo de Usuarios y Perfiles | Expone endpoints HTTP para registro y autenticación de usuarios. | `GestorUsuarios` |
 | `GestorUsuarios` | Módulo de Usuarios y Perfiles | Aplica lógica de negocio de registro: verificación de email único, hashing de contraseña, expedición de tokens y solicitud de email de bienvenida. | `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken`, `IServicioNotificaciones` |
 | `Usuario` | Módulo de Usuarios y Perfiles | Entidad de dominio que representa al usuario, su perfil, rol (Asistente/Organizador) y validación de hash de contraseña. | Ninguno |
@@ -383,7 +383,7 @@ consultarEventos(filtro):
 | Criterio | Análisis con Evidencia del Diseño |
 |---|---|
 | **Cohesión** | Alta cohesión por separación de responsabilidades: `ConsultadorEventos` se encarga exclusivamente de resolver búsquedas y aplicar reglas de consulta (BR-01/02/03); `GestorEventos` concentra el ciclo de vida administrativo; `HorarioEvento` y sus subclases encapsulan la lógica temporal; y `GestorUsuarios` se dedica exclusivamente a la identidad. Ninguna clase mezcla presentación, persistencia o consumo HTTP. |
-| **Acoplamiento** | Bajo acoplamiento mediante interfaces: los servicios de aplicación (`ConsultadorEventos`, `GestorUsuarios`) dependen de abstracciones (`IRepositorioDeEventos`, `IProveedorEventosExternos`, `IProveedorGeografico`, `IServicioNotificaciones`). Los cambios en proveedores externos (`datos.gov.co`, `api-colombia.com`, `Gmail`) quedan encapsulados en sus respectivos adaptadores sin propagarse al dominio. |
+| **Acoplamiento** | Bajo acoplamiento mediante interfaces: los servicios de aplicación (`ConsultadorEventos`, `GestorUsuarios`) dependen de abstracciones (`IRepositorioDeEventos`, `IProveedorEventosExternos`, `IServicioNotificaciones`). Los cambios en proveedores externos (`datos.gov.co`, `api-colombia.com`, `Gmail`) quedan encapsulados en sus respectivos adaptadores sin propagarse al dominio. |
 | **Ocultamiento de información** | Los detalles mecánicos de conexión a la base de datos, consultas SQL, formatos JSON propietarios de las APIs externas y algoritmos de hashing o firmado de tokens JWT permanecen encapsulados como privados detrás de las interfaces. Los componentes externos solo interactúan mediante DTOs tipados. |
 
 ---
@@ -395,8 +395,8 @@ consultarEventos(filtro):
 | | |
 |---|---|
 | **Contexto** | El sistema debe consultar eventos de proveedores externos (`datos.gov.co`, `api-colombia.com`) y almacenar eventos locales en base de datos sin acoplar la lógica de filtrado (`REQ-01`) a formatos cambiantes ni arriesgar la disponibilidad global ante caídas de red o límites de cuota (60 req/min). |
-| **Decisión** | Adoptar una Arquitectura en Capas estricta (Monolito Modular) con el patrón Adapter (`AdaptadorEventosDatosGov`, `AdaptadorApiColombia`) con caché local en memoria y una Capa de Persistencia desacoplada (`IRepositorioDeEventos`), donde todo servicio externo interactúa mediante contratos estables con fallback ante indisponibilidad. |
-| **Justificación** | Aislar las llamadas externas permite que fallas en APIs de terceros no interrumpan la consulta de eventos locales. Asimismo, la caché en `AdaptadorApiColombia` previene sobrepasar el límite de 60 req/min por IP. |
+| **Decisión** | Adoptar una Arquitectura en Capas estricta (Monolito Modular) con un adaptador unificado de eventos externos (`AdaptadorDeEventosExternos`, que implementa `IProveedorEventosExternos` y consume `datos.gov.co` y `api-colombia.com`) y una Capa de Persistencia desacoplada (`IRepositorioDeEventos`), donde todo servicio externo interactúa mediante contratos estables con timeout y fallback ante indisponibilidad. |
+| **Justificación** | Aislar las llamadas externas permite que las fallas, la lentitud o los errores de cuota de las APIs de terceros no interrumpan la consulta de eventos locales: ante cualquiera de ellos, el adaptador responde con una lista vacía de eventos externos y el sistema continúa con el catálogo local. |
 | **Costo aceptado / Trade-off** | Introduce capas adicionales de indirección (DTOs, interfaces y adaptadores), requiriendo mayor número de clases y ligero incremento en latencia por mapeo de datos. |
 
 ### Decisión B — Diseño Detallado (Detailed Design)
@@ -418,7 +418,7 @@ consultarEventos(filtro):
 
 | ID Requerimiento | Caso de Uso | Componente(s) Arquitectónico(s) | Clase(s) del Diseño Detallado |
 |---|---|---|---|
-| **REQ-01** | Consultar y Filtrar Eventos | Aplicación Web, API Gateway, Gestión de Eventos, Integración de Eventos Externos, Capa de Persistencia | `ControladorDeEventos`, `ConsultadorEventos`, `Evento`, `HorarioEvento`, `HorarioRango`, `HorarioRecurrente`, `IProveedorEventosExternos`, `AdaptadorEventosDatosGov`, `IProveedorGeografico`, `AdaptadorApiColombia`, `IRepositorioDeEventos` |
+| **REQ-01** | Consultar y Filtrar Eventos | Aplicación Web, API Gateway, Gestión de Eventos, Integración de Eventos Externos, Capa de Persistencia | `ControladorDeEventos`, `ConsultadorEventos`, `Evento`, `HorarioEvento`, `HorarioRango`, `HorarioRecurrente`, `IProveedorEventosExternos`, `AdaptadorDeEventosExternos`, `IRepositorioDeEventos` |
 | **REQ-02** | Administrar Eventos | Aplicación Web, API Gateway, Gestión de Eventos, Capa de Persistencia | `ControladorDeEventos`, `GestorEventos`, `Evento`, `HorarioEvento`, `HorarioRango`, `HorarioRecurrente`, `IRepositorioDeEventos` |
 | **REQ-13** | Registrar Usuario / Autenticar | Aplicación Web, API Gateway, Módulo de Usuarios y Perfiles, Módulo de Notificaciones, Capa de Persistencia | `ControladorDeUsuarios`, `GestorUsuarios`, `Usuario`, `IRepositorioDeUsuario`, `IProveedorDeToken`, `IServicioNotificaciones`, `ServicioNotificaciones`, `AdaptadorGmail` |
 
