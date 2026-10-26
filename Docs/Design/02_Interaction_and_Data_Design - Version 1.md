@@ -6,7 +6,7 @@
 | **Members** | Cristian Andrés Díaz Ortega - Juan Sebastián Rodríguez Carvajal - Martín Lora Caro - Justin David Vargas Vásquez - Nicolás David Lovera Cabiativa |
 | **Status** | Listo para revisión |
 | **Date** | 23/10/2026 |
-| **Inputs** | `Docs/Design/Diseño Arquitectónico detallado 01 (1).md` (Entregable 1 actualizado), Casos de uso y reglas en `Docs/Requirements/` y `Docs/Business Rules/`, Criterios de aceptación, Historias de usuario, ADR-0003 a ADR-0005, Interaction & Contracts Design v0.1 (Clase 13) |
+| **Inputs** | `Docs/Design/Diseño Arquitectónico detallado 01.md`, Casos de uso y reglas en `Docs/Requirements/` y `Docs/Business Rules/`, Criterios de aceptación, Historias de usuario, ADR-0003 a ADR-0005. |
 
 ---
 
