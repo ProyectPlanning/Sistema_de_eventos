@@ -70,7 +70,7 @@
 
 **Preguntas abiertas (Open Questions)**
 > 1. ¿Cómo debe tratar el algoritmo de solapamiento horario a los eventos de tipo "vida nocturna" que inician un día y finalizan en la madrugada del día siguiente, si el usuario define un rango horario nocturno (ej. 20:00 a 02:00)? *(Pendiente de validación en diseño detallado de la regla de horario).*  
-> 2. ¿Cuál será la política de reintentos o refresco de caché local cuando una API externa responda con error 429 (Too Many Requests)?
+> 2. ¿Cuál será la política de reintentos cuando una API externa responda con error 429 (Too Many Requests)??
 
 ---
 
