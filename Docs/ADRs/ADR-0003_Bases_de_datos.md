@@ -1,5 +1,5 @@
 # ADR-0003: Usar PostgreSQL para la base de datos 
-<!-- docs/adr/0003-postgresql-principal-redis-cache.md -->
+<!-- docs/adr/0003-postgresql.md -->
 
 ## Autores:
 
