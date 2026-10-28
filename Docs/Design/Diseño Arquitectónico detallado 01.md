@@ -139,7 +139,7 @@ para mejor lectura se dividio en dos diagramas estructurales enfocados en cada c
 classDiagram
     %% Capa de Entrada
     class ControladorDeEventos {
-        +consultar(req: ConsultaFiltrosDTO) List~EventoDTO~
+        +consultar(req: ConsultaFiltrosDTO) List~EventoDTO~, Boolean
         +crear(req: CrearEventoDTO) EventoDTO
         +modificar(id: Integer, req: ModificarEventoDTO) EventoDTO
         +eliminar(id: Integer) Boolean
@@ -149,7 +149,7 @@ classDiagram
     class ConsultadorEventos {
         -repositorio: IRepositorioDeEventos
         -proveedorExterno: IProveedorEventosExternos
-        +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~
+        +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~, Boolean
         -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
         -validarCoherenciaFiltro(filtro: FiltroEventosDTO) Void
     }
