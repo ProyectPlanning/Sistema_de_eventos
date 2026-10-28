@@ -139,7 +139,7 @@ para mejor lectura se dividio en dos diagramas estructurales enfocados en cada c
 classDiagram
     %% Capa de Entrada
     class ControladorDeEventos {
-        +consultar(req: ConsultaFiltrosDTO) List~EventoDTO~, Boolean
+        +consultar(filtro: FiltroEventosDTO) List~EventoDTO~, Boolean
         +crear(req: CrearEventoDTO) EventoDTO
         +modificar(id: Integer, req: ModificarEventoDTO) EventoDTO
         +eliminar(id: Integer) Boolean
