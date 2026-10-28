@@ -73,10 +73,10 @@ sequenceDiagram
             EXT-->>CO: ResultadoEventosExternosDTO -> lista vacía, disponibles = false
         end
 
-        loop por cada evento local candidato
-            CO->>REP: obtenerTarifaMinimaDeEvento(idEvento)
-            REP-->>CO: tarifa mínima vigente
-        end
+        
+
+
+
         CO->>CO: unificar y aplicarReglasNegocio
         CO-->>CE: EventosDTO(eventos, externosDisponibles)
         CE-->>GW: EventosDTO
