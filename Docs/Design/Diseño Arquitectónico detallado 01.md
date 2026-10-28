@@ -151,7 +151,7 @@ classDiagram
         -proveedorExterno: IProveedorEventosExternos
         +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~
         -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
-        -validarCoherenciaFiltro(filtro: FiltroEventosDTO) Boolean
+        -validarCoherenciaFiltro(filtro: FiltroEventosDTO) Void
     }
 
     class GestorEventos {
