@@ -354,7 +354,10 @@ Operación seleccionada: `consultarEventos(filtro)` de la clase `ConsultadorEven
 
 ```text
 consultarEventos(filtro):
-    validarCoherenciaFiltro(filtro) // Lanza ErrorValidacion si precios son negativos o fechas incoherentes
+    TRY:
+        validarCoherenciaFiltro(filtro)
+    EXCEPTION (invalidField):
+         throw(invalidField) // Lanza ErrorValidacion si precios son negativos o fechas incoherentes
     eventosLocales = repositorio.buscarPorCriterios(filtro.zonaGeografica, filtro.presupuestoMaximo)
     
     TRY:
