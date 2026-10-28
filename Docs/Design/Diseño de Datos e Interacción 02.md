@@ -77,7 +77,7 @@ sequenceDiagram
 
 
 
-        CO->>CO: unificar y aplicarReglasNegocio
+        CO->>CO: unificar y aplicarReglasNegocio(eventos,filtro)
         CO-->>CE: EventosDTO(eventos, externosDisponibles)
         CE-->>GW: EventosDTO
         GW-->>WEB: EventosDTO
