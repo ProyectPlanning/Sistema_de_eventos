@@ -93,7 +93,7 @@ sequenceDiagram
 |---|---|---|---|
 | Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `ingresar filtros`, `solicitar consulta`, `consultar`, `consultarEventos` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req)`, `ConsultadorEventos.consultarEventos(filtro)` |
 | Flujo principal, paso 3 (validar formato y coherencia) | `validarCoherenciaFiltro` | `FiltroEventosDTO` | `ConsultadorEventos.validarCoherenciaFiltro(filtro)` |
-| Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios`, `obtenerTarifaMinimaDeEvento` | `zonaGeografica`, `presupuestoMax`, lista de `Evento`, tarifa mínima | `IRepositorioDeEventos.buscarPorCriterios(zonaGeografica, presupuestoMax)`, `IRepositorioDeEventos.obtenerTarifaMinimaDeEvento(id)` |
+| Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios` | `zonaGeografica`, `presupuestoMax`, lista de `Evento` | `IRepositorioDeEventos.buscarPorCriterios(zonaGeografica, presupuestoMax)` |
 | Flujo principal, paso 4 (consultar APIs de eventos externas) | `obtenerEventosExternos` | Filtro → `ResultadoEventosExternosDTO` | `IProveedorEventosExternos.obtenerEventosExternos(filtro)` implementado por `AdaptadorDeEventosExternos` |
 | Flujo principal, paso 5 (consolidar y aplicar BR-01, BR-02) | `unificar y aplicarReglasNegocio` | Lista unificada de `Evento` cumpliendo los filtros dados | `ConsultadorEventos.aplicarReglasNegocio(eventos, filtro)` |
 | Flujo principal, paso 6 (presentar resultados) | `EventosDTO` | `EventosDTO` | `ControladorDeEventos.consultar` devuelve `EventosDTO` |
