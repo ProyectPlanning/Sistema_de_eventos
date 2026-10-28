@@ -139,7 +139,7 @@ para mejor lectura se dividio en dos diagramas estructurales enfocados en cada c
 classDiagram
     %% Capa de Entrada
     class ControladorDeEventos {
-        +consultar(req: ConsultaFiltrosDTO) EventosDTO
+        +consultar(req: ConsultaFiltrosDTO) List~EventoDTO~
         +crear(req: CrearEventoDTO) EventoDTO
         +modificar(id: Integer, req: ModificarEventoDTO) EventoDTO
         +eliminar(id: Integer) Boolean
@@ -149,7 +149,7 @@ classDiagram
     class ConsultadorEventos {
         -repositorio: IRepositorioDeEventos
         -proveedorExterno: IProveedorEventosExternos
-        +consultarEventos(filtro: FiltroEventosDTO) EventosDTO
+        +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~
         -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
         -validarCoherenciaFiltro(filtro: FiltroEventosDTO) Boolean
     }
@@ -170,23 +170,13 @@ classDiagram
         -horario: HorarioEvento
         -tarifas: List~Tarifa~
         -cuposDisponibles: Integer
-        -pais: String
-        -departamento: String
-        -ciudad: String
+        -ubicacionCiudad: String
         -direccion: String
         -estado: EstadoEvento
         -capacidadMáxima: Integer
         +Evento(evento: CrearEventoDTO)
         +tieneCupoDisponible() Boolean
-        +actualizar(titulo: String, desc: String, horario: HorarioEvento, tarifas: List~Tarifa~, cupos: Integer)
-    }
-
-
-    class Tarifa {
-        -id: Integer
-        -nombre: String
-        -precioCop: Decimal
-        -vigente: Boolean
+        +actualizar(titulo: String, desc: String, horario: HorarioEvento, precio: Float, cupos: Integer)
     }
 
     class HorarioEvento {
@@ -248,7 +238,7 @@ classDiagram
     IProveedorEventosExternos <|.. AdaptadorDeEventosExternos : implementa
     GestorEventos --> Evento : manipula
     GestorEventos --> IRepositorioDeEventos : persiste
-    Evento "1" *-- "1..*" Tarifa : ofrece
+    Evento "1" *-- "1" HorarioEvento : delega reglas temporales
     HorarioEvento <|-- HorarioRango : especializa
     HorarioEvento <|-- HorarioRecurrente : especializa
 ```
