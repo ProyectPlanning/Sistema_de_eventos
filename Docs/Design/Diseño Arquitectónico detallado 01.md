@@ -368,7 +368,7 @@ consultarEventos(filtro):
     
     listaFinal = []
     FOR evento IN eventosConsolidados:
-        IF evento.tieneCupoDisponible() Y repositorio.obtenerTarifaMinimaDeEvento(evento.id) <= filtro.presupuestoMaximo:
+        IF evento.tieneCupoDisponible():
             IF filtro.rangoHorario ES NULO O evento.horario.coincideConRango(filtro.rangoHorario):
                 listaFinal.agregar(mapearADTO(evento))
                 
