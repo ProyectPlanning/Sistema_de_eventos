@@ -274,14 +274,14 @@ erDiagram
 ## 3. Interface Contract (Contrato de interfaz)
 
 **Interaction chosen** (Flujo principal diagrama 1.1):
-* Consultar(filtro: `FiltroEventosDTO`): List~EventosDTO~,Boolean (Redirrecciona a la función principal consultarEventos)
+* Consultar(filtro: `FiltroEventosDTO`): Lista de EventosDTO,Boolean (Redirrecciona a la función principal consultarEventos)
 > Operación `consultarEventos(filtro)` **provista por Gestión de Eventos** (`ConsultadorEventos`) y **consumida por** `ControladorDeEventos`, que la expone al API Gateway. Se elige porque concentra todo el comportamiento del capstone (`REQ-01`): BR-01, BR-02, BR-03, Excepción A, Excepción B y flujo alternativo.
 
 | Element | Specification |
 |---|---|
 | **Operation and purpose** | `consultarEventos(filtro: FiltroEventosDTO) : EventosDTO`. Retorna los eventos vigentes, locales y externos (de `datos.gov.co` y `api-colombia.com`), compatibles con los criterios provistos por el asistente.|
 | **Input** (parameters and types) | `FiltroEventosDTO`: `zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: horario recurrente o por rango`. |
-| **Output** (successful result and data structure) |  `eventos: List~EventoDTO~` (lista vacía si ningún evento cumple los filtros) , `externosDisponibles: Boolean` (`false` solo si ambas fuentes externas fallaron o superaron 2 s). |
+| **Output** (successful result and data structure) |  `eventos: Lista de EventoDTO` (lista vacía si ningún evento cumple los filtros) , `externosDisponibles: Boolean` (`false` solo si ambas fuentes externas fallaron o superaron 2 s). |
 | **Preconditions** (what the caller must satisfy before invoking) | (1) El llamador es `ControladorDeEventos`, que ya validó que los campos del filtro tienen el tipo correcto. (2) Todos los campos de `FiltroEventosDTO` son opcionales (BR-03); un filtro vacío es válido. |
 | **Postconditions** (what is guaranteed on successful completion) | (1) Cada evento retornado cumple **todos** los criterios provistos. (2) Si hay presupuesto, cada evento tiene al menos una tarifa vigente ≤ presupuesto. (3) Ningún evento con aforo limitado tiene 0 cupos. (4) `externosDisponibles = false` **solo si** ambas fuentes externas fallaron o superaron 2 s; en ese caso `eventos` solo contiene eventos locales.|
 | **Failure outcomes** (each failure, and what state is left after it) | **`ErrorValidacion(campo, motivo)`** (Excepción A): presupuesto negativo, `rangoHorario.fin ≤ rangoHorario.inicio` o rango incompleto (solo inicio o solo fin); no se consulta ninguna fuente y la interfaz señala los campos erróneos conservando los demás datos. **Falla de una o de ambas fuentes externas** (Excepción B): no es un error para quien invoca; la operación termina con éxito entregando los eventos locales y los de la fuente que sí respondió, con `externosDisponibles = false` solo si fallaron ambas. En ningún caso se modifica el estado del sistema. |
@@ -289,7 +289,7 @@ erDiagram
 * validarCoherenciaFiltro(filtro: FiltroEventosDTO): void (no devuelve nada, si los campos son invalidos lanza un error que es manejado por consultarEventos)
 * buscarPorCriterios(zonaGeografica: pais: String, departamento: String, ciudad: String, presupuestoMaximo: Decimal (COP, ≥ 0), presupuestoMaximo: Decimal (COP, ≥ 0))
 * obtenerEventosExternos(filtro : FiltroEventosDTO): ResultadoEventosExternosDTO
-* aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) : List~EventoDTO~
+* aplicarReglasNegocio(eventos: Lista de Evento, filtro: FiltroEventosDTO) : Lista de EventoDTO
 
 
 **Testable examples**
