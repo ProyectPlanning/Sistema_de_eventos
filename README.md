@@ -23,7 +23,7 @@ Los asistentes a eventos enfrentan una gran pérdida de tiempo e incertidumbre a
 El sistema no es un simple CRUD de almacenamiento de registros. El software decide de manera automatizada:
 1. **Compatibilidad multidimensional de actividades:** Evalúa en tiempo real si un evento cumple simultáneamente con el techo presupuestal del usuario (regla `BR-02`), su rango horario de disponibilidad (algoritmo de solapamiento temporal) y su zona geográfica.
 2. **Disponibilidad efectiva de aforo:** Descarta automáticamente eventos agotados o con cupo cero (regla `BR-01`), evitando que el usuario seleccione planes inviables.
-3. **Aislamiento y tolerancia a fallos externos:** Decide dinámicamente activar mecanismos de contingencia (*fallback*) cuando un proveedor externo de eventos presenta caídas o demoras, garantizando la continuidad del servicio con el catálogo local y respetando las cuotas de servicio externas (como el límite de 60 req/min en `api-colombia.com` mediante caché).
+3. **Aislamiento y tolerancia a fallos externos:** Decide dinámicamente activar mecanismos de contingencia (*fallback*) cuando un proveedor externo de eventos presenta caídas o demoras, garantizando la continuidad del servicio con el catálogo local incluso cuando los proveedores externos presentan demoras, caídas o errores por exceso de solicitudes (como el límite de 60 req/min en `api-colombia.com`)..
 
 ---
 
@@ -53,8 +53,8 @@ Durante el proceso de auditoría técnica se identificaron los siguientes puntos
 
 1. **Gestión de eventos que cruzan la medianoche (`REQ-01`):**  
    *Ambigüedad:* Cuando un usuario define un rango de búsqueda nocturno (e.g. 21:00 a 03:00) y un evento inicia a las 22:00 y finaliza a las 04:00, se requiere estandarizar si se evalúa por solapamiento parcial o contención total entre fechas consecutivas. Se resolverá en la suite de pruebas unitarias de `HorarioRango`.
-2. **Estrategia de Caché y Rate Limiting de API Colombia (`REQ-01`):**  
-   *Especificación confirmada:* Implementar almacenamiento en memoria con TTL de 24 horas en `AdaptadorApiColombia` para respetar el límite de 60 req/min por IP.
+2. **Política ante el límite de cuota de API Colombia (`REQ-01`):**  
+   *Pendiente:* Definir el comportamiento del adaptador cuando `api-colombia.com` responda con error 429 (*Too Many Requests*) por superar el límite de 60 req/min por IP. Por ahora se trata como cualquier otra falla del proveedor externo (fallback con eventos locales).
 3. **Persistencia del reporte de eventos falsos (`REQ-01` / Mitigación de Riesgo):**  
    *Pendiente:* Diseñar en el modelo relacional del Incremento 2 la tabla para almacenar reportes de anomalías o eventos sospechosos emitidos por los usuarios.
 

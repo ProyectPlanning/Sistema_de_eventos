@@ -3,5 +3,5 @@ BR-01 Para eventos con cupos máximos, solo se muestran los eventos que cuenten 
 
 BR-02 En eventos con múltiples tipos de entrada (por ejemplo, **General $20.000** y **VIP $50.000**), el evento califica como resultado válido si **al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo** establecido por el usuario.
 
-BR-03 El usuario puede ingresar cualquier combinación de filtros (incluso ninguno); la consulta se realizará solo sobre los filtros ingresados. Sino se ingresa ningún filtro, se muestran eventos aleatorios.
+BR-03 El usuario puede ingresar cualquier combinación de filtros (incluso ninguno); la consulta se realizará solo sobre los filtros ingresados. Sino se ingresa ningún filtro, se muestran eventos de forma aleatoria.
 

@@ -38,7 +38,7 @@ flowchart TD
     end
 
     subgraph DATOS["3. Capa de Datos (Persistencia)"]
-        DB[("Base de Datos\n(Relacional Embebida / Local)")]
+        DB[("Base de Datos\n(Relacional)")]
     end
 
     subgraph TERCEROS["Servicios de Terceros (Sistemas Externos)"]
@@ -67,11 +67,11 @@ Es el núcleo del sistema, desarrollado como una aplicación modular (NestJS / T
 * **Capa de Persistencia:** Actúa como intermediario desacoplado entre los módulos de negocio y la base de datos física. Implementa el patrón DAO (Data Access Object) y Repositorio para abstraer las operaciones de acceso a datos y evitar que la lógica de negocio dependa directamente del motor relacional SQL.
 
 #### 3. Capa de Datos (Persistencia)
-* **Base de Datos:** Almacenamiento físico y centralizado de la información (PostgreSQL / SQLite conforme al ADR-0003 y lineamientos del curso). Recibe consultas y escrituras exclusivamente a través de la Capa de Persistencia del Back-End.
+* **Base de Datos:** Almacenamiento físico y centralizado de la información. Recibe consultas y escrituras exclusivamente a través de la Capa de Persistencia del Back-End.
 
 #### 4. Frontera de Integración con Servicios de Terceros
 APIs externas ubicadas fuera del límite del sistema, consumidas a través de la capa adaptadora (definida en el ADR-0004):
-* **API de Eventos:** Integración con `https://api-colombia.com/` (datos territoriales y contexto nacional como museos o parques con caché local) y `https://www.datos.gov.co/.../xm7a-7paj/about_data` (eventos oficiales abiertos).
+* **API de Eventos:** Integración con `https://api-colombia.com/` (atracciones turísticas como museos y parques naturales) y `https://www.datos.gov.co/.../xm7a-7paj/about_data` (eventos oficiales abiertos).
 * **API de Google Maps:** Geocodificación.
 * **API de Gmail:** Servicio externo para el despacho de correos electrónicos transaccionales.
 

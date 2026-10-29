@@ -38,7 +38,7 @@
 
 > **BR-02 — Calificación tarifaria por presupuesto:** En eventos con múltiples tipos o localidades de entrada (ej. General $20.000 y VIP $50.000), el evento califica como resultado válido si al menos una de sus tarifas vigentes es menor o igual al presupuesto máximo indicado por el usuario.
  
-> **BR-03 — Combinación flexible de filtros:** El usuario puede ingresar cualquier combinación de los tres criterios de búsqueda (presupuesto, horario, zona) o no ingresar ninguno. La consulta filtrará únicamente por los parámetros efectivamente provistos; si no se provee ningún filtro, el sistema presentará eventos sugeridos de forma aleatoria/general.
+> **BR-03 — Combinación flexible de filtros:** El usuario puede ingresar cualquier combinación de los tres criterios de búsqueda (presupuesto, horario, zona) o no ingresar ninguno. La consulta filtrará únicamente por los parámetros efectivamente provistos; si no se provee ningún filtro, el sistema presentará eventos sugeridos de forma aleatoria.
 
 **Restricción(es)**
 > 1. El sistema debe integrarse con proveedores de eventos externos mediante APIs REST de terceros, operando dentro de los límites de cuota (rate limits) y términos de servicio de dichos proveedores, sin asumir control sobre el ciclo de vida de los eventos remotos.  
@@ -70,7 +70,7 @@
 
 **Preguntas abiertas (Open Questions)**
 > 1. ¿Cómo debe tratar el algoritmo de solapamiento horario a los eventos de tipo "vida nocturna" que inician un día y finalizan en la madrugada del día siguiente, si el usuario define un rango horario nocturno (ej. 20:00 a 02:00)? *(Pendiente de validación en diseño detallado de la regla de horario).*  
-> 2. ¿Cuál será la política de reintentos o refresco de caché local cuando una API externa responda con error 429 (Too Many Requests)?
+> 2. ¿Cuál será la política de reintentos cuando una API externa responda con error 429 (Too Many Requests)??
 
 ---
 
@@ -104,29 +104,29 @@
 ### 4.2 Criterios de Aceptación
 
 **Escenario 1 — Filtros combinados con coincidencias (Camino normal)**
-> **Dado** que el usuario se encuentra en la pantalla de búsqueda de actividades y existen eventos registrados en "Colombia", departamento "Bogotá D.C.", ciudad "Bogotá",  
-> **cuando** ingresa como presupuesto máximo "$50.000 COP", selecciona la ciudad "Bogotá" y define un rango horario de "18:00 a 22:00",  
+> **Dado** que el usuario se encuentra en la pantalla de búsqueda de actividades y existen eventos vigentes registrados en "Colombia", departamento "Bogotá D.C.", ciudad "Bogotá",  
+> **cuando** ingresa como presupuesto máximo "$50.000 COP", selecciona la ciudad "Bogotá" y define un rango horario de "hoy a las 18:00 a 22:00",  
 > **entonces** el sistema retorna y despliega la lista de eventos cuya ubicación coincida con "Bogotá", cuya tarifa mínima vigente sea menor o igual a $50.000 COP (conforme a BR-02), cuyo horario esté comprendido en el rango indicado y que tengan al menos 1 cupo disponible (conforme a BR-01).
 
 **Escenario 2 — Búsqueda sin coincidencias compatibles (Camino alternativo)**
-> **Dado** que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10.000 COP" en el rango de "08:00 a 12:00",  
+> **Dado** que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10.000 COP" en el rango de "hoy a las 08:00 a 12:00",  
 > **cuando** el usuario ejecuta la consulta con dichos filtros,  
-> **entonces** el sistema informa claramente que no se encontraron eventos que satisfagan todos los criterios simultáneamente, y sugiere ampliar el rango horario o ajustar el presupuesto.
+> **entonces** el sistema informa claramente que no se encontraron eventos que satisfagan todos los criterios simultáneamente.
 
 **Escenario 3 — Búsqueda de eventos de acceso libre / gratuitos**
-> **Dado** que existen eventos públicos de entrada libre ($0 COP) en la ciudad seleccionada dentro del rango horario del usuario,  
+> **Dado** que existen eventos vigentes de entrada libre ($0 COP) en la ciudad seleccionada dentro del rango horario del usuario,  
 > **cuando** el usuario ejecuta la búsqueda ingresando un presupuesto máximo de "$0 COP",  
 > **entonces** el sistema presenta exclusivamente los eventos gratuitos ($0 COP) que coincidan con la ubicación y el horario definidos.
 
 **Escenario 4 — Búsqueda con filtros parciales**
-> **Dado** que existen 15 eventos registrados para la ciudad de "Cali",  
+> **Dado** que existen 15 eventos vigentes registrados para la ciudad de "Cali",  
 > **cuando** el usuario selecciona únicamente la ciudad "Cali" dejando vacíos los campos de presupuesto y rango de horario,  
-> **entonces** el sistema aplica la regla BR-03 y retorna los 15 eventos correspondientes a dicha ciudad ordenados cronológicamente.
+> **entonces** el sistema aplica la regla BR-03 y retorna los 15 eventos correspondientes a dicha ciudad.
 
 **Escenario 5 — Búsqueda sin filtros (Consulta abierta)**
-> **Dado** que el catálogo contiene eventos activos y el usuario no especifica ningún criterio de filtrado,  
+> **Dado** que el catálogo contiene eventos vigentes y el usuario no especifica ningún criterio de filtrado,  
 > **cuando** el usuario solicita ver actividades disponibles,  
-> **entonces** el sistema aplica BR-03 y presenta un listado general de eventos sugeridos y vigentes.
+> **entonces** el sistema aplica BR-03 y presenta un listado  de eventos vigentes aleatorios.
 
 ---
 
