@@ -139,6 +139,7 @@
 | **Meta** | Obtener un listado de eventos vigentes que se ajusten a su presupuesto, disponibilidad de tiempo y ubicación |
 | **Disparador (Trigger)** | El usuario ingresa criterios de búsqueda y solicita la ejecución de la consulta |
 | **Precondición** | El sistema se encuentra operativo y el servicio de eventos dispone de registros locales o remotos |
+
 **Flujo Principal**
 1. El usuario accede a la sección de búsqueda e ingresa de forma opcional: zona geográfica, presupuesto máximo disponible y rango horario (hora de inicio y hora de fin).
 2. El usuario envía la solicitud de búsqueda.
