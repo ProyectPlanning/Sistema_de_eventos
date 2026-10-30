@@ -452,7 +452,7 @@ consultarEventos(filtro):
 - [x] Los componentes están nombrados por responsabilidad ("Gestión de Eventos", "Capa de Persistencia"), no por tecnología.
 - [x] Nada dentro de la frontera del sistema es algo que el equipo no controle directamente.
 - [x] Las capacidades requeridas y provistas coinciden entre componentes adyacentes.
-- [x] Ambas decisiones de diseño explicitan costos y trade-offs reales, y están formalmente vinculadas con sus respectivos ADRs (`ADR-0004`, `ADR-0005` y `ADR-0006`).
+- [x] Ambas decisiones de diseño explicitan costos y trade-offs reales, y están formalmente vinculadas con sus respectivos ADRs.
 - [x] El diagrama de clases está fragmentado en dos secciones Mermaid independientes (`ControladorDeEventos` y `ControladorDeUsuarios`) para mayor legibilidad y modularidad.
 - [x] La integración del Módulo de Notificaciones está documentada y justificada arquitectónicamente.
 - [x] La tabla de trazabilidad cubre exhaustivamente los requerimientos de la Primera Etapa (REQ-01, REQ-02, REQ-13) sin filas vacías ni clases huérfanas.
