@@ -269,8 +269,6 @@ erDiagram
 
 **Interaction chosen** (Flujo principal diagrama 1.1):
 * Consultar(filtro: `FiltroEventosDTO`):  ResultadoConsultaDTO
-> Operación `consultarEventos(filtro)` **provista por Gestión de Eventos** (`ConsultadorEventos`) y **consumida por** `ControladorDeEventos`, que la expone al API Gateway. Se elige porque concentra todo el comportamiento del capstone (`REQ-01`): BR-01, BR-02, BR-03, Excepción A, Excepción B y flujo alternativo.
-
 | Element | Specification |
 |---|---|
 | **Operation and purpose** | `consultarEventos(filtro: FiltroEventosDTO) : ResultadoConsultaDTO`. Retorna los eventos vigentes, locales y externos (de `datos.gov.co` y `api-colombia.com`), compatibles con los criterios provistos por el usuario.|
