@@ -239,7 +239,7 @@ flowchart TD
 
 ## 6. Validación
 
-- [x] **Válido?** Si, sale directamente de Need-01 y US-01.
+- [x] **Válido?** Si, sale directamente de Need-01 y US-01.x.
 - [x] **Claro?** Si, "consultar y filtrar eventos por presupuesto máximo, rango de disponibilidad horaria y zona geográfica" tiene una lectura razonable única para eventos.
 - [x] **Atómico?** Si, es una única expectativa verificable de forma independiente (filtrar y listar eventos), no varias capacidades distintas empaquetadas juntas.
 - [x] **Necesario?** Si, removerlo elimina la funcionalidad central de descubrimiento del MVP, la cual responde directamente al Need-01.
