@@ -45,6 +45,7 @@ flowchart TD
     class F,I,Q,U exception;
 ```
 
+```text
 consultarEventos(filtro):
     TRY:
         validarCoherenciaFiltro(filtro)
@@ -78,3 +79,6 @@ consultarEventos(filtro):
                 listaFinal.agregar(mapearADTO(evento))
 
     RETURN listaFinal // Lista vacía si no hay coincidencias (Flujo Alternativo)
+
+```
+
