@@ -118,15 +118,15 @@ sequenceDiagram
         CO->>EXT: obtenerEventosExternos(filtro)
 
         alt al menos una API externa respondió
-            EXT-->>CO: ResultadoEventosExternosDTO -> eventosExternos, disponibles = true
+            EXT-->>CO: ResultadoEventosExternosDTO 
         else Excepción B - APIs externas fallaron o timeout
-            EXT-->>CO: ResultadoEventosExternosDTO -> lista vacía, disponibles = false
+            EXT-->>CO: Lanzar error de TimeoutError o NetworkError
             CO->>CO: externosDisponibles = false
         end
 
         alt Excepción D - ambas fuentes fallaron (localesDisponibles = false y externosDisponibles = false)
             CO-->>CE: ServicioNoDisponibleError
-            CE-->>GW: error servicio no disponible (503)
+            CE-->>GW: error servicio no disponible 
             GW-->>WEB: servicio no disponible
             WEB-->>U: informar que la búsqueda no está disponible, intentar más tarde
         else al menos una fuente disponible
