@@ -377,10 +377,10 @@ consultarEventos(filtro):
         externosDisponibles = FALSO // EXCEPCIÓN B
         eventosExternos = LISTA_VACIA
 
-    eventosConsolidados = unificar(eventosLocales, eventosExternos)
-
+    eventosCandidatos = unificar(eventosLocales, eventosExternos)
+    // Aplicar reglas de negocio, verificando el horario y los cupos disponibles
     listaFinal = []
-    FOR evento IN eventosConsolidados:
+    FOR evento IN eventosCandidatos:
         IF evento.tieneCupoDisponible():
             IF filtro.rangoHorario ES NULO O evento.horario.coincideConRango(filtro.rangoHorario):
                 listaFinal.agregar(mapearADTO(evento))
