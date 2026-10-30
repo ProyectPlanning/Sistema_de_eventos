@@ -32,8 +32,8 @@ sequenceDiagram
     participant EXT as AdaptadorDeEventosExternos
 
     U->>WEB: ingresar filtros
-    WEB->>GW: solicitar consulta 
-    GW->>CE: consultar(req)
+    WEB->>GW: solicitar consulta
+    GW->>CE: consultar(filtro)
     CE->>CO: consultarEventos(filtro)
     CO->>CO: validarCoherenciaFiltro(filtro)
 
@@ -43,31 +43,40 @@ sequenceDiagram
         GW-->>WEB: campo erróneo y motivo
         WEB-->>U: resaltar campo y conservar los demás datos
     else filtros válidos
-        CO->>REP: buscarPorCriterios(zonaGeografica,presupuestoMax)
-        REP-->>CO: lista de Evento locales candidatos
-        CO->>EXT: obtenerEventosExternos(filtro)
+        CO->>REP: buscarPorCriterios(zonaGeografica, presupuestoMax)
 
-
-
-
-        alt al menos una API externa respondió
-            EXT-->>CO: ResultadoEventosExternosDTO -> eventosExternos, disponibles = true
-        else Excepción B - ambas APIs externas fallaron o timeout
-            EXT-->>CO: ResultadoEventosExternosDTO -> lista vacía, disponibles = false
+        alt base de datos respondió
+            REP-->>CO: lista de Evento locales candidatos
+        else Excepción C - base de datos no respondió
+            REP-->>CO: DatabaseError / TimeoutError
+            CO->>CO: localesDisponibles = false, eventosLocales = lista vacía
         end
 
-        
+        CO->>EXT: obtenerEventosExternos(filtro)
 
+        alt al menos una API externa respondió
+            EXT-->>CO: ResultadoEventosExternosDTO 
+        else Excepción B - APIs externas fallaron o timeout
+            EXT-->>CO: Lanzar error de TimeoutError o NetworkError
+            CO->>CO: externosDisponibles = false
+        end
 
+        alt Excepción D - ambas fuentes fallaron (localesDisponibles = false y externosDisponibles = false)
+            CO-->>CE: ServicioNoDisponibleError
+            CE-->>GW: error servicio no disponible 
+            GW-->>WEB: servicio no disponible
+            WEB-->>U: informar que la búsqueda no está disponible, intentar más tarde
+        else al menos una fuente disponible
+            CO->>CO: unificar y aplicarReglasNegocio(eventos, filtro)
+            CO-->>CE: ResultadoConsultaDTO(eventos, localesDisponibles, externosDisponibles)
+            CE-->>GW: ResultadoConsultaDTO
+            GW-->>WEB: ResultadoConsultaDTO
 
-        CO->>CO: unificar y aplicarReglasNegocio(eventos,filtro)
-        CO-->>CE: EventosDTO(eventos, externosDisponibles)
-        CE-->>GW: EventosDTO
-        GW-->>WEB: EventosDTO
-        alt existen coincidencias
-            WEB-->>U: lista de eventos compatibles (aviso si externosDisponibles = false)
-        else Flujo alternativo - lista vacía
-            WEB-->>U: informar que no hay coincidencias
+            alt existen coincidencias
+                WEB-->>U: lista de eventos compatibles (aviso si alguna fuente = false)
+            else Flujo alternativo - lista vacía
+                WEB-->>U: informar que no hay coincidencias y sugerir ajustes (aclarar si alguna fuente = false)
+            end
         end
     end
 ```
