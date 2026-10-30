@@ -269,6 +269,8 @@ erDiagram
 
 **Interaction chosen** (Flujo principal diagrama 1.1):
 * Consultar(filtro: `FiltroEventosDTO`):  ResultadoConsultaDTO
+### 3.2 consultarEventos
+
 | Element | Specification |
 |---|---|
 | **Operation and purpose** | `consultarEventos(filtro: FiltroEventosDTO) : ResultadoConsultaDTO`. Retorna los eventos vigentes, locales y externos (de `datos.gov.co` y `api-colombia.com`), compatibles con los criterios provistos por el usuario.|
