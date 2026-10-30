@@ -20,7 +20,7 @@ flowchart TD
 
     H -- "No (timeout o error)" --> T{"¿La Base de Datos también falló?"}
 
-    T -- "Sí" --> U["EXCEPCIÓN D: Ambas fuentes fallaron. Registrar error e informar al usuario que la Base de Datos y la API externa no respondieron; intentar más tarde"]
+    T -- "Sí" --> U["EXCEPCIÓN D: Ambas fuentes fallaron. Informar al usuario que la Base de Datos y la API externa no respondieron; intentar más tarde"]
     U --> V([Postcondición: Usuario informado de la falla del servicio, sin resultados])
 
     T -- "No" --> I["EXCEPCIÓN B: Registrar fallo y continuar solo con eventos locales"]
