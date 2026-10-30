@@ -96,7 +96,7 @@ sequenceDiagram
 
     U->>WEB: ingresar filtros
     WEB->>GW: solicitar consulta
-    GW->>CE: consultar(req)
+    GW->>CE: consultar(filtro)
     CE->>CO: consultarEventos(filtro)
     CO->>CO: validarCoherenciaFiltro(filtro)
 
