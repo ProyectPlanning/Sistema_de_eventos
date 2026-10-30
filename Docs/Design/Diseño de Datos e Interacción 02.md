@@ -275,7 +275,7 @@ erDiagram
 |---|---|
 | **Operation and purpose** | `consultarEventos(filtro: FiltroEventosDTO) : ResultadoConsultaDTO`. Retorna los eventos vigentes, locales y externos (de `datos.gov.co` y `api-colombia.com`), compatibles con los criterios provistos por el usuario.|
 | **Input** (parameters and types) | `FiltroEventosDTO`: `zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: horario recurrente o por rango`. |
-| **Output** (successful result and data structure) |   `ResultadoConsultaDTO`: eventos: list<Evento>, localesDisponibles: Boolean , externosDisponibles: Boolean |
+| **Output** (successful result and data structure) |   `ResultadoConsultaDTO: eventos: lista de EventosDTO, localesDisponibles: Boolean , externosDisponibles: Boolean` |
 | **Preconditions** (what the caller must satisfy before invoking) | (1) El llamador es `ControladorDeEventos`, que ya validó que los campos del filtro tienen el tipo correcto. (2) Todos los campos de `FiltroEventosDTO` son opcionales. |
 | **Postconditions** (what is guaranteed on successful completion) | (1) Cada evento retornado cumple **todos** los criterios provistos. (2) Si hay presupuesto, cada evento tiene al menos una tarifa vigente ≤ presupuesto. (3) Ningún evento con aforo limitado tiene 0 cupos. (4) `externosDisponibles = false` **solo si** ambas fuentes externas fallaron o superaron 2 s; `localesDisponibles = false` si la base de datos no respondió|
 | **Failure outcomes** (each failure, and what state is left after it) | **`ErrorValidacion(campo, motivo)`** (Excepción A): presupuesto negativo, `rangoHorario.fin ≤ rangoHorario.inicio` o rango incompleto (solo inicio o solo fin); no se consulta ninguna fuente y la interfaz señala el campo erróneo conservando los demás datos. **Falla de una o de ambas fuentes externas** (Excepción B): En caso de que la base de datos local responda, se informa al usuario que los eventos externos no están disponibles. **No responde la base de datos** (Excepción C): En caso de que el proveedor de eventos externos responda, se informa al usuario que no hay eventos locales disponibles. **Tanto la fuente de eventos externos como la base de datos local fallaron** (Excepción D): Se informa al usuario que el servicio no esta disponible. |
@@ -366,7 +366,7 @@ erDiagram
 
 ## 7. Consistency Checklist (Lista de verificación)
 
-- [ ] Two use cases from the project, each traceable to a Use Case written in the requirements. — *1.1 trazable a `REQ-01`. 1.2 trazable a `US-02.1`, pero `REQ-02` aún no tiene caso de uso detallado; sus pasos se declaran como supuestos (ver `OQ-03`).*
+- [x] Two use cases from the project, each traceable to a Use Case written in the requirements. — *1.1 trazable a `REQ-01`. 1.2 trazable a `US-02.1`*
 - [x] Each sequence diagram shows the main flow and at least one alternative or exception flow.
 - [x] No business behavior is invented: anything unspecified is marked as an assumption or Open Question.
 - [x] Section 2.1 explains what is NOT persisted as well as what is.
