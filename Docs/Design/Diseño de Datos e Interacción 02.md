@@ -282,8 +282,18 @@ erDiagram
 | **Failure outcomes (each failure, and what state is left after it)** | **`ErrorValidacion(campo, motivo)` (Excepción A):** se lanza cuando se identifica un criterio incoherente. Casos: **(a)** `presupuestoMaximo < 0` → `campo = presupuestoMaximo`, motivo `"no puede ser negativo"`. **(b)** `rangoHorario` por rango contiene únicamente `inicio` o únicamente `fin` → `campo = rangoHorario`, motivo `"rango incompleto"`. **(c)** `rangoHorario.fin <= rangoHorario.inicio` → `campo = rangoHorario`, motivo `"el fin debe ser posterior al inicio"`. `consultarEventos` captura la excepción y la propaga a `ControladorDeEventos`. No se consulta el repositorio ni las APIs externas. La interfaz señala el campo erróneo y conserva los demás datos ingresados. Tras el error no se modifica el estado del sistema. |
 | **Invariants and side effects** | **Sin efectos secundarios:** no modifica `filtro`, el catálogo de eventos, los usuarios ni las tarifas. No invoca el repositorio ni los proveedores externos. Tampoco registra advertencias en el log, dado que estas corresponden a la Excepción B. La operación es determinista: su resultado depende exclusivamente de los valores recibidos en el filtro y no del reloj del sistema. |
 
+### 3.4 buscarPorCriterios
 
-* buscarPorCriterios(zonaGeografica: pais: String, departamento: String, ciudad: String, presupuestoMaximo: Decimal (COP, ≥ 0), presupuestoMaximo: Decimal (COP, ≥ 0))
+| Element | Specification |
+|---|---|
+| **Operation and purpose** |`buscarPorCriterios`. Obtener los eventos locales que cumplen con los filtros de zonaGeográfica y presupuestoMáximo.|
+| **Input (parameters and types)** |`zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0) |
+| **Output (successful result and data structure)** | Devuelve una lista de la clase `Evento` con los eventos locales que cumplen con los  filtros `zonaGeografica` y `presupuestoMaximo` |
+| **Preconditions (what the caller must satisfy before invoking)** | Los filtros `presupestoMaximo` y `zonaGegrafica` son válidos|
+| **Postconditions (what is guaranteed on successful completion)** | Lista de eventos locales que cumplen con los filtros `presupestoMaximo` y `zonaGeografica`|
+| **Failure outcomes (each failure, and what state is left after it)** | **`Base de datos no responde` (Excepción C):** Se lanza un error indicando que la base de datos no responde|
+| **Invariants and side effects** | **Sin efectos secundarios:**|
+
 * obtenerEventosExternos(filtro : FiltroEventosDTO): ResultadoEventosExternosDTO
 * aplicarReglasNegocio(eventos: Lista de Evento, filtro: FiltroEventosDTO) : Lista de EventoDTO
 
