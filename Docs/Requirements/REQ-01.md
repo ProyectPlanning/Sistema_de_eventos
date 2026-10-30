@@ -151,7 +151,7 @@
 8. El sistema presenta al usuario la lista ordenada de eventos compatibles con sus restricciones y, si alguna fuente no respondió, un aviso de que los resultados pueden estar incompletos.
 
 **Flujo Alternativo**
-> **Sin eventos coincidentes (Paso 7):** Si ningún evento cumple la combinación de filtros, el sistema informa que no hay coincidencias, mantiene los filtros en pantalla y sugiere ampliar el rango horario o aumentar el presupuesto (Escenario 2). Si además alguna fuente no respondió, el sistema aclara que algunos eventos no pudieron consultarse, para que el usuario no ajuste sus filtros innecesariamente.
+> **Sin eventos coincidentes (Paso 7):** Si ningún evento cumple la combinación de filtros, el sistema informa que no hay coincidencias, mantiene los filtros en pantalla y sugiere ampliar el rango horario o aumentar el presupuesto (Escenario 2). Si además alguna fuente no respondió, el sistema aclara que algunos eventos no pudieron consultarse.
 
 **Excepciones**
 > **Excepción A — Criterios de entrada malformados (Paso 3):** Si el usuario ingresa valores no válidos (por ejemplo, un presupuesto negativo o una hora de fin anterior a la hora de inicio), el sistema detiene la consulta, señala visualmente el campo con error y solicita la corrección, conservando los demás datos ingresados.  
@@ -161,6 +161,7 @@
 
 **Postcondición**
 > El usuario ve los eventos viables para su búsqueda, recibe orientación clara para ajustar sus criterios o es informado de que el servicio no está disponible temporalmente. En todos los casos sabe si los resultados están completos y el sistema no se bloquea.
+
 **Diagrama de Flujo del Caso de Uso**
 
 ```mermaid
