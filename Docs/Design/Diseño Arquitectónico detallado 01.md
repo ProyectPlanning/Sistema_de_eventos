@@ -8,7 +8,7 @@
 | **Members** |Cristian Andres Diaz Ortega - Juan Sebastian Rodriguez Carvajal - Martin Lora Caro - Justin David Vargas Vasquez -Nicolas David Lovera Cabiativa |
 | **Status** | Listo para revisar |
 | **Date** | 17/10/2026 |
-| **Inputs** | `docs/requerimientos/` |
+| **Inputs** | `docs/Requirements/` |
 
 ---
 
