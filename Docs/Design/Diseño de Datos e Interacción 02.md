@@ -46,7 +46,7 @@ sequenceDiagram
         CO->>REP: buscarPorCriterios(zonaGeografica, presupuestoMax)
 
         alt base de datos respondió
-            REP-->>CO: lista de Evento locales candidatos
+            REP-->>CO: lista de eventos locales candidatos
         else Excepción C - base de datos no respondió
             REP-->>CO: DatabaseError / TimeoutError
             CO->>CO: localesDisponibles = false, eventosLocales = lista vacía
@@ -55,7 +55,7 @@ sequenceDiagram
         CO->>EXT: obtenerEventosExternos(filtro)
 
         alt al menos una API externa respondió
-            EXT-->>CO: ResultadoEventosExternosDTO 
+            EXT-->>CO: Lista de eventos externos candidatos
         else Excepción B - APIs externas fallaron o timeout
             EXT-->>CO: Lanzar error de TimeoutError o NetworkError
             CO->>CO: externosDisponibles = false
