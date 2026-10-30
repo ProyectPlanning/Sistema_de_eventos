@@ -43,39 +43,4 @@ flowchart TD
     class B,C,D,G,R,S,J,L mainflow;
     class N alt;
     class F,I,Q,U exception;
-Este es el pseudocódigo con las cuatro excepciones (A, B, C y D):
-
-consultarEventos(filtro):
-    TRY:
-        validarCoherenciaFiltro(filtro)
-    EXCEPTION (invalidField):
-        throw(invalidField) // EXCEPCIÓN A: precios negativos o fechas incoherentes
-
-    bdFallo = FALSO
-    TRY:
-        eventosLocales = repositorio.buscarPorCriterios(filtro.zonaGeografica, filtro.presupuestoMaximo)
-    EXCEPTION (DatabaseError, TimeoutError):
-        registrarError("Base de datos no respondió; continuando con eventos externos") // EXCEPCIÓN C
-        eventosLocales = LISTA_VACIA
-        bdFallo = VERDADERO
-
-    TRY:
-        respuestaExterna = IProveedorEventosExternos.obtenerEventosExternos(filtro) // timeout max 2000 ms
-        eventosExternos = respuestaExterna.eventosValidados
-    EXCEPTION (TimeoutError, NetworkError):
-        IF bdFallo:
-            registrarError("Base de datos y API externa no respondieron")
-            throw(ServicioNoDisponibleError) // EXCEPCIÓN D: ambas fuentes fallaron
-        registrarAdvertencia("API externa inaccesible; continuando con catálogo local") // EXCEPCIÓN B
-        eventosExternos = LISTA_VACIA
-
-    eventosConsolidados = unificar(eventosLocales, eventosExternos)
-
-    listaFinal = []
-    FOR evento IN eventosConsolidados:
-        IF evento.tieneCupoDisponible():
-            IF filtro.rangoHorario ES NULO O evento.horario.coincideConRango(filtro.rangoHorario):
-                listaFinal.agregar(mapearADTO(evento))
-
-    RETURN listaFinal // Lista vacía si no hay coincidencias (Flujo Alternativo)
 ```
