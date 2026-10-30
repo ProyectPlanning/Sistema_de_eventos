@@ -52,22 +52,22 @@ consultarEventos(filtro):
     EXCEPTION (invalidField):
         throw(invalidField) // EXCEPCIÓN A: precios negativos o fechas incoherentes
 
-    bdFallo = FALSO
+    localesDisponibles = VERDADERO
+    externosDisponibles = VERDADERO
+
     TRY:
         eventosLocales = repositorio.buscarPorCriterios(filtro.zonaGeografica, filtro.presupuestoMaximo)
     EXCEPTION (DatabaseError, TimeoutError):
-        registrarError("Base de datos no respondió; continuando con eventos externos") // EXCEPCIÓN C
+        localesDisponibles = FALSO // EXCEPCIÓN C
         eventosLocales = LISTA_VACIA
-        bdFallo = VERDADERO
 
     TRY:
         respuestaExterna = IProveedorEventosExternos.obtenerEventosExternos(filtro) // timeout max 2000 ms
         eventosExternos = respuestaExterna.eventosValidados
     EXCEPTION (TimeoutError, NetworkError):
-        IF bdFallo:
-            registrarError("Base de datos y API externa no respondieron")
-            throw(ServicioNoDisponibleError) // EXCEPCIÓN D: ambas fuentes fallaron
-        registrarAdvertencia("API externa inaccesible; continuando con catálogo local") // EXCEPCIÓN B
+        IF NO localesDisponibles:
+            throw ServicioNoDisponibleError("Base de datos y API externa no respondieron") // EXCEPCIÓN D
+        externosDisponibles = FALSO // EXCEPCIÓN B
         eventosExternos = LISTA_VACIA
 
     eventosConsolidados = unificar(eventosLocales, eventosExternos)
@@ -78,7 +78,10 @@ consultarEventos(filtro):
             IF filtro.rangoHorario ES NULO O evento.horario.coincideConRango(filtro.rangoHorario):
                 listaFinal.agregar(mapearADTO(evento))
 
-    RETURN listaFinal // Lista vacía si no hay coincidencias (Flujo Alternativo)
-
+    RETURN ResultadoConsultaDTO(
+        eventos = listaFinal,                  // vacía → Flujo Alternativo
+        localesDisponibles = localesDisponibles,
+        externosDisponibles = externosDisponibles
+    )
 ```
 
