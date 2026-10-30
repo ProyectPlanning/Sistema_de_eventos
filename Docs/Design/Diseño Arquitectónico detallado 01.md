@@ -218,13 +218,13 @@ classDiagram
 
     class IProveedorEventosExternos {
         <<interface>>
-        +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
+        +obtenerEventosExternos(filtro: FiltroEventosDTO) List~Evento~
     }
 
     class AdaptadorDeEventosExternos {
         -urlDatosGov: String
         -urlApiColombia: String
-        +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
+        +obtenerEventosExternos(filtro: FiltroEventosDTO) List~Evento~
         -mapearApiColombia(json: String) EventoDTO
         -mapearDatosGov(json: String) EventoDTO
     }
