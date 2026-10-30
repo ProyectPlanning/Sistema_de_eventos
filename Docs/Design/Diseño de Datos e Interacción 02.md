@@ -30,8 +30,6 @@ sequenceDiagram
     participant CO as ConsultadorEventos
     participant REP as IRepositorioDeEventos
     participant EXT as AdaptadorDeEventosExternos
-    participant GOV as API datos.gov.co
-    participant COL as API Colombia (api-colombia.com)
 
     U->>WEB: ingresar filtros
     WEB->>GW: solicitar consulta 
@@ -49,23 +47,8 @@ sequenceDiagram
         REP-->>CO: lista de Evento locales candidatos
         CO->>EXT: obtenerEventosExternos(filtro)
 
-        par Consulta a API datos.gov.co 
-            EXT->>GOV: consultar catálogo con timeout de 2 s
-            alt respuesta exitosa a tiempo
-                GOV-->>EXT: registros JSON 
-                EXT->>EXT: mapearDatosGov(json)
-            else timeout (> 2 s) o error HTTP
-                EXT->>EXT: registrar advertencia y lista vacía para datos.gov.co
-            end
-        and Consulta a API Colombia 
-            EXT->>COL: consultar catálogo con timeout de 2 s
-            alt respuesta exitosa a tiempo
-                COL-->>EXT: registros JSON
-                EXT->>EXT: mapearApiColombia(json)
-            else timeout (> 2 s) o error HTTP
-                EXT->>EXT: registrar advertencia y lista vacía para api-colombia
-            end
-        end
+
+
 
         alt al menos una API externa respondió
             EXT-->>CO: ResultadoEventosExternosDTO -> eventosExternos, disponibles = true
