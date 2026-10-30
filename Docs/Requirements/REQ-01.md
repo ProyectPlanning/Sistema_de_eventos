@@ -9,7 +9,7 @@
 | **Estado** | validado |
 | **Equipo** | Cristian Andres Diaz Ortega - Juan Sebastian Rodriguez Carvajal - Martin Lora Caro - Justin David Vargas Vasquez -Nicolas David Lovera Cabiativa|
 | **Fecha** |9/10/2026|
-| **Historia de usuario relacionada** |US-01.1|
+| **Historia de usuario relacionada** |US-01.1,US-01.2,US-01.3|
 
 ---
 
@@ -144,7 +144,7 @@
 2. El usuario envía la solicitud de búsqueda.
 3. El sistema valida el formato y la coherencia de los criterios ingresados (presupuesto positivo, hora de fin posterior a la hora de inicio).
 4. El sistema consulta la base de datos local filtrando por zona geográfica y presupuesto máximo.
-5. El sistema consulta la API de eventos externa a través del componente de integración, con un tiempo límite de 2 segundos.
+5. El sistema consulta la API de eventos externa filtrando por zona geográfica y presupuesto máximo a través del componente de integración, con un tiempo límite de 2 segundos.
 6. El sistema unifica los eventos locales y externos en un solo listado.
 7. El sistema aplica las reglas de negocio (BR-01 de cupos disponibles y BR-02 de tarifas menores o iguales al presupuesto), filtra por el rango horario cuando el usuario lo indicó y excluye los eventos vencidos.
 8. El sistema presenta al usuario la lista ordenada de eventos compatibles con sus restricciones y, si alguna fuente no respondió, un aviso de que los resultados pueden estar incompletos.
@@ -178,7 +178,7 @@ flowchart TD
     P -- "No (error de conexión o timeout)" --> Q["EXCEPCIÓN C: Base de datos no respondió. Registrar fallo y continuar sin eventos locales"]
     Q --> R
 
-    P -- "Sí" --> R["5. Sistema consulta API de eventos externa (timeout máx. 2000 ms)"]
+    P -- "Sí" --> R["5. Sistema consulta API de eventos externa filtrando por zona geográfica y presupuesto máximo (timeout máx. 2000 ms)"]
     R --> H{"¿API externa disponible en tiempo límite?"}
 
     H -- "No (timeout o error)" --> T{"¿La Base de Datos también falló?"}
