@@ -305,7 +305,7 @@ erDiagram
 | **Failure outcomes (each failure, and what state is left after it)** | **`Base de datos no responde` (Excepción C):** Se lanza un error indicando que la base de datos no responde|
 | **Invariants and side effects** | **Sin efectos secundarios:**|
 
-* obtenerEventosExternos(filtro : FiltroEventosDTO): ResultadoEventosExternosDTO
+* obtenerEventosExternos(filtro : FiltroEventosDTO): Lista de Evento (lista de eventos externos que cumplen con los filtros zonaGeografica y presupuestoMaximo)
 * aplicarReglasNegocio(eventos: Lista de Evento, filtro: FiltroEventosDTO) : Lista de EventoDTO
 
 
