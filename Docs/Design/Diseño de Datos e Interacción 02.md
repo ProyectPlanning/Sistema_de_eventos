@@ -323,6 +323,18 @@ erDiagram
 | Sin coincidencias | Igual | `ciudad = Medellín, presupuestoMaximo = 10000, rango = hoy 08:00–12:00` | `eventos = []`, éxito; la UI informa y sugiere ajustar filtros. |
 | Sin filtros | Igual | `{}` | Éxito con el listado de eventos aleatorios, aquí E2 se excluye por cupos = 0. |
 
+### 3.5 obtenerEventosExternos
+
+| Element | Specification |
+|---|---|
+| **Operation and purpose** | `obtenerEventosExternos(filtro: FiltroEventosDTO): Lista de Evento`. Operación de la interfaz `IProveedorEventosExternos`, implementada por `AdaptadorDeEventosExternos` (componente Integración de Eventos Externos). Consulta en tiempo real las APIs externas de eventos (`datos.gov.co` y `api-colombia.com`) y retorna los eventos externos que cumplen con los filtros `zonaGeografica` y `presupuestoMaximo`. Es el equivalente externo de `buscarPorCriterios`. |
+| **Input (parameters and types)** | `filtro: FiltroEventosDTO`: `zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: horario recurrente o por rango`. Todos los campos son opcionales. |
+| **Output (successful result and data structure)** | Lista de la clase `Evento` con los eventos externos que cumplen con los filtros `zonaGeografica` y `presupuestoMaximo`. |
+| **Preconditions (what the caller must satisfy before invoking)** | (1) El llamador es `ConsultadorEventos.consultarEventos`, a través de `IProveedorEventosExternos`. (2) `validarCoherenciaFiltro` ya terminó sin lanzar error, por lo que los filtros son válidos. (3) Todos los campos del filtro son opcionales; se permite un filtro vacío `{}`. |
+| **Postconditions (what is guaranteed on successful completion)** | (1) Cada evento retornado cumple los filtros `zonaGeografica` y `presupuestoMaximo` provistos. (2) La lista puede ser vacía si ningún evento externo cumple los filtros. (3) La operación se completa dentro del tiempo límite de 2 s. (4) El objeto `filtro` permanece exactamente igual que antes de ejecutar la operación. |
+| **Failure outcomes (each failure, and what state is left after it)** | **`TimeoutError` / `NetworkError` (Excepción B):** se lanza cuando las APIs externas fallaron o superaron el tiempo límite de 2 s. Se registra una advertencia en el log. No se modifica el estado del sistema. `ConsultadorEventos.consultarEventos` captura el error, asigna `externosDisponibles = false` y `eventosExternos` = lista vacía, y continúa con los eventos locales; la interfaz muestra el aviso de que los eventos externos no están disponibles. Si además la base de datos local no respondió (Excepción C), `consultarEventos` lanza `ServicioNoDisponibleError` (Excepción D). |
+| **Invariants and side effects** | **Solo lectura:** no modifica el catálogo local, los usuarios ni las tarifas. Los eventos externos no se persisten, porque su dueño son los proveedores externos y se consultan en tiempo real (sección 2.1). El único efecto es el registro de la advertencia en el log cuando ocurre la Excepción B. |
+
 ---
 
 ## 4. Cross-Consistency & Changes to Deliverable 1 (Consistencia cruzada)
