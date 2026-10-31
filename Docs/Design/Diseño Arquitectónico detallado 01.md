@@ -8,7 +8,7 @@
 | **Members** |Cristian Andres Diaz Ortega - Juan Sebastian Rodriguez Carvajal - Martin Lora Caro - Justin David Vargas Vasquez -Nicolas David Lovera Cabiativa |
 | **Status** | Listo para revisar |
 | **Date** | 17/10/2026 |
-| **Inputs** | `docs/requerimientos/` |
+| **Inputs** | `docs/Requirements/` |
 
 ---
 
@@ -139,7 +139,7 @@ para mejor lectura se dividio en dos diagramas estructurales enfocados en cada c
 classDiagram
     %% Capa de Entrada
     class ControladorDeEventos {
-        +consultar(filtro: FiltroEventosDTO) List~EventoDTO~, Boolean
+        +consultar(filtro: FiltroEventosDTO) ResultadoConsultaDTO
         +crear(req: CrearEventoDTO) EventoDTO
         +modificar(id: Integer, req: ModificarEventoDTO) EventoDTO
         +eliminar(id: Integer) Boolean
@@ -149,8 +149,7 @@ classDiagram
     class ConsultadorEventos {
         -repositorio: IRepositorioDeEventos
         -proveedorExterno: IProveedorEventosExternos
-        +consultarEventos(filtro: FiltroEventosDTO) List~EventoDTO~, Boolean
-        -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
+        +consultarEventos(filtro: FiltroEventosDTO) ResultadoConsultaDTO
         -validarCoherenciaFiltro(filtro: FiltroEventosDTO) Void
     }
 
@@ -218,13 +217,13 @@ classDiagram
 
     class IProveedorEventosExternos {
         <<interface>>
-        +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
+        +obtenerEventosExternos(filtro: FiltroEventosDTO) List~Evento~
     }
 
     class AdaptadorDeEventosExternos {
         -urlDatosGov: String
         -urlApiColombia: String
-        +obtenerEventosExternos(filtro: FiltroEventosDTO) ResultadoEventosExternosDTO
+        +obtenerEventosExternos(filtro: FiltroEventosDTO) List~Evento~
         -mapearApiColombia(json: String) EventoDTO
         -mapearDatosGov(json: String) EventoDTO
     }
@@ -357,25 +356,39 @@ consultarEventos(filtro):
     TRY:
         validarCoherenciaFiltro(filtro)
     EXCEPTION (invalidField):
-         throw(invalidField) // Lanza ErrorValidacion si precios son negativos o fechas incoherentes
-    eventosLocales = repositorio.buscarPorCriterios(filtro.zonaGeografica, filtro.presupuestoMaximo)
-    
+        throw(invalidField) // EXCEPCIÓN A: precios negativos o fechas incoherentes
+
+    localesDisponibles = VERDADERO
+    externosDisponibles = VERDADERO
+
+    TRY:
+        eventosLocales = repositorio.buscarPorCriterios(filtro.zonaGeografica, filtro.presupuestoMaximo)
+    EXCEPTION (DatabaseError, TimeoutError):
+        localesDisponibles = FALSO // EXCEPCIÓN C
+        eventosLocales = LISTA_VACIA
+
     TRY:
         respuestaExterna = IProveedorEventosExternos.obtenerEventosExternos(filtro) // timeout max 2000 ms
         eventosExternos = respuestaExterna.eventosValidados
     EXCEPTION (TimeoutError, NetworkError):
-        registrarAdvertencia("API externa inaccesible; continuando con catálogo local")
+        IF NO localesDisponibles:
+            throw ServicioNoDisponibleError("Base de datos y API externa no respondieron") // EXCEPCIÓN D
+        externosDisponibles = FALSO // EXCEPCIÓN B
         eventosExternos = LISTA_VACIA
-    
-    eventosConsolidados = unificar(eventosLocales, eventosExternos)
-    
+
+    eventosCandidatos = unificar(eventosLocales, eventosExternos)
+    // Aplicar reglas de negocio, verificando el horario y los cupos disponibles
     listaFinal = []
-    FOR evento IN eventosConsolidados:
+    FOR evento IN eventosCandidatos:
         IF evento.tieneCupoDisponible():
             IF filtro.rangoHorario ES NULO O evento.horario.coincideConRango(filtro.rangoHorario):
                 listaFinal.agregar(mapearADTO(evento))
-                
-    RETURN listaFinal // Retorna lista vacía si no hay coincidencias (Flujo Alternativo)
+
+    RETURN ResultadoConsultaDTO(
+        eventos = listaFinal,                  // vacía → Flujo Alternativo
+        localesDisponibles = localesDisponibles,
+        externosDisponibles = externosDisponibles
+    )
 ```
 
 ---
@@ -438,7 +451,7 @@ consultarEventos(filtro):
 - [x] Los componentes están nombrados por responsabilidad ("Gestión de Eventos", "Capa de Persistencia"), no por tecnología.
 - [x] Nada dentro de la frontera del sistema es algo que el equipo no controle directamente.
 - [x] Las capacidades requeridas y provistas coinciden entre componentes adyacentes.
-- [x] Ambas decisiones de diseño explicitan costos y trade-offs reales, y están formalmente vinculadas con sus respectivos ADRs (`ADR-0004`, `ADR-0005` y `ADR-0006`).
+- [x] Ambas decisiones de diseño explicitan costos y trade-offs reales, y están formalmente vinculadas con sus respectivos ADRs.
 - [x] El diagrama de clases está fragmentado en dos secciones Mermaid independientes (`ControladorDeEventos` y `ControladorDeUsuarios`) para mayor legibilidad y modularidad.
 - [x] La integración del Módulo de Notificaciones está documentada y justificada arquitectónicamente.
 - [x] La tabla de trazabilidad cubre exhaustivamente los requerimientos de la Primera Etapa (REQ-01, REQ-02, REQ-13) sin filas vacías ni clases huérfanas.

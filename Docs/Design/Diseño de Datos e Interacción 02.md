@@ -30,12 +30,10 @@ sequenceDiagram
     participant CO as ConsultadorEventos
     participant REP as IRepositorioDeEventos
     participant EXT as AdaptadorDeEventosExternos
-    participant GOV as API datos.gov.co
-    participant COL as API Colombia (api-colombia.com)
 
     U->>WEB: ingresar filtros
-    WEB->>GW: solicitar consulta 
-    GW->>CE: consultar(req)
+    WEB->>GW: solicitar consulta
+    GW->>CE: consultar(filtro)
     CE->>CO: consultarEventos(filtro)
     CO->>CO: validarCoherenciaFiltro(filtro)
 
@@ -45,61 +43,57 @@ sequenceDiagram
         GW-->>WEB: campo erróneo y motivo
         WEB-->>U: resaltar campo y conservar los demás datos
     else filtros válidos
-        CO->>REP: buscarPorCriterios(zonaGeografica,presupuestoMax)
-        REP-->>CO: lista de Evento locales candidatos
+        CO->>REP: buscarPorCriterios(zonaGeografica, presupuestoMax)
+
+        alt base de datos respondió
+            REP-->>CO: lista de eventos locales candidatos
+        else Excepción C - base de datos no respondió
+            REP-->>CO: DatabaseError / TimeoutError
+            CO->>CO: localesDisponibles = false, eventosLocales = lista vacía
+        end
+
         CO->>EXT: obtenerEventosExternos(filtro)
 
-        par Consulta a API datos.gov.co 
-            EXT->>GOV: consultar catálogo con timeout de 2 s
-            alt respuesta exitosa a tiempo
-                GOV-->>EXT: registros JSON 
-                EXT->>EXT: mapearDatosGov(json)
-            else timeout (> 2 s) o error HTTP
-                EXT->>EXT: registrar advertencia y lista vacía para datos.gov.co
-            end
-        and Consulta a API Colombia 
-            EXT->>COL: consultar catálogo con timeout de 2 s
-            alt respuesta exitosa a tiempo
-                COL-->>EXT: registros JSON
-                EXT->>EXT: mapearApiColombia(json)
-            else timeout (> 2 s) o error HTTP
-                EXT->>EXT: registrar advertencia y lista vacía para api-colombia
-            end
-        end
-
         alt al menos una API externa respondió
-            EXT-->>CO: ResultadoEventosExternosDTO -> eventosExternos, disponibles = true
-        else Excepción B - ambas APIs externas fallaron o timeout
-            EXT-->>CO: ResultadoEventosExternosDTO -> lista vacía, disponibles = false
+            EXT-->>CO: Lista de eventos externos candidatos
+        else Excepción B - APIs externas fallaron o timeout
+            EXT-->>CO: Lanzar error de TimeoutError o NetworkError
+            CO->>CO: externosDisponibles = false
         end
 
-        
+        alt Excepción D - ambas fuentes fallaron (localesDisponibles = false y externosDisponibles = false)
+            CO-->>CE: ServicioNoDisponibleError
+            CE-->>GW: error servicio no disponible 
+            GW-->>WEB: servicio no disponible
+            WEB-->>U: informar que la búsqueda no está disponible, intentar más tarde
+        else al menos una fuente disponible
+            CO->>CO: unificar y aplicarReglasNegocio(eventos, filtro)
+            CO-->>CE: ResultadoConsultaDTO(eventos, localesDisponibles, externosDisponibles)
+            CE-->>GW: ResultadoConsultaDTO
+            GW-->>WEB: ResultadoConsultaDTO
 
-
-
-        CO->>CO: unificar y aplicarReglasNegocio(eventos,filtro)
-        CO-->>CE: EventosDTO(eventos, externosDisponibles)
-        CE-->>GW: EventosDTO
-        GW-->>WEB: EventosDTO
-        alt existen coincidencias
-            WEB-->>U: lista de eventos compatibles (aviso si externosDisponibles = false)
-        else Flujo alternativo - lista vacía
-            WEB-->>U: informar que no hay coincidencias
+            alt existen coincidencias
+                WEB-->>U: lista de eventos compatibles (aviso si alguna fuente = false)
+            else Flujo alternativo - lista vacía
+                WEB-->>U: informar que no hay coincidencias y sugerir ajustes (aclarar si alguna fuente = false)
+            end
         end
     end
 ```
 
 | Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1) |
 |---|---|---|---|
-| Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `ingresar filtros`, `solicitar consulta`, `consultar`, `consultarEventos` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(req)`, `ConsultadorEventos.consultarEventos(filtro)` |
+| Flujo principal, pasos 1–2 (ingresar y enviar filtros) | `ingresar filtros`, `solicitar consulta`, `consultar`, `consultarEventos` | País, departamento, ciudad, presupuesto máximo, rango horario (todos opcionales) | `ControladorDeEventos.consultar(filtro)`, `ConsultadorEventos.consultarEventos(filtro)` |
 | Flujo principal, paso 3 (validar formato y coherencia) | `validarCoherenciaFiltro` | `FiltroEventosDTO` | `ConsultadorEventos.validarCoherenciaFiltro(filtro)` |
-| Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios` | `zonaGeografica`, `presupuestoMax`, lista de `Evento` | `IRepositorioDeEventos.buscarPorCriterios(zonaGeografica, presupuestoMax)` |
-| Flujo principal, paso 4 (consultar APIs de eventos externas) | `obtenerEventosExternos` | Filtro → `ResultadoEventosExternosDTO` | `IProveedorEventosExternos.obtenerEventosExternos(filtro)` implementado por `AdaptadorDeEventosExternos` |
-| Flujo principal, paso 5 (consolidar y aplicar BR-01, BR-02) | `unificar y aplicarReglasNegocio` | Lista unificada de `Evento` cumpliendo los filtros dados | `ConsultadorEventos.aplicarReglasNegocio(eventos, filtro)` |
-| Flujo principal, paso 6 (presentar resultados) | `EventosDTO` | `EventosDTO` | `ControladorDeEventos.consultar` devuelve `EventosDTO` |
-| Flujo alternativo (sin coincidencias, paso 5) | `informar que no hay coincidencias` | `EventosDTO` con lista vacía | `ControladorDeEventos.consultar` devuelve `EventosDTO` |
-| Excepción A (criterios malformados, paso 3) | `Excepción A` | campo erróneo y motivo | `validarCoherenciaFiltro` en `ConsultadorEventos` |
-| Excepción B (timeout o indisponibilidad externa, paso 4) | `Excepción B` | `ResultadoEventosExternosDTO`, `externosDisponibles = false` | `AdaptadorDeEventosExternos.obtenerEventosExternos`, timeout 2 s, fallback y advertencia |
+| Flujo principal, paso 4 (consultar BD local) | `buscarPorCriterios`, `lista de Evento locales candidatos` | `zonaGeografica`, `presupuestoMax` → lista de `Evento` con eventos locales que cumplen con los filtros `zonaGeografica` y `presupuestoMax`| `IRepositorioDeEventos.buscarPorCriterios(zonaGeografica, presupuestoMax)` |
+| Flujo principal, paso 5 (consultar APIs de eventos externas) | `obtenerEventosExternos`, lista de `Evento` | Filtro → lista de `Evento` con eventos externos que cumplen con los filtros `zonaGeografica` y `presupuestoMax` | `IProveedorEventosExternos.obtenerEventosExternos(filtro)` implementado por `AdaptadorDeEventosExternos`|
+| Flujo principal, pasos 6–7  | `unificar y aplicarReglasNegocio` | Lista unificada de `Evento` que cumple los filtros dados | `ConsultadorEventos.aplicarReglasNegocio(eventos, filtro)` |
+| Flujo principal, paso 8 (presentar resultados) | `ResultadoConsultaDTO`, `lista de eventos compatibles` | `ResultadoConsultaDTO(eventos, localesDisponibles, externosDisponibles)` | `ControladorDeEventos.consultar` devuelve `ResultadoConsultaDTO` |
+| Flujo alternativo (sin coincidencias, paso 7) | `informar que no hay coincidencias y sugerir ajustes` | `ResultadoConsultaDTO` con lista vacía, `localesDisponibles`, `externosDisponibles` | `ControladorDeEventos.consultar` devuelve `ResultadoConsultaDTO` |
+| Excepción A (criterios malformados, paso 3) | `Excepción A`, `Error de validación de filtros` | Campo erróneo y motivo | `ConsultadorEventos.validarCoherenciaFiltro(filtro)` lanza `ErrorValidacion` |
+| Excepción B (timeout o falla de las APIs externas, paso 5) | `Excepción B`, `TimeoutError / NetworkError` | Error capturado → `eventosExternos` = lista vacía, `externosDisponibles = false` | `AdaptadorDeEventosExternos.obtenerEventosExternos` lanza el error (timeout 2 s); `ConsultadorEventos.consultarEventos` lo captura y continúa con eventos locales |
+| Excepción C (base de datos no respondió, paso 4) | `Excepción C`, `DatabaseError / TimeoutError` | Error capturado → `eventosLocales` = lista vacía, `localesDisponibles = false` | `IRepositorioDeEventos.buscarPorCriterios` lanza el error; `ConsultadorEventos.consultarEventos` lo captura y continúa con la consulta externa |
+| Excepción D (ambas fuentes fallaron, paso 5) | `Excepción D`, `ServicioNoDisponibleError`, `servicio no disponible` | `localesDisponibles = false` y error externo →  mensaje de servicio no disponible | `ConsultadorEventos.consultarEventos` lanza `ServicioNoDisponibleError` |
 
 ### 1.2 Administrar Eventos (Crear Evento) — from requirement REQ-02
 
@@ -274,22 +268,63 @@ erDiagram
 ## 3. Interface Contract (Contrato de interfaz)
 
 **Interaction chosen** (Flujo principal diagrama 1.1):
-* Consultar(filtro: `FiltroEventosDTO`): Lista de EventosDTO,Boolean (Redirrecciona a la función principal consultarEventos)
-> Operación `consultarEventos(filtro)` **provista por Gestión de Eventos** (`ConsultadorEventos`) y **consumida por** `ControladorDeEventos`, que la expone al API Gateway. Se elige porque concentra todo el comportamiento del capstone (`REQ-01`): BR-01, BR-02, BR-03, Excepción A, Excepción B y flujo alternativo.
+### 3.1 Consultar(filtro: FiltroEventosDTO)
 
 | Element | Specification |
 |---|---|
-| **Operation and purpose** | `consultarEventos(filtro: FiltroEventosDTO) : EventosDTO`. Retorna los eventos vigentes, locales y externos (de `datos.gov.co` y `api-colombia.com`), compatibles con los criterios provistos por el asistente.|
-| **Input** (parameters and types) | `FiltroEventosDTO`: `zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: horario recurrente o por rango`. |
-| **Output** (successful result and data structure) |  `eventos: Lista de EventoDTO` (lista vacía si ningún evento cumple los filtros) , `externosDisponibles: Boolean` (`false` solo si ambas fuentes externas fallaron o superaron 2 s). |
-| **Preconditions** (what the caller must satisfy before invoking) | (1) El llamador es `ControladorDeEventos`, que ya validó que los campos del filtro tienen el tipo correcto. (2) Todos los campos de `FiltroEventosDTO` son opcionales (BR-03); un filtro vacío es válido. |
-| **Postconditions** (what is guaranteed on successful completion) | (1) Cada evento retornado cumple **todos** los criterios provistos. (2) Si hay presupuesto, cada evento tiene al menos una tarifa vigente ≤ presupuesto. (3) Ningún evento con aforo limitado tiene 0 cupos. (4) `externosDisponibles = false` **solo si** ambas fuentes externas fallaron o superaron 2 s; en ese caso `eventos` solo contiene eventos locales.|
-| **Failure outcomes** (each failure, and what state is left after it) | **`ErrorValidacion(campo, motivo)`** (Excepción A): presupuesto negativo, `rangoHorario.fin ≤ rangoHorario.inicio` o rango incompleto (solo inicio o solo fin); no se consulta ninguna fuente y la interfaz señala los campos erróneos conservando los demás datos. **Falla de una o de ambas fuentes externas** (Excepción B): no es un error para quien invoca; la operación termina con éxito entregando los eventos locales y los de la fuente que sí respondió, con `externosDisponibles = false` solo si fallaron ambas. En ningún caso se modifica el estado del sistema. |
-| **Invariants and side effects** (what must stay true, what may change) | **Solo lectura:** la operación **no modifica** el catálogo local, usuarios ni tarifas. Efectos permitidos: registrar una advertencia en el log cuando falla una fuente externa. |
-* validarCoherenciaFiltro(filtro: FiltroEventosDTO): void (no devuelve nada, si los campos son invalidos lanza un error que es manejado por consultarEventos)
-* buscarPorCriterios(zonaGeografica: pais: String, departamento: String, ciudad: String, presupuestoMaximo: Decimal (COP, ≥ 0), presupuestoMaximo: Decimal (COP, ≥ 0))
-* obtenerEventosExternos(filtro : FiltroEventosDTO): ResultadoEventosExternosDTO
-* aplicarReglasNegocio(eventos: Lista de Evento, filtro: FiltroEventosDTO) : Lista de EventoDTO
+| **Operation and purpose** | `consultar(filtro: FiltroEventosDTO): ResultadoConsultaDTO`. Operación pública de `ControladorDeEventos` (Capa de Entrada / Controlador del módulo de Gestión de Eventos). Expone el punto de entrada para la búsqueda de actividades, delegando la orquestación a `ConsultadorEventos.consultarEventos(filtro)` y retornando el resultado unificado junto con el estado de disponibilidad de las fuentes locales y externas. |
+| **Input (parameters and types)** | `filtro: FiltroEventosDTO`: `zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: horario recurrente o por rango`. Todos los campos son opcionales. El API Gateway transforma y organiza la petición HTTP y valida los tipos de datos primitivos antes de transferir el control a esta operación. |
+| **Output (successful result and data structure)** | `ResultadoConsultaDTO: eventos: Lista de EventoDTO, localesDisponibles: Boolean, externosDisponibles: Boolean`. En caso de no existir coincidencias compatibles, `eventos` es una lista vacía `[]`. |
+| **Preconditions (what the caller must satisfy before invoking)** | (1) El llamador es el API Gateway tras enrutar la petición de la Aplicación Web. (2) `filtro` es una instancia válida de `FiltroEventosDTO`. (3) Todos los criterios de búsqueda son opcionales (se admite filtro vacío `{}`). (4) No se exige autenticación ni token de sesión para invocar esta operación, ya que la consulta es pública para cualquier asistente según REQ-01. |
+| **Postconditions (what is guaranteed on successful completion)** | (1) Retorna `ResultadoConsultaDTO` con los eventos vigentes que cumplen con los criterios y reglas de negocio. (2) Si no hay coincidencias, retorna `eventos = []` conservando el estado de disponibilidad de las fuentes (flujo alternativo). (3) Las banderas `localesDisponibles` y `externosDisponibles` reflejan fielmente el estado de respuesta de las fuentes de información. (4) No se altera el catálogo ni el estado del sistema. |
+| **Failure outcomes (each failure, and what state is left after it)** | **`ErrorValidacion(campo, motivo)` (Excepción A):** Criterios incoherentes detectados en la validación de dominio (`presupuestoMaximo < 0`, rango incompleto o fin anterior a inicio); la excepción se propaga hacia el API Gateway para ser respondida como error HTTP 400 Bad Request  señalando el campo erróneo y conservando los demás datos ingresados. **`ServicioNoDisponibleError` (Excepción D):** Ocurre cuando tanto la base de datos local como las APIs externas fallan (`localesDisponibles = false` y `externosDisponibles = false`); se propaga al API Gateway para ser respondida como HTTP 503 Service Unavailable informando que el servicio no está disponible temporalmente. En cualquier caso de error, el estado del sistema permanece inalterado. |
+| **Invariants and side effects** | **Solo lectura (idempotente):** No modifica registros locales de eventos, usuarios ni tarifas. |
+### 3.2 consultarEventos
+
+| Element | Specification |
+|---|---|
+| **Operation and purpose** | `consultarEventos(filtro: FiltroEventosDTO) : ResultadoConsultaDTO`. Operación de `ConsultadorEventos` (Capa de Lógica de Negocio). Orquesta el flujo completo de búsqueda: valida la coherencia del filtro (`validarCoherenciaFiltro`), recupera eventos locales (`buscarPorCriterios`) y externos (`obtenerEventosExternos`), unifica las fuentes y aplica directamente en memoria las reglas de negocio del sistema (BR-01 de cupos, BR-02 de calificación tarifaria y BR-03 de combinación/omisión de filtros, junto con la vigencia y coincidencia horaria). Retorna el resultado con los eventos completamente corregidos y depurados por las reglas de negocio, convertidos a `EventoDTO`, junto con las banderas de disponibilidad de cada fuente (`localesDisponibles`, `externosDisponibles`). |
+| **Input (parameters and types)** | `FiltroEventosDTO`: `zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: horario recurrente o por rango`. Todos los campos son opcionales. |
+| **Output (successful result and data structure)** | `ResultadoConsultaDTO: eventos: lista de EventoDTO, localesDisponibles: Boolean, externosDisponibles: Boolean`. La lista `eventos` se corrige y filtra tras la aplicación de todas las reglas de negocio (BR-01 de aforo con cupos disponibles, BR-02 de presupuesto con tarifa calificada, BR-03 con filtros combinados o sugerencias aleatorias si el filtro está vacío, y coincidencia horaria si se indicó rango). Si ningún evento califica o no hay coincidencias, `eventos` es una lista vacía `[]`. |
+| **Preconditions (what the caller must satisfy before invoking)** | (1) El llamador es `ControladorDeEventos`, que ya validó que los campos del filtro tienen el tipo sintáctico correcto. (2) Todos los campos de `FiltroEventosDTO` son opcionales (se admite filtro vacío `{}`). (3) El sistema cuenta con conectividad a la base de datos local y a los adaptadores de eventos externos. |
+| **Postconditions (what is guaranteed on successful completion)** | (1) **BR-01 (Cupos y aforo):** Cada evento retornado cumple `Evento.tieneCupoDisponible()` (`capacidad_maxima` nula o `cupos_disponibles ≥ 1`). Ningún evento con aforo limitado y 0 cupos aparece en el listado. Para eventos externos sin datos de aforo según OQ-01, se asume que no tienen aforo limitado. (2) **BR-02 (Tarifa calificada):** Si se especificó `presupuestoMaximo`, cada evento retornado posee al menos una tarifa vigente con precio en COP `≤ presupuestoMaximo`. Para eventos externos sin tarifas registradas según OQ-01, se asume provisionalmente acceso libre ($0 COP). (3) **Vigencia y Horario:** Todos los eventos retornados se encuentran en estado vigente (`VIGENTE`) y activos temporalmente; si se indicó `rangoHorario`, cada evento retornado cumple con `coincideConRango(inicio, fin)`. (4) **BR-03 (Sin filtros):** Si no se especificó ningún criterio de búsqueda (filtro vacío `{}`), Se asume que la operación retorna los eventos vigentes con cupo disponible ordenados o seleccionados de forma aleatoria a modo de sugerencias para el usuario. (5) Los eventos son transformados y devueltos como instancias de `EventoDTO`, desacopladas de las entidades internas del dominio. (6) `externosDisponibles = false` **solo si** ambas fuentes externas fallaron o superaron 2 s; `localesDisponibles = false` si la base de datos local no respondió. Si al menos una fuente responde, se entregan los resultados depurados de la fuente disponible. |
+| **Failure outcomes (each failure, and what state is left after it)** | **`ErrorValidacion(campo, motivo)` (Excepción A):** Criterios incoherentes detectados por `validarCoherenciaFiltro` (`presupuestoMaximo < 0`, `rangoHorario.fin ≤ rangoHorario.inicio` o rango incompleto); no se consulta ninguna fuente y la excepción se propaga a `ControladorDeEventos`. La interfaz señala el campo erróneo conservando los demás datos ingresados. **Falla de fuentes externas (Excepción B):** Se capturan los errores (`TimeoutError` / `NetworkError`) si superan 2 s, se fija `externosDisponibles = false`, y se continúa aplicando las reglas únicamente sobre eventos locales. **Falla de base de datos local (Excepción C):** Se captura el error de persistencia, se fija `localesDisponibles = false`, y se continúa aplicando las reglas únicamente sobre eventos externos. **`ServicioNoDisponibleError` (Excepción D):** Si tanto la base de datos local como las fuentes externas fallan (`localesDisponibles = false` y `externosDisponibles = false`), se lanza esta excepción hacia `ControladorDeEventos`. |
+| **Invariants and side effects (what must stay true, what may change)** | **Solo lectura:** La operación no modifica el catálogo local, usuarios ni tarifas.  |
+### 3.3 validarCoherenciaFiltro
+
+| Element | Specification |
+|---|---|
+| **Operation and purpose** | `validarCoherenciaFiltro(filtro: FiltroEventosDTO): void`. Operación privada de `ConsultadorEventos`, invocada únicamente por `consultarEventos`. Verifica que los criterios de búsqueda proporcionados sean coherentes entre sí y con las restricciones definidas para la consulta, antes de consultar cualquier fuente de información.|
+| **Input (parameters and types)** | `filtro: FiltroEventosDTO`: `zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP)`, `rangoHorario: horario recurrente o por rango`. Todos los campos son opcionales. |
+| **Output (successful result and data structure)** | Ninguno (`void`). Si la operación termina sin lanzar una excepción, significa que los criterios proporcionados son coherentes y `consultarEventos` puede continuar con `buscarPorCriterios` y `obtenerEventosExternos`. |
+| **Preconditions (what the caller must satisfy before invoking)** | (1) El llamador es `consultarEventos`, perteneciente a la misma clase `ConsultadorEventos`. (2) El objeto `filtro` debe estar construido y sus campos deben tener los tipos de datos correspondientes, cuya validación corresponde a `ControladorDeEventos`. (3) Todos los campos del filtro son opcionales; por tanto, se permite recibir un filtro vacío `{}`. |
+| **Postconditions (what is guaranteed on successful completion)** | (1) `presupuestoMaximo` es nulo o mayor o igual a cero. El valor `0` es válido. (2) Si `rangoHorario` corresponde a un horario por rango, debe contener ambos valores (`inicio` y `fin`); además, `fin` debe ser estrictamente posterior a `inicio`. (3) `zonaGeografica` admite cualquier combinación de campos presentes u omitidos, incluyendo búsquedas realizadas únicamente por ciudad. (4) El objeto `filtro` permanece exactamente igual que antes de ejecutar la operación. |
+| **Failure outcomes (each failure, and what state is left after it)** | **`ErrorValidacion(campo, motivo)` (Excepción A):** se lanza cuando se identifica un criterio incoherente. Casos: **(a)** `presupuestoMaximo < 0` → `campo = presupuestoMaximo`, motivo `"no puede ser negativo"`. **(b)** `rangoHorario` por rango contiene únicamente `inicio` o únicamente `fin` → `campo = rangoHorario`, motivo `"rango incompleto"`. **(c)** `rangoHorario.fin <= rangoHorario.inicio` → `campo = rangoHorario`, motivo `"el fin debe ser posterior al inicio"`. `consultarEventos` captura la excepción y la propaga a `ControladorDeEventos`. No se consulta el repositorio ni las APIs externas. La interfaz señala el campo erróneo y conserva los demás datos ingresados. Tras el error no se modifica el estado del sistema. |
+| **Invariants and side effects** | **Sin efectos secundarios:** no modifica `filtro`, el catálogo de eventos, los usuarios ni las tarifas. No invoca el repositorio ni los proveedores externos. Tampoco registra advertencias en el log, dado que estas corresponden a la Excepción B. La operación es determinista: su resultado depende exclusivamente de los valores recibidos en el filtro y no del reloj del sistema. |
+
+### 3.4 buscarPorCriterios
+
+| Element | Specification |
+|---|---|
+| **Operation and purpose** |`buscarPorCriterios`. Obtener los eventos locales que cumplen con los filtros de zonaGeográfica y presupuestoMáximo.|
+| **Input (parameters and types)** |`zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0) |
+| **Output (successful result and data structure)** | Devuelve una lista de la clase `Evento` con los eventos locales que cumplen con los  filtros `zonaGeografica` y `presupuestoMaximo` |
+| **Preconditions (what the caller must satisfy before invoking)** | Los filtros `presupestoMaximo` y `zonaGegrafica` son válidos|
+| **Postconditions (what is guaranteed on successful completion)** | Lista de eventos locales que cumplen con los filtros `presupestoMaximo` y `zonaGeografica`|
+| **Failure outcomes (each failure, and what state is left after it)** | **`Base de datos no responde` (Excepción C):** Se lanza un error indicando que la base de datos no responde|
+| **Invariants and side effects** | **Sin efectos secundarios**|
+
+### 3.5 obtenerEventosExternos
+
+| Element | Specification |
+|---|---|
+| **Operation and purpose** | `obtenerEventosExternos(filtro: FiltroEventosDTO): Lista de Evento`. Operación de la interfaz `IProveedorEventosExternos`, implementada por `AdaptadorDeEventosExternos` (componente Integración de Eventos Externos). Consulta en tiempo real las APIs externas de eventos (`datos.gov.co` y `api-colombia.com`) y retorna los eventos externos que cumplen con los filtros `zonaGeografica` y `presupuestoMaximo`. Es el equivalente externo de `buscarPorCriterios`. |
+| **Input (parameters and types)** | `filtro: FiltroEventosDTO`: `zonaGeografica: pais: String, departamento: String, ciudad: String`, `presupuestoMaximo: Decimal (COP, ≥ 0)`, `rangoHorario: horario recurrente o por rango`. Todos los campos son opcionales. |
+| **Output (successful result and data structure)** | Lista de la clase `Evento` con los eventos externos que cumplen con los filtros `zonaGeografica` y `presupuestoMaximo`. |
+| **Preconditions (what the caller must satisfy before invoking)** | (1) El llamador es `ConsultadorEventos.consultarEventos`, a través de `IProveedorEventosExternos`. (2) `validarCoherenciaFiltro` ya terminó sin lanzar error, por lo que los filtros son válidos. (3) Todos los campos del filtro son opcionales; se permite un filtro vacío `{}`. |
+| **Postconditions (what is guaranteed on successful completion)** | (1) Cada evento retornado cumple los filtros `zonaGeografica` y `presupuestoMaximo` provistos. (2) La lista puede ser vacía si ningún evento externo cumple los filtros. (3) La operación se completa dentro del tiempo límite de 2 s. (4) El objeto `filtro` permanece exactamente igual que antes de ejecutar la operación. |
+| **Failure outcomes (each failure, and what state is left after it)** | **`TimeoutError` / `NetworkError` (Excepción B):** se lanza cuando las APIs externas fallaron o superaron el tiempo límite de 2 s. Se registra una advertencia en el log. No se modifica el estado del sistema. `ConsultadorEventos.consultarEventos` captura el error, asigna `externosDisponibles = false` y `eventosExternos` = lista vacía, y continúa con los eventos locales; la interfaz muestra el aviso de que los eventos externos no están disponibles. Si además la base de datos local no respondió (Excepción C), `consultarEventos` lanza `ServicioNoDisponibleError` (Excepción D). |
+| **Invariants and side effects** | **Solo lectura:** no modifica el catálogo local, los usuarios ni las tarifas. Los eventos externos no se persisten, porque su dueño son los proveedores externos y se consultan en tiempo real (sección 2.1). El único efecto es el registro de la advertencia en el log cuando ocurre la Excepción B. |
 
 
 **Testable examples**
@@ -305,6 +340,8 @@ erDiagram
 | Excepción A | Igual | `presupuestoMaximo = -1000` o `rango = hoy 22:00–18:00` | `ErrorValidacion(campo = presupuestoMaximo y rangoHorario)`; no se consulta repositorio ni APIs externas. |
 | Sin coincidencias | Igual | `ciudad = Medellín, presupuestoMaximo = 10000, rango = hoy 08:00–12:00` | `eventos = []`, éxito; la UI informa y sugiere ajustar filtros. |
 | Sin filtros | Igual | `{}` | Éxito con el listado de eventos aleatorios, aquí E2 se excluye por cupos = 0. |
+
+
 
 ---
 
@@ -349,7 +386,7 @@ erDiagram
 
 ## 7. Consistency Checklist (Lista de verificación)
 
-- [ ] Two use cases from the project, each traceable to a Use Case written in the requirements. — *1.1 trazable a `REQ-01`. 1.2 trazable a `US-02.1`, pero `REQ-02` aún no tiene caso de uso detallado; sus pasos se declaran como supuestos (ver `OQ-03`).*
+- [x] Two use cases from the project, each traceable to a Use Case written in the requirements. — *1.1 trazable a `REQ-01`. 1.2 trazable a `US-02.1`*
 - [x] Each sequence diagram shows the main flow and at least one alternative or exception flow.
 - [x] No business behavior is invented: anything unspecified is marked as an assumption or Open Question.
 - [x] Section 2.1 explains what is NOT persisted as well as what is.

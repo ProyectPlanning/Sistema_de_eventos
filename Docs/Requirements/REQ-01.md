@@ -9,7 +9,7 @@
 | **Estado** | validado |
 | **Equipo** | Cristian Andres Diaz Ortega - Juan Sebastian Rodriguez Carvajal - Martin Lora Caro - Justin David Vargas Vasquez -Nicolas David Lovera Cabiativa|
 | **Fecha** |9/10/2026|
-| **Historia de usuario relacionada** |US-01.1|
+| **Historia de usuario relacionada** |US-01.1,US-01.2,US-01.3|
 
 ---
 
@@ -141,22 +141,26 @@
 | **Precondición** | El sistema se encuentra operativo y el servicio de eventos dispone de registros locales o remotos |
 
 **Flujo Principal**
-1. El usuario accede a la sección de búsqueda e ingresa opcionalmente: zona geográfica, presupuesto máximo disponible y rango de horario (hora inicio y fin).
+1. El usuario accede a la sección de búsqueda e ingresa de forma opcional: zona geográfica, presupuesto máximo disponible y rango horario (hora de inicio y hora de fin).
 2. El usuario envía la solicitud de búsqueda.
-3. El sistema valida el formato de los criterios ingresados (números positivos en presupuesto, fechas/horas coherentes).
-4. El sistema consulta los eventos en la base de datos local y solicita la sincronización/consulta a la API de eventos externa a través del componente de integración.
-5. El sistema consolida los resultados, aplica las reglas de negocio (BR-01 de cupos disponibles y BR-02 de tarifas menores o iguales al presupuesto) y excluye eventos vencidos.
-6. El sistema presenta al usuario la lista ordenada de eventos compatibles con sus restricciones.
+3. El sistema valida el formato y la coherencia de los criterios ingresados (presupuesto positivo, hora de fin posterior a la hora de inicio).
+4. El sistema consulta la base de datos local filtrando por zona geográfica y presupuesto máximo.
+5. El sistema consulta la API de eventos externa filtrando por zona geográfica y presupuesto máximo a través del componente de integración, con un tiempo límite de 2 segundos.
+6. El sistema unifica los eventos locales y externos en un solo listado.
+7. El sistema aplica las reglas de negocio (BR-01 de cupos disponibles y BR-02 de tarifas menores o iguales al presupuesto), filtra por el rango horario cuando el usuario lo indicó y excluye los eventos vencidos.
+8. El sistema presenta al usuario la lista ordenada de eventos compatibles con sus restricciones y, si alguna fuente no respondió, un aviso de que los resultados pueden estar incompletos.
 
 **Flujo Alternativo**
-> **Sin eventos coincidentes (Paso 5):** Si ningún evento satisface la combinación exacta de filtros, el sistema notifica que no existen coincidencias, mantiene los filtros en pantalla y sugiere relajar el rango horario o incrementar el presupuesto (Escenario 2).
+> **Sin eventos coincidentes (Paso 7):** Si ningún evento cumple la combinación de filtros, el sistema informa que no hay coincidencias, mantiene los filtros en pantalla y sugiere ampliar el rango horario o aumentar el presupuesto (Escenario 2). Si además alguna fuente no respondió, el sistema aclara que algunos eventos no pudieron consultarse.
 
 **Excepciones**
-> **Excepción A — Criterios de entrada malformados (Paso 3):** Si el usuario introduce valores no válidos (e.g. presupuesto negativo o rango horario con hora fin anterior a la hora inicio), el sistema detiene la consulta, señala visualmente el campo erróneo y solicita la corrección manteniendo los demás datos.  
-> **Excepción B — Falla o timeout de la API externa de eventos (Paso 4):** Si el servicio de eventos externos no responde dentro de 2 segundos o retorna error HTTP, el sistema activa el fallback de contingencia: ejecuta la consulta únicamente sobre los registros de la base de datos local y despliega un aviso informativo indicando que los eventos externos no pudieron cargarse momentáneamente.
+> **Excepción A — Criterios de entrada malformados (Paso 3):** Si el usuario ingresa valores no válidos (por ejemplo, un presupuesto negativo o una hora de fin anterior a la hora de inicio), el sistema detiene la consulta, señala visualmente el campo con error y solicita la corrección, conservando los demás datos ingresados.  
+> **Excepción B — Falla o timeout de la API externa de eventos (Paso 5):** Si el servicio de eventos externos no responde en 2 segundos o devuelve un error HTTP, y la base de datos local sí respondió, el sistema marca la fuente externa como no disponible y continúa solo con los eventos locales. Al presentar los resultados, muestra un aviso de que los eventos externos no pudieron cargarse por el momento.  
+> **Excepción C — La base de datos local no respondió (Paso 4):** Si la base de datos local presenta un error de conexión o de tiempo de espera, el sistema marca la fuente local como no disponible y continúa con la consulta a la API externa (Paso 5). Al presentar los resultados, muestra un aviso de que los eventos del catálogo propio no pudieron cargarse por el momento.  
+> **Excepción D — Ambas fuentes fallaron (Paso 5):** Si la base de datos local no respondió (Excepción C) y la API externa tampoco, el sistema detiene la consulta e informa al usuario que el servicio de búsqueda no está disponible por el momento y que intente más tarde. No muestra el mensaje de "sin coincidencias", porque la falta de resultados se debe al sistema y no a los filtros.
 
 **Postcondición**
-> El usuario visualiza la oferta de actividades viables para su perfil de búsqueda o recibe retroalimentación clara para ajustar sus criterios, sin bloqueos del sistema.
+> El usuario ve los eventos viables para su búsqueda, recibe orientación clara para ajustar sus criterios o es informado de que el servicio no está disponible temporalmente. En todos los casos sabe si los resultados están completos y el sistema no se bloquea.
 
 **Diagrama de Flujo del Caso de Uso**
 
@@ -170,16 +174,28 @@ flowchart TD
     E -- "No" --> F["EXCEPCIÓN A: Mostrar error de validación en pantalla"]
     F --> B
 
-    E -- "Sí" --> G["4. Sistema consulta Base de Datos local y API de eventos externa"]
-    G --> H{"¿API externa disponible en tiempo límite?"}
+    E -- "Sí" --> G["4. Sistema consulta Base de Datos local por zona y presupuesto máximo"]
+    G --> P{"¿Base de datos respondió?"}
 
-    H -- "No (timeout o error)" --> I["EXCEPCIÓN B: Registrar fallo y activar fallback con datos locales"]
-    I --> J["5. Filtrar eventos por BR-01 y BR-02"]
-    
-    H -- "Sí" --> J
+    P -- "No (error de conexión o timeout)" --> Q["EXCEPCIÓN C: Base de datos no respondió. Registrar fallo y continuar sin eventos locales"]
+    Q --> R
+
+    P -- "Sí" --> R["5. Sistema consulta API de eventos externa filtrando por zona geográfica y presupuesto máximo (timeout máx. 2000 ms)"]
+    R --> H{"¿API externa disponible en tiempo límite?"}
+
+    H -- "No (timeout o error)" --> T{"¿La Base de Datos también falló?"}
+
+    T -- "Sí" --> U["EXCEPCIÓN D: Ambas fuentes fallaron. Informar al usuario que la Base de Datos y la API externa no respondieron; intentar más tarde"]
+    U --> V([Postcondición: Usuario informado de la falla del servicio, sin resultados])
+
+    T -- "No" --> I["EXCEPCIÓN B: Registrar fallo y continuar solo con eventos locales"]
+    I --> S
+
+    H -- "Sí" --> S["6. Unificar eventos locales y externos"]
+    S --> J["7. Filtrar eventos por cupo disponible y rango horario"]
 
     J --> K{"¿Se encontraron eventos coincidentes?"}
-    K -- "Sí" --> L["6. Presentar lista de eventos compatibles"]
+    K -- "Sí" --> L["8. Presentar lista de eventos compatibles"]
     L --> M([Postcondición: Usuario visualiza eventos viables])
 
     K -- "No" --> N["FLUJO ALTERNATIVO: Informar ausencia de coincidencias y sugerir ajustes"]
@@ -189,9 +205,9 @@ flowchart TD
     classDef alt fill:#F2A541,color:#1E2761,stroke:#F2A541;
     classDef exception fill:#B3261E,color:#ffffff,stroke:#B3261E;
 
-    class B,C,D,G,J,L mainflow;
+    class B,C,D,G,R,S,J,L mainflow;
     class N alt;
-    class F,I exception;
+    class F,I,Q,U exception;
 ```
 
 ---
@@ -223,7 +239,7 @@ flowchart TD
 
 ## 6. Validación
 
-- [x] **Válido?** Si, sale directamente de Need-01 y US-01.
+- [x] **Válido?** Si, sale directamente de Need-01 y US-01.x.
 - [x] **Claro?** Si, "consultar y filtrar eventos por presupuesto máximo, rango de disponibilidad horaria y zona geográfica" tiene una lectura razonable única para eventos.
 - [x] **Atómico?** Si, es una única expectativa verificable de forma independiente (filtrar y listar eventos), no varias capacidades distintas empaquetadas juntas.
 - [x] **Necesario?** Si, removerlo elimina la funcionalidad central de descubrimiento del MVP, la cual responde directamente al Need-01.
