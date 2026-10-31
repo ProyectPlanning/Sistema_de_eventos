@@ -150,7 +150,6 @@ classDiagram
         -repositorio: IRepositorioDeEventos
         -proveedorExterno: IProveedorEventosExternos
         +consultarEventos(filtro: FiltroEventosDTO) ResultadoConsultaDTO
-        -aplicarReglasNegocio(eventos: List~Evento~, filtro: FiltroEventosDTO) List~EventoDTO~
         -validarCoherenciaFiltro(filtro: FiltroEventosDTO) Void
     }
 
