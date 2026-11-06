@@ -39,7 +39,9 @@ Ejemplos de fuerzas en juego: requisitos no funcionales (rendimiento,
 seguridad, escalabilidad), restricciones de equipo o de tiempo,
 deuda técnica existente, compatibilidad con sistemas ya construidos.
 -->
- 
+Frente a la problematica que se nos presentó al momento de nombrar los archivos es necesario tomar una decision
+con respecto a la nomenclatura de los archivos y el codigo con el fin de tener una estructura fija donde todos los miembros deben tener una estructura fija.
+  
 ## Decisión
  
 <!--
@@ -49,6 +51,7 @@ un ADR no es un RFC, no necesita convencer a nadie aquí — la
 justificación ya quedó en "Contexto" y las alternativas descartadas
 van abajo.
 -->
+variables: camelCase; clases:PascalCase, archivos: Pascal_Snake_Case
  
 ## Alternativas consideradas
  
@@ -58,6 +61,7 @@ falta un análisis exhaustivo, basta con dejar constancia de que se
 consideraron y el motivo del descarte (costo, madurez, curva de
 aprendizaje, no cumple un requisito, etc.).
 -->
+flatcase o kebab-case para las variables
  
 ## Consecuencias
  
@@ -69,21 +73,5 @@ introducida, dependencia nueva, curva de aprendizaje del equipo).
 -->
  
 ---
+Mejor organización por la estandarización
  
-### Diferencia con un RFC (referencia rápida)
- 
-<!--
-Elimina esta sección en el ADR final; queda aquí solo como recordatorio
-para quien usa la plantilla.
-- Un RFC se escribe ANTES de decidir, para abrir discusión y llegar a
-  consenso; es un documento "vivo" mientras dura la deliberación.
-- Un ADR registra una decisión YA tomada (o que se está formalizando);
-  una vez aceptado, es casi inmutable — si cambia, se escribe un ADR
-  nuevo que reemplaza al anterior, no se edita el viejo.
-- El RFC suele ser más largo (motivación, métricas, riesgos, preguntas
-  abiertas); el ADR es deliberadamente corto: Contexto, Decisión,
-  Consecuencias.
-- En equipos que usan ambos: el RFC es el proceso de deliberación,
-  y al cerrarlo se destila un ADR corto como registro histórico de lo
-  que finalmente se decidió.
--->
