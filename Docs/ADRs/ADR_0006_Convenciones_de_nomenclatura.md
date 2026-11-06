@@ -1,4 +1,4 @@
-# ADR-000X: Título corto de la decisión
+# ADR-0006: Convenciones de nomenclatura
  
 <!--
 Nombra el archivo con el número consecutivo y un slug corto, por ejemplo:
@@ -11,8 +11,12 @@ por qué el sistema es como es.
 -->
  
 Autores:
- - @githubusername
-Fecha: AAAA-MM-DD
+ - Justin David Vargas Vasquez
+ - Cristian Andres Diaz Ortega
+ - Juan Sebastian Rodriguez Carvajal
+ - Nicolas David Lovera Cabiativa
+
+Fecha: 2026-11-5
  
 ## Estado
  
