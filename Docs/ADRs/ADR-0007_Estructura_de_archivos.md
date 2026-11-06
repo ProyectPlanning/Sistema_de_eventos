@@ -48,7 +48,12 @@ un ADR no es un RFC, no necesita convencer a nadie aquí — la
 justificación ya quedó en "Contexto" y las alternativas descartadas
 van abajo.
 -->
-Estructura a utilizar: src/<- Todo el codigo de la aplicación config/ <- Configuraciones necesarias para levantar el proyecto docs/<- Documentos generales README <- Explicación del proyecto
+Estructura a utilizar: 
+En las siguientes carpetas se encontraran los archivos relacionados con:
+* backend/: La lógica de negocio.
+* frontend/: La vista del usuario y las peticiones.
+* docs/: Documentos generales.
+* README: Explicación del proyecto.
 ## Alternativas consideradas
  
 <!--
