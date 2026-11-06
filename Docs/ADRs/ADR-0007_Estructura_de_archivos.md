@@ -38,9 +38,7 @@ Ejemplos de fuerzas en juego: requisitos no funcionales (rendimiento,
 seguridad, escalabilidad), restricciones de equipo o de tiempo,
 deuda técnica existente, compatibilidad con sistemas ya construidos.
 -->
-Frente a la problematica que se nos presentó al momento de nombrar los archivos es necesario tomar una decision
-con respecto a la nomenclatura de los archivos y el codigo con el fin de tener una estructura fija donde todos los miembros deben tener una estructura fija.
-  
+Definir cual va hacer la estructura de carpetas que se utilizará
 ## Decisión
  
 <!--
@@ -50,8 +48,7 @@ un ADR no es un RFC, no necesita convencer a nadie aquí — la
 justificación ya quedó en "Contexto" y las alternativas descartadas
 van abajo.
 -->
-variables: camelCase; clases:PascalCase, archivos: Pascal_Snake_Case
- 
+Estructura a utilizar: src/<- Todo el codigo de la aplicación config/ <- Configuraciones necesarias para levantar el proyecto docs/<- Documentos generales README <- Explicación del proyecto
 ## Alternativas consideradas
  
 <!--
@@ -60,7 +57,7 @@ falta un análisis exhaustivo, basta con dejar constancia de que se
 consideraron y el motivo del descarte (costo, madurez, curva de
 aprendizaje, no cumple un requisito, etc.).
 -->
-flatcase o kebab-case para las variables
+No se consideraron alternativas para ganar Sencillez.
  
 ## Consecuencias
  
