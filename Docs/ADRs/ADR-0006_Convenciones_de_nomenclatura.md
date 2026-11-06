@@ -50,7 +50,7 @@ un ADR no es un RFC, no necesita convencer a nadie aquí — la
 justificación ya quedó en "Contexto" y las alternativas descartadas
 van abajo.
 -->
-- variables: camelCase.
+- variables y constantes: camelCase.
 - clases:PascalCase.
 - archivos: Pascal_Snake_Case.
  
