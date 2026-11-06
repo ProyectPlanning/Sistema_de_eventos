@@ -49,11 +49,14 @@ justificación ya quedó en "Contexto" y las alternativas descartadas
 van abajo.
 -->
 Estructura a utilizar: 
+### Estructura Orientada a responsabilidades
+Ejemplo:
 En las siguientes carpetas se encontraran los archivos relacionados con:
 * backend/: La lógica de negocio.
 * frontend/: La vista del usuario y las peticiones.
 * docs/: Documentos generales.
 * README: Explicación del proyecto.
+
 ## Alternativas consideradas
  
 <!--
@@ -62,7 +65,8 @@ falta un análisis exhaustivo, basta con dejar constancia de que se
 consideraron y el motivo del descarte (costo, madurez, curva de
 aprendizaje, no cumple un requisito, etc.).
 -->
-No se consideraron alternativas para ganar Sencillez.
+- Estructura clasica por capas: Aunque es ideal para una app pequeña, la navegación es molesta y modificar puede llevar varias carpetas
+- Arquitectura limpia estricta: Aunque se separada por las reglas de negocio de los casos de uso y es testeable, esto genera demasiada complejidad.
  
 ## Consecuencias
  
@@ -74,4 +78,4 @@ introducida, dependencia nueva, curva de aprendizaje del equipo).
 -->
  
 ---
-Mejor organización por la estandarización
+Se pueden generar duplicaciones en la logica, si no se tienen claros los limites del dominio de negocio desde el principio
