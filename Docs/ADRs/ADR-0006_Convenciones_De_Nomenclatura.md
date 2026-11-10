@@ -57,6 +57,7 @@ Se adoptan las siguientes convenciones de nomenclatura para todo el repositorio:
 | Constantes | `camelCase` | `maxIntentosLogin` | `MAX_INTENTOS_LOGIN`, `max-intentos-login` |
 | Clases | `PascalCase` | `EventosService` | `eventosService`, `eventos_service` |
 | Archivos | `Pascal_Snake_Case` | `Eventos_Service.ts` | `eventosService.ts`, `eventos-service.ts` |
+| Carpetas | `camelCase` | `docs` | `Docs`, `SRC` |
 
 ### Excepciones
  
