@@ -59,12 +59,12 @@ Las carpetas de primer nivel contienen:
 ### Ejemplo de estructura base
  
 ```text
-Sistema_de_eventos/
+sistemaDeEventos/
 ├── README.md                     # Explicación del proyecto
-├── Docs/                         # Documentos generales
-│   ├── ADRs/                     # Decisiones de arquitectura
-│   ├── Design/                   # Diseños y diagramas
-│   └── Requirements/             # Requisitos
+├── docs/                         # Documentos generales
+│   ├── adrs/                     # Decisiones de arquitectura
+│   ├── design/                   # Diseños y diagramas
+│   └── requirements/             # Requisitos
 ├── backend/                      # Lógica de negocio
 │   ├── package.json
 │   ├── src/
