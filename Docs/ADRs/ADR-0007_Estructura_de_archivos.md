@@ -1,4 +1,4 @@
-# ADR-0006: Convenciones de nomenclatura
+# ADR-0007: Estructura de archivos
  
 <!--
 Nombra el archivo con el número consecutivo y un slug corto, por ejemplo:
@@ -15,6 +15,7 @@ Autores:
  - Cristian Andres Diaz Ortega
  - Juan Sebastian Rodriguez Carvajal
  - Nicolas David Lovera Cabiativa
+ - Martin Lora Caro
 
 Fecha: 2026-11-5
  
@@ -27,7 +28,7 @@ Un ADR "Propuesto" está en discusión. Una vez el equipo decide, pasa a
 modifica su contenido de fondo.
 -->
  
-Validado
+Aceptado
 ## Contexto
  
 <!--
@@ -38,7 +39,8 @@ Ejemplos de fuerzas en juego: requisitos no funcionales (rendimiento,
 seguridad, escalabilidad), restricciones de equipo o de tiempo,
 deuda técnica existente, compatibilidad con sistemas ya construidos.
 -->
-Definir cual va hacer la estructura de carpetas que se utilizará
+Hasta ahora, el repositorio sólo contiene un README y su respectiva documentación en la carpeta Docs. La parte de código no se ha comenzado a trabajar, pero no se tiene claro tampoco la estructura de carpetas que usará el repositorio.
+Definir cual va hacer la estructura de carpetas que se utilizará en el GitHub.
 ## Decisión
  
 <!--
@@ -48,7 +50,7 @@ un ADR no es un RFC, no necesita convencer a nadie aquí — la
 justificación ya quedó en "Contexto" y las alternativas descartadas
 van abajo.
 -->
-Estructura a utilizar: 
+Definimos que se usará la siguiente estructura: 
 ### Estructura Orientada a responsabilidades
 Ejemplo:
 En las siguientes carpetas se encontraran los archivos relacionados con:
@@ -65,8 +67,8 @@ falta un análisis exhaustivo, basta con dejar constancia de que se
 consideraron y el motivo del descarte (costo, madurez, curva de
 aprendizaje, no cumple un requisito, etc.).
 -->
-- Estructura clasica por capas: Aunque es ideal para una app pequeña, la navegación es molesta y modificar puede llevar varias carpetas
-- Arquitectura limpia estricta: Aunque se separada por las reglas de negocio de los casos de uso y es testeable, esto genera demasiada complejidad.
+- Estructura clásica por capas: Aunque es funcional para una app pequeña, la navegación es molesta y modificar un solo elemento puede requerir de alterar varias carpetas.
+- Arquitectura limpia estricta: Aunque se separa por las reglas de negocio de los casos de uso y es testeable, esto genera demasiada complejidad.
  
 ## Consecuencias
  
@@ -78,4 +80,5 @@ introducida, dependencia nueva, curva de aprendizaje del equipo).
 -->
  
 ---
+
 Se pueden generar duplicaciones en la logica, si no se tienen claros los limites del dominio de negocio desde el principio
