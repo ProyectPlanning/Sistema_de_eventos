@@ -16,7 +16,7 @@ Autores:
  - Juan Sebastian Rodriguez Carvajal
  - Nicolas David Lovera Cabiativa
 
-Fecha: 2026-11-5
+Fecha: 2026-11-10
  
 ## Estado
  
@@ -38,8 +38,7 @@ Ejemplos de fuerzas en juego: requisitos no funcionales (rendimiento,
 seguridad, escalabilidad), restricciones de equipo o de tiempo,
 deuda técnica existente, compatibilidad con sistemas ya construidos.
 -->
-Frente a la problematica que se nos presentó al momento de nombrar los archivos es necesario tomar una decision
-con respecto a la nomenclatura de los archivos y el codigo con el fin de tener una estructura fija donde todos los miembros deben tener una estructura fija.
+Durante el desarrollo surgió el problema de que cada integrante nombraba archivos, variables y clases con criterios distintos. Esto genera inconsistencias en el repositorio, dificulta la búsqueda de archivos, complica las revisiones de código y aumenta el tiempo que un miembro necesita para entender el código de otro, por lo que requería tomar una decisión formal sobre la nomenclatura de los archivos y del código, con el fin de contar con una estructura fija que todos los miembros del equipo deban seguir.
   
 ## Decisión
  
@@ -50,9 +49,66 @@ un ADR no es un RFC, no necesita convencer a nadie aquí — la
 justificación ya quedó en "Contexto" y las alternativas descartadas
 van abajo.
 -->
-- variables y constantes: camelCase.
-- clases:PascalCase.
-- archivos: Pascal_Snake_Case.
+Se adoptan las siguientes convenciones de nomenclatura para todo el repositorio:
+ 
+| Elemento | Convención | Ejemplo correcto | Ejemplo incorrecto |
+|---|---|---|---|
+| Variables | `camelCase` | `presupuestoMaximo` | `presupuesto_maximo`, `presupuestomaximo` |
+| Constantes | `camelCase` | `maxIntentosLogin` | `MAX_INTENTOS_LOGIN`, `max-intentos-login` |
+| Clases | `PascalCase` | `EventosService` | `eventosService`, `eventos_service` |
+| Archivos | `Pascal_Snake_Case` | `Eventos_Service.ts` | `eventosService.ts`, `eventos-service.ts` |
+
+### Ejemplos:
+ 
+#### Variables y constantes (`camelCase`)
+ 
+```typescript
+// Variables
+let aforoDisponible = 0;
+const nombreOrganizador = "Laura";
+const eventosFiltrados = [];
+ 
+// Constantes
+const maxIntentosLogin = 5;
+const tiempoExpiracionToken = 3600;
+```
+ 
+#### Clases (`PascalCase`)
+ 
+```typescript
+class EventosService {}
+class UsuariosController {}
+class HorarioRango {}
+```
+ 
+#### Archivos (`Pascal_Snake_Case`)
+ 
+```text
+Eventos_Controller.ts
+Eventos_Service.ts
+Eventos_Repository.ts
+Usuarios_Service.ts
+Horario_Rango.ts
+Horario_Rango.test.ts
+```
+ 
+#### Ejemplo combinado
+ 
+Archivo `Eventos_Service.ts`, que contiene la clase `EventosService` con sus variables y constantes:
+ 
+```typescript
+// Eventos_Service.ts
+const maxEventosPorPagina = 20;
+ 
+export class EventosService {
+  constructor(private readonly eventosRepository: EventosRepository) {}
+ 
+  filtrarEventos(presupuestoMaximo: number) {
+    const eventosFiltrados = this.eventosRepository.buscarPorPrecio(presupuestoMaximo);
+    return eventosFiltrados.slice(0, maxEventosPorPagina);
+  }
+}
+```
  
 ## Alternativas consideradas
  
@@ -62,7 +118,9 @@ falta un análisis exhaustivo, basta con dejar constancia de que se
 consideraron y el motivo del descarte (costo, madurez, curva de
 aprendizaje, no cumple un requisito, etc.).
 -->
-flatcase o kebab-case para las variables
+
+- **`flatcase` para las variables** (`presupuestomaximo`): descartado. Al no separar visualmente las palabras, se reduce notablemente la legibilidad en nombres largos.
+- **`kebab-case` para las variables** (`presupuesto-maximo`): descartado. El guion no es un carácter válido en identificadores de la mayoría de lenguajes, ya que se interpreta como el operador de resta. Solo sería viable en archivos, pero no se adopta para mantener una convención uniforme.
  
 ## Consecuencias
  
@@ -73,6 +131,12 @@ también documenta el costo que se está aceptando (deuda técnica
 introducida, dependencia nueva, curva de aprendizaje del equipo).
 -->
  
----
-Mejor organización por la estandarización
+### Positivas:
+ 
+- **Mejor organización por la estandarización:** Todos los miembros nombran los elementos de la misma forma, lo que reduce discusiones y correcciones durante las revisiones de código.
+- **Legibilidad:** El tipo de elemento puede identificarse a simple vista por su formato.
+
+### Negativas:
+ 
+- **Curva de adaptación:** Los miembros acostumbrados a otras convenciones deberán adaptarse.
  
