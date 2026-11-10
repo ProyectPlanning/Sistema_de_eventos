@@ -15,6 +15,7 @@ Autores:
  - Cristian Andres Diaz Ortega
  - Juan Sebastian Rodriguez Carvajal
  - Nicolas David Lovera Cabiativa
+ - Martín Lora Caro
 
 Fecha: 2026-11-5
  
@@ -27,7 +28,7 @@ Un ADR "Propuesto" está en discusión. Una vez el equipo decide, pasa a
 modifica su contenido de fondo.
 -->
  
-Validado
+Aceptado
 ## Contexto
  
 <!--
@@ -38,7 +39,7 @@ Ejemplos de fuerzas en juego: requisitos no funcionales (rendimiento,
 seguridad, escalabilidad), restricciones de equipo o de tiempo,
 deuda técnica existente, compatibilidad con sistemas ya construidos.
 -->
-Frente a la problematica que se nos presentó al momento de nombrar los archivos es necesario tomar una decision
+Se nos presentó una problemática con el nombramiento de archivos dentro del repositorio, es necesario tomar una decisión respecto a esta,
 con respecto a la nomenclatura de los archivos y el codigo con el fin de tener una estructura fija donde todos los miembros deben tener una estructura fija.
   
 ## Decisión
@@ -50,6 +51,7 @@ un ADR no es un RFC, no necesita convencer a nadie aquí — la
 justificación ya quedó en "Contexto" y las alternativas descartadas
 van abajo.
 -->
+Se decidió una nomenclatura basada en el tipo de elemento.
 - variables y constantes: camelCase.
 - clases:PascalCase.
 - archivos: Pascal_Snake_Case.
@@ -62,7 +64,7 @@ falta un análisis exhaustivo, basta con dejar constancia de que se
 consideraron y el motivo del descarte (costo, madurez, curva de
 aprendizaje, no cumple un requisito, etc.).
 -->
-flatcase o kebab-case para las variables
+flatcase o kebab-case para las variables, se descartan ya que consideramos que camelCase explica de mejor forma y más resumida la variable de forma sencilla.
  
 ## Consecuencias
  
@@ -76,3 +78,4 @@ introducida, dependencia nueva, curva de aprendizaje del equipo).
 ---
 Mejor organización por la estandarización
  
+Requiere renombrar elementos en otros ADRs, diagramas de clases, contratos, etc. que se hicieron previamente a la estandarización.
