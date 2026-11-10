@@ -58,6 +58,10 @@ Se adoptan las siguientes convenciones de nomenclatura para todo el repositorio:
 | Clases | `PascalCase` | `EventosService` | `eventosService`, `eventos_service` |
 | Archivos | `Pascal_Snake_Case` | `Eventos_Service.ts` | `eventosService.ts`, `eventos-service.ts` |
 
+### Excepciones
+ 
+Los archivos cuyo nombre es exigido por una herramienta o por el ecosistema conservan su nombre estándar: `README.md`, `package.json`, `tsconfig.json`, `docker-compose.yml`, `main.ts` (punto de entrada de NestJS), entre otros.
+
 ### Ejemplos:
  
 #### Variables y constantes (`camelCase`)
