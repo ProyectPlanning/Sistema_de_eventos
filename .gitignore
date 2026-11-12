@@ -1,0 +1,10 @@
+# Variables de entorno con secretos
+.env
+
+# Dependencias y compilados
+node_modules/
+dist/
+
+# Otros
+*.log
+.DS_Store
