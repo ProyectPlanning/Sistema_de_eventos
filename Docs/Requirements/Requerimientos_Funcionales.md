@@ -11,9 +11,9 @@ Este documento compila el catálogo integral de requerimientos funcionales del s
 
 | ID | Nombre / Función | Descripción Breve | Alcance / Etapa | Prioridad MoSCoW |
 | :--- | :--- | :--- | :---: | :---: |
-| **REQ-01** | **Búsqueda y filtrado de eventos** | Filtrar eventos por presupuesto máximo, disponibilidad horaria y ubicación geográfica. | **Primera Etapa (MVP)** | **Must Have** |
-| **REQ-02** | **Gestión de eventos** | Crear, modificar y eliminar eventos locales en el sistema. | **Primera Etapa (MVP)** | **Must Have** |
-| **REQ-13** | **Registro y creación de cuenta** | Permitir a los usuarios crear una cuenta y autenticarse en la plataforma. | **Primera Etapa (MVP)** | **Must Have** |
+| **REQ-01** | **Búsqueda y filtrado de eventos** | Filtrar eventos por presupuesto máximo, disponibilidad horaria y ubicación geográfica. | **Primera Etapa-A(MVP)** | **Must Have** |
+| **REQ-02** | **Gestión de eventos** | Crear, modificar y eliminar eventos locales en el sistema. | **Primera Etapa-B (MVP)** | **Must Have** |
+| **REQ-13** | **Registro y creación de cuenta** | Permitir a los usuarios crear una cuenta y autenticarse en la plataforma. | **Primera Etapa-B (MVP)** | **Must Have** |
 | **REQ-03** | Recomendaciones por preferencias | Sugerir automáticamente actividades basadas en gustos del usuario. | *Fase Posterior* | Should Have |
 | **REQ-04** | Notificación de recomendaciones | Enviar alertas sobre nuevos eventos recomendados. | *Fase Posterior* | Could Have |
 | **REQ-05** | Calificación de eventos y creadores | Calificar la experiencia de eventos y la reputación del organizador. | *Fase Posterior* | Could Have |
@@ -34,18 +34,18 @@ Este documento compila el catálogo integral de requerimientos funcionales del s
 ### 2.1. Gestión e Interacción con Eventos
 
 #### **[REQ-01] — Búsqueda y filtrado de eventos**
-* **Alcance:** Primera Etapa (Must Have).
+* **Alcance:** Primera Etapa-A (Must Have).
 * **Descripción:** El sistema debe permitir al usuario consultar y filtrar eventos ingresando su presupuesto máximo, su rango de disponibilidad horaria y su zona geográfica (país, departamento/estado y ciudad).
 * **Especificación detallada:** Ver documento normativo individual [`REQ-01.md`](REQ-01.md).
 
 #### **[REQ-02] — Administración de eventos**
-* **Alcance:** Primera Etapa (Must Have).
+* **Alcance:** Primera Etapa-B (Must Have).
 * **Descripción:** El sistema debe permitir a los usuarios autorizados (organizadores) crear, modificar y eliminar eventos dentro de la plataforma, validando la coherencia de datos de horario, tarifas y capacidad.
 
 ### 2.2. Gestión de Identidad y Accesos
 
 #### **[REQ-13] — Registro y creación de cuenta**
-* **Alcance:** Primera Etapa (Must Have).
+* **Alcance:** Primera Etapa-B (Must Have).
 * **Descripción:** El sistema debe permitir a nuevos usuarios registrarse en la plataforma ingresando sus datos básicos de identificación, correo electrónico y contraseña segura, así como autenticarse para acceder a las funciones del sistema.
 
 ---
