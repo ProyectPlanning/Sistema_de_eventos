@@ -68,9 +68,9 @@
 | **Desfase o desactualización en horarios, precios y cupos de eventos**: Un evento agota entradas o altera su tarifa/horario en la plataforma de origen sin reflejarlo a tiempo en la API de consulta. | Media-Alta | Medio (Frustración del usuario al encontrar discrepancias entre los resultados filtrados y las condiciones reales del evento). | Desplegar sello temporal de *"Última sincronización"* en la ficha del evento y enlace directo al sitio oficial del evento para confirmación final. |
 | **Modificaciones imprevistas en los esquemas de datos del proveedor**: Cambios intempestivos en el formato JSON, tipos de datos o campos de la API externa que rompen la deserialización. | Media-Baja | Medio-Alto (Falla en el parseo y filtrado de eventos externos, causando omisión de resultados válidos). | Aislamiento estricto de la integración en un módulo adaptador desacoplado; validación de esquema en la ingesta descartando de forma segura registros mal formados sin afectar el resto de la consulta. |
 
-**Preguntas abiertas (Open Questions)**
-> 1. ¿Cómo debe tratar el algoritmo de solapamiento horario a los eventos de tipo "vida nocturna" que inician un día y finalizan en la madrugada del día siguiente, si el usuario define un rango horario nocturno (ej. 20:00 a 02:00)? *(Pendiente de validación en diseño detallado de la regla de horario).*  
-> 2. ¿Cuál será la política de reintentos cuando una API externa responda con error 429 (Too Many Requests)??
+**Decisiones sobre preguntas abiertas (resueltas)**
+> 1.  Horario nocturno — Decisión: Un rango del usuario cuya hora de fin es menor que la de inicio (ej. 20:00–02:00) se interpreta como continuo y termina al día siguiente. Un evento coincide si su horario se solapa con el rango del usuario, es decir, si comparten al menos un momento. Para eventos recurrentes se evalúa el mismo criterio en cada día de la semana programado, hasta su fecha_limite.*  
+> 2. Error 429 — Decisión: No se reintenta dentro de la misma consulta, porque el límite de 2 s no da margen. Un 429 se trata como falla del proveedor (Excepción B, fallback a eventos locales). Además, el adaptador deja de consultar ese proveedor durante el tiempo que indique el encabezado Retry-After, o 60 s si no viene, para no seguir gastando cuota.
 
 ---
 
@@ -106,7 +106,7 @@
 **Escenario 1 — Filtros combinados con coincidencias (Camino normal)**
 > **Dado** que el usuario se encuentra en la pantalla de búsqueda de actividades y existen eventos vigentes registrados en "Colombia", departamento "Bogotá D.C.", ciudad "Bogotá",  
 > **cuando** ingresa como presupuesto máximo "$50.000 COP", selecciona la ciudad "Bogotá" y define un rango horario de "hoy a las 18:00 a 22:00",  
-> **entonces** el sistema retorna y despliega la lista de eventos cuya ubicación coincida con "Bogotá", cuya tarifa mínima vigente sea menor o igual a $50.000 COP (conforme a BR-02), cuyo horario esté comprendido en el rango indicado y que tengan al menos 1 cupo disponible (conforme a BR-01).
+> **entonces** el sistema retorna y despliega la lista de eventos cuya ubicación coincida con "Bogotá", cuya tarifa mínima vigente sea menor o igual a $50.000 COP (conforme a BR-02), cuyo horario se solape con el rango indicado y que tengan al menos 1 cupo disponible (conforme a BR-01).
 
 **Escenario 2 — Búsqueda sin coincidencias compatibles (Camino alternativo)**
 > **Dado** que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10.000 COP" en el rango de "hoy a las 08:00 a 12:00",  

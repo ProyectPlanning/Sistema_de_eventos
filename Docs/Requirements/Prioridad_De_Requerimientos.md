@@ -15,9 +15,16 @@ Para garantizar la construcción de un incremento funcional verticalmente integr
 ```mermaid
 flowchart TD
     subgraph ETAPA1["PRIMERA ETAPA (Alcance Inmediato — Incremento 1 / MVP)"]
-        R01["REQ-01: Búsqueda y Filtrado de Eventos"]
-        R02["REQ-02: Gestión y Administración de Eventos"]
-        R13["REQ-13: Registro y Creación de Cuenta"]
+        subgraph INC_1A["Incremento 1A: REQ-01"]
+            R01["REQ-01: Búsqueda y Filtrado de Eventos"]
+        end
+
+        subgraph INC_1B["Incremento 1B: REQ-02, REQ-13"]
+            R02["REQ-02: Gestión y Administración de Eventos"]
+            R13["REQ-13: Registro y Creación de Cuenta"]
+        end
+
+        INC_1A --> INC_1B
     end
 
     subgraph FASE_POSTERIOR["FASE POSTERIOR (Fuera de Alcance Inicial — Incrementos 2 a 5)"]
@@ -48,6 +55,8 @@ Estos tres requerimientos representan el **núcleo mínimo viable** del sistema.
 
 ### Argumentación y Trade-Offs de la Primera Etapa
 > **Decisión de priorización:** Priorizar `REQ-01`, `REQ-02` y `REQ-13` permite entregar un producto funcional de extremo a extremo (Frontend → API Gateway → Lógica de Dominio → Persistencia en Base de Datos). Aceptamos conscientemente el costo de posponer para iteraciones futuras las capacidades de recomendación automática (`REQ-03`), agendamiento externo (`REQ-07`), marcado social (`REQ-08`) y perfiles avanzados (`REQ-15`). Tratar todas las funciones como *Must Have* impediría validar la arquitectura y el modelo de dominio en los plazos fijados por la asignatura.
+
+>**Secuenciación interna:** REQ-01 va primero porque es la propuesta de valor central (NEED-01) y su consulta es pública (no requiere REQ-13). Su única dependencia con REQ-02 son los datos, que se cubren con datos semilla y APIs externas. 
 
 ---
 
@@ -91,8 +100,8 @@ Requerimientos que han sido formalmente descartados para la primera y segunda fa
 
 | ID Requerimiento | Alcance Planificado | Justificación de Capacidad (Clase 10) |
 | :---: | :---: | :--- |
-| **REQ-01** | **Primera Etapa (Must Have)** | Demanda central evidenciada en NEED-01; base del primer incremento. |
-| **REQ-02** | **Primera Etapa (Must Have)** | Provisión de contenido local indispensable para poblar el catálogo. |
-| **REQ-13** | **Primera Etapa (Must Have)** | Base de seguridad, sesión y control de acceso del sistema. |
+| **REQ-01** | **Primera Etapa-1A (Must Have)** | Demanda central evidenciada en NEED-01; base del primer incremento. |
+| **REQ-02** | **Primera Etapa-1B (Must Have)** | Provisión de contenido local indispensable para poblar el catálogo. |
+| **REQ-13** | **Primera Etapa-1B (Must Have)** | Base de seguridad, sesión y control de acceso del sistema. |
 | **REQ-03 al REQ-11, REQ-14, REQ-15** | **Fase Posterior (Should/Could)** | Extensiones funcionales diferidas para evitar sobrecarga en el primer vertical slice. |
 | **REQ-12** | **Fuera de Alcance Inicial (Won't)** | Dependencia de infraestructura de mensajería asíncrona postergada. |

@@ -29,15 +29,15 @@ El sistema no es un simple CRUD de almacenamiento de registros. El software deci
 
 ## 2. Alcance de la Primera Etapa (Incremento 1 / MVP)
 
-Conforme a la metodología **MoSCoW** y la gestión de capacidad limitada, la **Primera Etapa** del proyecto se enfoca estrictamente en construir un incremento vertical funcional (*vertical slice*) que integre Front-End, API Gateway, Lógica de Negocio y Persistencia para **únicamente estos tres requerimientos nucleares**: `REQ-01`, `REQ-02` y `REQ-13`
+Conforme a la metodología **MoSCoW** y la gestión de capacidad limitada, la **Primera Etapa** del proyecto se enfoca estrictamente en construir un incremento vertical funcional (*vertical slice*) que integre Front-End, API Gateway, Lógica de Negocio y Persistencia para la Primera Etapa se divide en dos entregas sobre la misma arquitectura: Incremento 1A — REQ-01 (entrega evaluada), construido como un incremento vertical completo (Front-End → API Gateway → Lógica → Persistencia), y Incremento 1B — REQ-02 y REQ-13, que reutiliza la entidad Evento, IRepositorioDeEventos y el modelo de datos del 1A. Mientras llega el 1B, el catálogo local se carga con datos semilla.
 
 ### 2.1 Requerimientos Priorizados de la Primera Etapa
 
-| ID | Nombre | Descripción Breve | Rol / Actor | Caso de Uso |
-|:---:|:---|:---|:---:|:---|
-| **REQ-01** | **Búsqueda y filtrado de eventos** | Consultar y filtrar eventos ingresando presupuesto máximo, rango de disponibilidad horaria y zona geográfica. | Asistente | Consultar y Filtrar Eventos |
-| **REQ-02** | **Gestión de eventos** | Crear, modificar y cancelar/eliminar eventos locales validando aforos, fechas y precios. | Organizador | Administrar Eventos |
-| **REQ-13** | **Registro y creación de cuenta** | Crear cuenta de usuario, autenticación segura y emisión de tokens de sesión. | Usuario nuevo | Registrar / Autenticar Usuario |
+| ID | Nombre | Descripción Breve | Rol / Actor | Caso de Uso | Incremento |
+|:---:|:---|:---|:---:|:---|:---|
+| **REQ-01** | **Búsqueda y filtrado de eventos** | Consultar y filtrar eventos ingresando presupuesto máximo, rango de disponibilidad horaria y zona geográfica. | Asistente | Consultar y Filtrar Eventos | 1A |
+| **REQ-02** | **Gestión de eventos** | Crear, modificar y cancelar/eliminar eventos locales validando aforos, fechas y precios. | Organizador | Administrar Eventos | 1B |
+| **REQ-13** | **Registro y creación de cuenta** | Crear cuenta de usuario, autenticación segura y emisión de tokens de sesión. | Usuario nuevo | Registrar / Autenticar Usuario | 1B |
 
 ### 2.2 Requerimientos de Fase Posterior (Preservados en el Backlog)
 Los requerimientos fuera del alcance inicial **no fueron eliminados**, sino clasificados para las fases subsiguientes:
@@ -52,11 +52,11 @@ Los requerimientos fuera del alcance inicial **no fueron eliminados**, sino clas
 Durante el proceso de auditoría técnica se identificaron los siguientes puntos para refinamiento en los Incrementos 1 y 2:
 
 1. **Gestión de eventos que cruzan la medianoche (`REQ-01`):**  
-   *Ambigüedad:* Cuando un usuario define un rango de búsqueda nocturno (e.g. 21:00 a 03:00) y un evento inicia a las 22:00 y finaliza a las 04:00, se requiere estandarizar si se evalúa por solapamiento parcial o contención total entre fechas consecutivas. Se resolverá en la suite de pruebas unitarias de `HorarioRango`.
-2. **Política ante el límite de cuota de API Colombia (`REQ-01`):**  
-   *Pendiente:* Definir el comportamiento del adaptador cuando `api-colombia.com` responda con error 429 (*Too Many Requests*) por superar el límite de 60 req/min por IP. Por ahora se trata como cualquier otra falla del proveedor externo (fallback con eventos locales).
+   *Resuelto:* Cuando un usuario define un rango de búsqueda nocturno (e.g. 21:00 a 03:00) y un evento inicia a las 22:00 y finaliza a las 04:00, se requiere estandarizar si se evalúa por solapamiento parcial o contención total entre fechas consecutivas. Se resolverá en la suite de pruebas unitarias de `HorarioRango`.
+2. **Política ante el límite de cuota de API Colombia (`REQ-01`):** 
+   *Resuelto:* Definir el comportamiento del adaptador cuando `api-colombia.com` responda con error 429 (*Too Many Requests*) por superar el límite de 60 req/min por IP. Por ahora se trata como cualquier otra falla del proveedor externo (fallback con eventos locales).
 3. **Persistencia del reporte de eventos falsos (`REQ-01` / Mitigación de Riesgo):**  
-   *Pendiente:* Diseñar en el modelo relacional del Incremento 2 la tabla para almacenar reportes de anomalías o eventos sospechosos emitidos por los usuarios.
+   *Resuelto:* Reporte de eventos sospechosos — Fuera del alcance del Incremento 1A. El riesgo de eventos falsos se mitiga en 1A con la etiqueta “Información externa — no verificada”, enlaces a boleterías oficiales y uso exclusivo de APIs reconocidas. El reporte comunitario queda en el backlog.
 
 ---
 
