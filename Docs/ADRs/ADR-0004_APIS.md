@@ -43,7 +43,7 @@ Dado que los proveedores externos pueden experimentar caídas, latencia de red o
    * `IServicioMapas` implementado por `AdaptadorGoogleMaps` (para geocodificación).
 
 2. **Mecanismo de Resiliencia (Timeout Estricto y Fallback):**
-   Las consultas remotas a la API de eventos de `datos.gov.co` y a la de `https://api-colombia.com/` tendrán un tiempo de espera límite (*timeout*) de **2 segundos**. Si el proveedor externo no responde dentro de dicho tiempo o retorna un error HTTP, el adaptador activa el mecanismo de *fallback* retornando una lista vacía de eventos externos y logueando una advertencia, permitiendo que el sistema responda al usuario únicamente con los eventos de la base de datos local sin interrumpir el servicio.
+   Las consultas remotas a la API de eventos de `datos.gov.co` y a la de `https://api-colombia.com/` tendrán un tiempo de espera límite (*timeout*) de **2 segundos**. Si el proveedor externo no responde dentro de dicho tiempo o retorna un error HTTP, el adaptador activa el mecanismo de errores, permitiendo que el sistema responda al usuario únicamente con los eventos de la base de datos local sin interrumpir el servicio.
 
 ---
 

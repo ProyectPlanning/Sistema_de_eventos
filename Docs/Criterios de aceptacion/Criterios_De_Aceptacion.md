@@ -3,7 +3,7 @@
 **AC.1.1 — eventos filtrado**:
 Dado que el usuario se encuentra en la pantalla de búsqueda de actividades y existen eventos vigentes registrados en "Colombia", departamento "Bogotá D.C.", ciudad "Bogotá",
 cuando ingresa como presupuesto máximo "$50.000 COP", selecciona la ciudad "Bogotá" y define un rango horario de "hoy a las 18:00 a 22:00",
-entonces el sistema retorna y despliega la lista de eventos cuya ubicación coincida con "Bogotá", cuya tarifa mínima vigente sea menor o igual a $50.000 COP (conforme a BR-02), cuyo horario esté comprendido en el rango indicado y que tengan al menos 1 cupo disponible (conforme a BR-01).
+entonces el sistema retorna y despliega la lista de eventos cuya ubicación coincida con "Bogotá", cuya tarifa mínima vigente sea menor o igual a $50.000 COP (conforme a BR-02), cuyo horario se solape con el rango indicado y que tengan al menos 1 cupo disponible (conforme a BR-01).
 
 **AC.1.2 — sin eventos compatibles**:
 Dado que no existen eventos registrados en la ciudad "Medellín" con precio menor a "$10.000 COP" en el rango de "hoy a las 08:00 a 12:00",
